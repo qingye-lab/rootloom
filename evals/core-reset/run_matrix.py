@@ -13,6 +13,7 @@ from pathlib import Path
 import random
 import shutil
 import subprocess
+import sys
 import time
 from typing import Any
 
@@ -162,6 +163,12 @@ def stream_codex(
     return returncode
 
 
+def codex_command(binary: str) -> list[str]:
+    if Path(binary).suffix.casefold() == ".py":
+        return [sys.executable, binary]
+    return [binary]
+
+
 def execute_run(
     *,
     codex_binary: str,
@@ -215,8 +222,9 @@ def execute_run(
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     env["ROOTLOOM_EVAL_EVIDENCE_DIR"] = str(evidence_dir)
     env["ROOTLOOM_EVAL_SETUP_HOME"] = str(setup_home)
+    command = codex_command(codex_binary)
     argv = [
-        codex_binary,
+        *command,
         "exec",
         "--ephemeral",
         "--json",
@@ -264,7 +272,7 @@ def execute_run(
         "repetition": repetition,
         "model": model,
         "reasoning": reasoning,
-        "codex_cli": run_checked([codex_binary, "--version"], cwd=repo).stdout.strip(),
+        "codex_cli": run_checked([*command, "--version"], cwd=repo).stdout.strip(),
         "started_at": started_at.isoformat(),
         "elapsed_seconds": round(elapsed, 3),
         "returncode": returncode,

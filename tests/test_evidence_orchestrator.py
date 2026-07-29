@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -76,7 +77,9 @@ class EvidenceOrchestratorTests(unittest.TestCase):
             "--path",
             "test_app.py",
             "--verify",
-            f"{sys.executable} -m unittest test_app -v",
+            shlex.join(
+                [sys.executable, "-B", "-m", "unittest", "test_app", "-v"]
+            ),
             "--target",
             target,
             "--primary-evidence",

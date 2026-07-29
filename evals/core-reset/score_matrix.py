@@ -27,7 +27,7 @@ MANUAL_SELECTION = re.compile(
     re.I,
 )
 PLUGIN_MARKDOWN = re.compile(
-    r"((?:/[^\s\"']+|plugins/cache/rootloom/rootloom/[^\s\"']+)\.md)"
+    r"((?:[A-Za-z]:/|/|plugins/cache/rootloom/rootloom/)[^\s\"']+\.md)"
 )
 MANAGED_GUIDANCE_START = re.compile(
     r"^<!-- rootloom:managed-start version=1(?: [^<>\r\n]*)? -->$",
@@ -80,7 +80,7 @@ def activated_context(
     skills: set[str] = set()
     references: set[str] = set()
     for item in command_items(events):
-        command = item.get("command", "")
+        command = item.get("command", "").replace("\\", "/")
         if "plugins/cache/rootloom/rootloom/" not in command:
             continue
         for match in PLUGIN_MARKDOWN.findall(command):
