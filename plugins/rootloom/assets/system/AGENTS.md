@@ -23,6 +23,7 @@
 - **Full** covers routine and high-risk actions only within the current task's stated operation type and scope. Never infer Full.
 - Under Standard, ask before irreversible loss, force-push or history rewrite, destructive remote or production operations, purchases, credential or permission changes, incompatible contracts, or material scope expansion.
 - Rootloom modes do not bypass platform, sandbox, organization, credential, or hard-deny controls.
+- After exact Single action authorization, execute it once without asking again. A pre-launch platform refusal is a platform blocker, not missing user authorization; name the controlling layer and retry only after its policy changes.
 
 ## Verification
 

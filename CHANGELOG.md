@@ -12,6 +12,17 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Require Governed and Evidence References before the first edit, add a compact
+  Governed completion contract, and stop when a required Reference cannot load.
+- Advance Core Reset scoring to mechanical v4 so successful relative Reference reads
+  (including quoted plugin paths containing spaces) and bounded equivalent
+  Review/Migration wording are scored from their actual evidence instead of reported
+  as route or quality regressions.
+- Distinguish exact user authorization from a pre-launch host-policy refusal; Rootloom
+  does not repeat consent prompts or misreport that platform blocker as missing consent.
+- Require Project Guidance completion to detect and remove only current-task
+  verification artifacts, preventing cache, coverage, or build output from escaping the
+  authorized guidance path.
 - Make Direct and Scoped self-contained routine routes with no Reference load, batch
   independent inspection, and retain behavior-mapped verification plus one challenge
   pass inside the Change Skill.

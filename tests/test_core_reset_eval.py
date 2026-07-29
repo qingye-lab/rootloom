@@ -115,7 +115,7 @@ class CoreResetEvalTests(unittest.TestCase):
             "suite": "rootloom-core-reset-eval-v2",
             "model": "fixture",
             "reasoning": "fixture",
-            "scoring": "rootloom-core-reset-mechanical-v3",
+            "scoring": "rootloom-core-reset-mechanical-v4",
             "repetitions": repetitions,
             "random_seed": 20260729,
             "candidate": {
@@ -191,6 +191,14 @@ class CoreResetEvalTests(unittest.TestCase):
             "Natural-language guidance alone never authorizes",
             skill,
         )
+
+    def test_project_guidance_verification_must_not_pollute_worktree(self) -> None:
+        skill = GUIDANCE_SKILL_PATH.read_text(encoding="utf-8")
+
+        self.assertIn("compare the final worktree", skill)
+        self.assertIn("Verification must not leave caches", skill)
+        self.assertIn("remove only artifacts created by this", skill)
+        self.assertIn("task, never pre-existing user work", skill)
 
     def test_evidence_orchestrator_is_single_command_convenience_only(self) -> None:
         reference = EVIDENCE_MODE_PATH.read_text(encoding="utf-8")
@@ -433,6 +441,7 @@ class CoreResetEvalTests(unittest.TestCase):
                         "item": {
                             "type": "command_execution",
                             "command": f"cat {skill} {reference}",
+                            "exit_code": 0,
                         },
                     }
                 ]
@@ -447,6 +456,146 @@ class CoreResetEvalTests(unittest.TestCase):
                 "verification-contract.md"
             ],
         )
+
+    def test_activated_context_resolves_later_relative_reference_commands(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "plugins" / "cache" / "rootloom" / "rootloom"
+            skill = (
+                root
+                / "4.1.0"
+                / "skills"
+                / "operating-coding-change"
+                / "SKILL.md"
+            )
+            governed = skill.parent / "references" / "governed-change.md"
+            verification = skill.parent / "references" / "verification-contract.md"
+            governed.parent.mkdir(parents=True)
+            skill.write_text("skill", encoding="utf-8")
+            governed.write_text("governed", encoding="utf-8")
+            verification.write_text("verification", encoding="utf-8")
+
+            context_bytes, skills, references = self.scorer.activated_context(
+                [
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "command_execution",
+                            "command": f"cat {skill}",
+                            "exit_code": 0,
+                        },
+                    },
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "command_execution",
+                            "command": "cat references/governed-change.md",
+                            "exit_code": 0,
+                        },
+                    },
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "command_execution",
+                            "command": "cat references/verification-contract.md",
+                            "exit_code": 0,
+                        },
+                    },
+                ]
+            )
+
+        self.assertEqual(
+            context_bytes,
+            len("skillgovernedverification"),
+        )
+        self.assertEqual(skills, ["operating-coding-change"])
+        self.assertEqual(
+            references,
+            [
+                "operating-coding-change/references/governed-change.md",
+                "operating-coding-change/references/verification-contract.md",
+            ],
+        )
+
+    def test_activated_context_resolves_quoted_paths_with_spaces(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="rootloom eval ") as directory:
+            skill = (
+                Path(directory)
+                / "plugins"
+                / "cache"
+                / "rootloom"
+                / "rootloom"
+                / "4.1.0"
+                / "skills"
+                / "operating-coding-change"
+                / "SKILL.md"
+            )
+            governed = skill.parent / "references" / "governed-change.md"
+            governed.parent.mkdir(parents=True)
+            skill.write_text("skill", encoding="utf-8")
+            governed.write_text("governed", encoding="utf-8")
+
+            context_bytes, skills, references = self.scorer.activated_context(
+                [
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "command_execution",
+                            "command": f"sed -n '1,240p' '{skill}'",
+                            "exit_code": 0,
+                        },
+                    },
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "command_execution",
+                            "command": f'sed -n "1,240p" "{governed}"',
+                            "exit_code": 0,
+                        },
+                    },
+                ]
+            )
+
+        self.assertEqual(context_bytes, len("skillgoverned"))
+        self.assertEqual(skills, ["operating-coding-change"])
+        self.assertEqual(
+            references,
+            ["operating-coding-change/references/governed-change.md"],
+        )
+
+    def test_activated_context_ignores_failed_reads(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            skill = (
+                Path(directory)
+                / "plugins"
+                / "cache"
+                / "rootloom"
+                / "rootloom"
+                / "4.1.0"
+                / "skills"
+                / "operating-coding-change"
+                / "SKILL.md"
+            )
+            skill.parent.mkdir(parents=True)
+            skill.write_text("skill", encoding="utf-8")
+
+            context_bytes, skills, references = self.scorer.activated_context(
+                [
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "command_execution",
+                            "command": f"cat '{skill}'",
+                            "exit_code": 1,
+                        },
+                    }
+                ]
+            )
+
+        self.assertEqual(context_bytes, 0)
+        self.assertEqual(skills, [])
+        self.assertEqual(references, [])
 
     def test_activated_context_resolves_loop_joined_references(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -484,6 +633,7 @@ class CoreResetEvalTests(unittest.TestCase):
                                 f'sed -n "1,240p" "{skill.parent}/"'
                                 "'$rootloom_ref; done"
                             ),
+                            "exit_code": 0,
                         },
                     }
                 ]
@@ -529,6 +679,7 @@ class CoreResetEvalTests(unittest.TestCase):
                                 'cat "$CODEX_HOME/plugins/cache/rootloom/rootloom/'
                                 '4.1.0/skills/setup-rootloom/SKILL.md"'
                             ),
+                            "exit_code": 0,
                         },
                     }
                 ],
@@ -566,6 +717,7 @@ class CoreResetEvalTests(unittest.TestCase):
                                 "sed -n '1,240p' plugins/cache/rootloom/rootloom/"
                                 "4.1.0/skills/setup-rootloom/SKILL.md"
                             ),
+                            "exit_code": 0,
                         },
                     }
                 ],
@@ -611,6 +763,20 @@ class CoreResetEvalTests(unittest.TestCase):
             self.scorer.root_cause_score("review-only", review, 1, 0),
             1.0,
         )
+        equivalent_review = (
+            "The open exception is suppressed, leaving connected after failure and "
+            "without a retry after the delay. The test ratifies the defect and "
+            "encodes the false-connected state."
+        )
+        self.assertEqual(
+            self.scorer.root_cause_score(
+                "review-only",
+                equivalent_review,
+                1,
+                0,
+            ),
+            1.0,
+        )
         migration = (
             "Readers accept both v1 and v2 during rollout. Migration is retry-safe "
             "and unchanged on rerun; rollback restores the prior file."
@@ -620,6 +786,45 @@ class CoreResetEvalTests(unittest.TestCase):
                 self.scorer.governed_score(
                     "data-migration",
                     migration,
+                    1,
+                    Path(directory),
+                ),
+                1.0,
+            )
+            equivalent_migration = (
+                "Readers accept both v1 and v2 during coexistence. Migration is "
+                "repeat-safe and byte-preserves v2. Rollback restores v1."
+            )
+            self.assertEqual(
+                self.scorer.governed_score(
+                    "data-migration",
+                    equivalent_migration,
+                    1,
+                    Path(directory),
+                ),
+                1.0,
+            )
+            unchanged_migration = (
+                "Writers emit v2. Readers accept v1 name and v2 display_name. "
+                "Migration leaves v2 byte-for-byte unchanged. Rollback restores v1."
+            )
+            self.assertEqual(
+                self.scorer.governed_score(
+                    "data-migration",
+                    unchanged_migration,
+                    1,
+                    Path(directory),
+                ),
+                1.0,
+            )
+            no_op_migration = (
+                "Readers accept both v1 and v2. Repeated migration and existing v2 "
+                "files are exact no-ops. Rollback restores v1."
+            )
+            self.assertEqual(
+                self.scorer.governed_score(
+                    "data-migration",
+                    no_op_migration,
                     1,
                     Path(directory),
                 ),

@@ -68,3 +68,13 @@ routine implementation history.
 Require contract/migration or mixed-version checks where applicable, the verification
 contract, an adversarial challenge pass, rollback readiness, and an explicit residual
 risk statement. For governed defect repair require `ROOT_CAUSE_ALIGNMENT: PASS`.
+
+Report governed completion compactly:
+
+```text
+Compatibility           Old/new contract and affected consumers
+Migration / Coexistence  Transition window or NOT_APPLICABLE
+Rollback / Compensation  Recovery path and irreversible point
+Verification             Executed checks and behavior proved
+Residual Risk            Remaining gaps or NONE_OBSERVED
+```

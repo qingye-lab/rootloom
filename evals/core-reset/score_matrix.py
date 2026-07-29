@@ -29,9 +29,16 @@ MANUAL_SELECTION = re.compile(
 PLUGIN_MARKDOWN = re.compile(
     r"((?:[A-Za-z]:/|/|plugins/cache/rootloom/rootloom/)[^\s\"']+\.md)"
 )
+QUOTED_PLUGIN_MARKDOWN = re.compile(
+    r"[\"']((?:[A-Za-z]:/|/|plugins/cache/rootloom/rootloom/)[^\"']+\.md)[\"']"
+)
 PLUGIN_SKILL_DIRECTORY = re.compile(
     r"((?:[A-Za-z]:/|/|plugins/cache/rootloom/rootloom/)"
     r"[^\s\"']+/skills/[^/\s\"']+/)"
+)
+QUOTED_PLUGIN_SKILL_DIRECTORY = re.compile(
+    r"[\"']((?:[A-Za-z]:/|/|plugins/cache/rootloom/rootloom/)"
+    r"[^\"']+/skills/[^/\"']+/)[\"']"
 )
 RELATIVE_REFERENCE = re.compile(r"\breferences/[A-Za-z0-9._/-]+\.md\b")
 MANAGED_GUIDANCE_START = re.compile(
@@ -84,47 +91,57 @@ def activated_context(
     markdown_paths: set[Path] = set()
     skills: set[str] = set()
     references: set[str] = set()
+    observed_skill_directories: set[Path] = set()
+
+    def resolve_plugin_path(raw: str) -> Path:
+        path = Path(raw)
+        if not path.is_file() and codex_home is not None and not path.is_absolute():
+            path = codex_home / path
+        if (
+            not path.is_file()
+            and codex_home is not None
+            and raw.startswith("/plugins/")
+        ):
+            path = codex_home / raw.removeprefix("/")
+        return path
+
+    def record_markdown(path: Path) -> None:
+        if not path.is_file() or "skills" not in path.parts:
+            return
+        skill_index = path.parts.index("skills")
+        if skill_index + 1 >= len(path.parts):
+            return
+        markdown_paths.add(path)
+        if path.name == "SKILL.md":
+            skills.add(path.parts[skill_index + 1])
+            observed_skill_directories.add(path.parent)
+        if "references" in path.parts[skill_index + 2 :]:
+            references.add(
+                Path(*path.parts[skill_index + 1 :]).as_posix()
+            )
+
     for item in command_items(events):
-        command = item.get("command", "").replace("\\", "/")
-        if "plugins/cache/rootloom/rootloom/" not in command:
+        if item.get("exit_code") != 0:
             continue
+        command = item.get("command", "").replace("\\", "/")
         matches = set(PLUGIN_MARKDOWN.findall(command))
+        matches.update(QUOTED_PLUGIN_MARKDOWN.findall(command))
         relative_references = set(RELATIVE_REFERENCE.findall(command))
-        for directory_match in PLUGIN_SKILL_DIRECTORY.findall(command):
-            directory = Path(directory_match)
-            if (
-                not directory.is_dir()
-                and codex_home is not None
-                and not directory.is_absolute()
-            ):
-                directory = codex_home / directory
+        candidate_directories = set(observed_skill_directories)
+        directory_matches = set(PLUGIN_SKILL_DIRECTORY.findall(command))
+        directory_matches.update(QUOTED_PLUGIN_SKILL_DIRECTORY.findall(command))
+        for directory_match in directory_matches:
+            directory = resolve_plugin_path(directory_match)
+            if directory.is_dir():
+                candidate_directories.add(directory)
+        for match in matches:
+            record_markdown(resolve_plugin_path(match))
+        candidate_directories.update(observed_skill_directories)
+        for directory in candidate_directories:
             for reference_match in relative_references:
                 candidate = directory / reference_match
                 if candidate.is_file():
-                    matches.add(str(candidate))
-        for match in matches:
-            path = Path(match)
-            if not path.is_file() and codex_home is not None and not path.is_absolute():
-                path = codex_home / path
-            if (
-                not path.is_file()
-                and codex_home is not None
-                and match.startswith("/plugins/")
-            ):
-                path = codex_home / match.removeprefix("/")
-            if not path.is_file():
-                continue
-            parts = path.parts
-            if "skills" not in parts:
-                continue
-            skill_index = parts.index("skills")
-            if skill_index + 1 >= len(parts):
-                continue
-            markdown_paths.add(path)
-            if path.name == "SKILL.md":
-                skills.add(parts[skill_index + 1])
-            if "references" in parts[skill_index + 2 :]:
-                references.add(Path(*parts[skill_index + 1 :]).as_posix())
+                    record_markdown(candidate)
     context_bytes = sum(path.stat().st_size for path in markdown_paths)
     return context_bytes, sorted(skills), sorted(references)
 
@@ -441,7 +458,13 @@ def root_cause_score(
                     "changed",
                     "mask",
                     "codif",
+                    "ratif",
+                    "endors",
+                    "encodes",
+                    "incorrect state",
+                    "broken implementation",
                     "defective behavior",
+                    "false-connected",
                     "false-success",
                     "false success",
                 )
@@ -464,7 +487,17 @@ def governed_score(scenario_id: str, final_text: str, success: int, repo: Path) 
     if scenario_id == "data-migration":
         idempotency_signal = any(
             phrase in text
-            for phrase in ("idempot", "retry-safe", "retry safe", "unchanged on rerun")
+            for phrase in (
+                "idempot",
+                "repeat-safe",
+                "repeat safe",
+                "retry-safe",
+                "retry safe",
+                "unchanged on rerun",
+                "byte-for-byte unchanged",
+                "repeated migration",
+                "exact no-op",
+            )
         )
         coexistence_signal = (
             any(word in text for word in ("coexist", "compatib", "dual read"))
@@ -736,7 +769,7 @@ def main() -> int:
         "random_seed": matrix["random_seed"],
         "candidate": matrix.get("candidate"),
         "codex_cli": codex_versions[0] if len(codex_versions) == 1 else codex_versions,
-        "scoring": "rootloom-core-reset-mechanical-v3",
+        "scoring": "rootloom-core-reset-mechanical-v4",
         "runs": runs,
     }
     output.parent.mkdir(parents=True, exist_ok=True)

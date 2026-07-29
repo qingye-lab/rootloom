@@ -101,6 +101,10 @@ codex execpolicy check --pretty --rules ~/.codex/rules/rootloom.rules -- rm -rf 
 ```
 
 Expected decisions are ten `allow`, followed by `forbidden`. The installed global guidance—not argv Rules—owns authorization state: Single action applies once, Standard persists across tasks for all non-high-risk steps of each explicit goal, and Full covers high-risk steps only in the current task and scope. The Rules avoid a second prompt after that semantic decision and retain only the catastrophic recursive-deletion hard deny. A more restrictive active Rule or platform policy can still prompt.
+If the host still classifies an exact authorized action as approval-requiring while the
+active task or organization profile forbids asking (for example
+`AskForApproval=Never`), treat that controlling profile as the blocker; repeating the
+same user confirmation cannot override it.
 
 ## Change preset or roll back
 

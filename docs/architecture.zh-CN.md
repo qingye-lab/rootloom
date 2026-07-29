@@ -61,8 +61,10 @@ Reference，只检查精确目标并运行最小相关检查。脏工作树仍�
 先在 Scoped 中做有限诊断；只有诊断后仍存在材料级不确定性才升级。Direct 与 Scoped
 都由 Change Skill 自包含且不加载 Reference；Scoped 仍要求成比例的仓库证据、按行为
 映射的验证以及一次检查后挑战，但不再增加一次模型/工具往返。Governed 加载兼容、
-Rollout、Rollback 与详细验证规则；显式 Evidence Mode 才增加确定性采集。安装
-Rootloom 永远不会启动 Analyzer 或 Finalizer。
+Rollout、Rollback 与详细验证规则，并且必须在首次编辑前完成；必需 Reference 无法
+加载时停止。其完成合同明确报告 Compatibility、Migration/Coexistence、
+Rollback/Compensation、Verification 与 Residual Risk。显式 Evidence Mode 才增加
+确定性采集。安装 Rootloom 永远不会启动 Analyzer 或 Finalizer。
 
 缺陷的 `ROOT_CAUSE_ALIGNMENT: PASS` 必须包含触发方式、所属边界、被违反的不变量、有证据的根因以及对最强替代假设的否定。功能或机械任务使用 `NOT_APPLICABLE` 并明确目标不变量。
 
@@ -121,7 +123,9 @@ Runner 辅助模块保持小型：
 SessionStart Hook 绝不写入。Active Guidance 可以自动请求只读 Validate。没有当前
 用户请求时，持久 Refine 必须由独立且精确的
 `<!-- rootloom:refine-once version=1 -->` Marker 授权，只作用于该文件，并在成功
-写入时消费；自然语言指导本身不能授权持久化。可选历史经验属于单独安装的 `rootloom-memory`
+写入时消费；自然语言指导本身不能授权持久化。Guidance 完成前会对照初始状态与授权
+路径检查最终工作树，只清理由当前任务生成的验证 Artifact，不留下 Cache、Coverage
+或 Build 输出。可选历史经验属于单独安装的 `rootloom-memory`
 插件。它的 `$project-memory` Skill 只选择有界任务/路径匹配，
 分离过期生命周期状态，所有结果都只是线索。
 

@@ -393,7 +393,7 @@ def validate_core_reset_eval(errors: list[str]) -> None:
         "--minimum-repetitions",
         "uncached_input_tokens",
         "bootstrap_ratio_interval",
-        "rootloom-core-reset-mechanical-v3",
+        "rootloom-core-reset-mechanical-v4",
         "rootloom-3.4",
         "rootloom-4.1",
     ):
@@ -424,8 +424,15 @@ def validate_core_reset_eval(errors: list[str]) -> None:
                 "route_score",
                 "runtime_codex_home",
                 "PLUGIN_SKILL_DIRECTORY",
+                "QUOTED_PLUGIN_MARKDOWN",
+                "QUOTED_PLUGIN_SKILL_DIRECTORY",
                 "MANAGED_GUIDANCE_START",
-                "rootloom-core-reset-mechanical-v3",
+                "rootloom-core-reset-mechanical-v4",
+                "observed_skill_directories",
+                "repeat-safe",
+                "byte-for-byte unchanged",
+                "repeated migration",
+                "false-connected",
             ),
         ),
     ):
@@ -458,7 +465,7 @@ def validate_core_reset_eval(errors: list[str]) -> None:
     if (
         example.get("format") != "rootloom-core-reset-results-v2"
         or example.get("suite") != "rootloom-core-reset-eval-v2"
-        or example.get("scoring") != "rootloom-core-reset-mechanical-v3"
+        or example.get("scoring") != "rootloom-core-reset-mechanical-v4"
         or example.get("repetitions") != 3
     ):
         errors.append("Core Reset v2 result example differs")
@@ -471,7 +478,7 @@ def validate_core_reset_eval(errors: list[str]) -> None:
     if (
         retained.get("format") != "rootloom-core-reset-results-v2"
         or retained.get("suite") != "rootloom-core-reset-eval-v2"
-        or retained.get("scoring") != "rootloom-core-reset-mechanical-v3"
+        or retained.get("scoring") != "rootloom-core-reset-mechanical-v4"
         or retained.get("repetitions") != 3
         or not isinstance(retained_runs, list)
         or len(retained_runs) != 126
@@ -499,12 +506,13 @@ def validate_core_reset_eval(errors: list[str]) -> None:
         ROOT / "evals" / "core-reset" / "reports" / "4.1.0.md"
     ).read_text(encoding="utf-8")
     for marker in (
-        "formal behavioral gate not accepted",
+        "formal behavioral gate accepted",
         "14 scenarios × 3 variants × 3 repetitions = 126",
         "Reference overreach",
         "Routine uncached input",
         "previous efficiency failures are corrected",
-        "fail-closed on the two",
+        "route-scoped recomposition",
+        "verification-pollution failure",
     ):
         if marker not in retained_report:
             errors.append(f"retained 4.1 report is missing {marker!r}")
@@ -608,6 +616,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Use this Skill's verification and challenge steps; load no Reference.",
             "Batch independent reads",
             "Use one post-check challenge pass",
+            "Before the first edit in Governed or Evidence mode",
+            "stop instead of proceeding",
             "local callable/signature shape, file count, or dirty worktree alone",
             "material root-cause uncertainty remaining after bounded",
             "Initial cause uncertainty routes through bounded diagnosis",
@@ -636,6 +646,13 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "REVIEW_REQUIRED_WITH_REDACTIONS",
             "--reviewable-path",
         ),
+        SKILLS / "operating-coding-change" / "references" / "governed-change.md": (
+            "Compatibility",
+            "Migration / Coexistence",
+            "Rollback / Compensation",
+            "Verification",
+            "Residual Risk",
+        ),
         SKILLS / "project-guidance" / "SKILL.md": (
             "seed",
             "refresh",
@@ -645,6 +662,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Natural-language guidance alone never authorizes",
             "semantic-refinement.md",
             "seed_project_guidance.py",
+            "Verification must not leave caches",
+            "remove only artifacts created by this",
         ),
         SKILLS / "operating-code-review" / "SKILL.md": (
             "ROOT_CAUSE_ALIGNMENT",
@@ -652,6 +671,11 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "unreviewed evidence",
             "security-review.md",
             "data-and-migration-review.md",
+        ),
+        PLUGIN / "assets" / "system" / "AGENTS.md": (
+            "After exact Single action authorization",
+            "pre-launch platform refusal is a platform blocker",
+            "not missing user authorization",
         ),
         EVIDENCE / "analyze_change.py": (
             "analyze_change",

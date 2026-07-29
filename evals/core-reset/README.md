@@ -51,11 +51,12 @@ python3 evals/core-reset/score_matrix.py \
 `uncached_input_tokens`, output/reasoning tokens, command/message counts, route
 overreach/underreach, and task outcomes from the actual event stream and resulting
 fixtures. It does not accept model self-reports for Guidance, Setup, or route success.
-The current `rootloom-core-reset-mechanical-v3` scoring contract recognizes legal
+The current `rootloom-core-reset-mechanical-v4` scoring contract recognizes legal
 managed-guidance marker attributes, cached plugin paths expressed as absolute,
-`$CODEX_HOME`-relative, or runtime-home-relative paths, and bounded semantically
-equivalent completion signals. The formal gate rejects results with an older or missing
-scoring contract.
+`$CODEX_HOME`-relative, or runtime-home-relative paths (including quoted paths with
+spaces), later relative Reference commands associated with a previously loaded Skill
+directory, and bounded semantically equivalent completion signals. The formal gate
+rejects results with an older or missing scoring contract.
 
 ## Formal behavioral gate
 
@@ -94,9 +95,10 @@ The repository retains the sanitized
 [`results-4.1.0.json`](results-4.1.0.json) matrix and its
 [`4.1.0 report`](reports/4.1.0.md). The result contains all 126 cells and binds the
 final evaluated Core digest. It reuses 84 immutable No Rootloom/3.4 baseline runs,
-rescored with the current scorer, and combines them with 42 fresh candidate runs.
+rescored with the current scorer, and combines them with 42 route-scoped candidate
+runs. After Project Guidance changed, all six rows activating that Skill were rerun;
+rows that did not activate it retained their existing event evidence.
 
 The report is authoritative about the outcome: both previous efficiency failures are
-corrected, while one Governed Reference-route miss and two small quality-score
-regressions keep the complete formal behavioral gate and version-tag workflow
-fail-closed.
+corrected, scoring v4 resolves the three prior false negatives, Project Guidance
+prevents verification pollution, and the complete formal behavioral gate passes.

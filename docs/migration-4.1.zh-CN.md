@@ -19,6 +19,14 @@ Scoped 现在由 Change Skill 自包含，并与 Direct 一样不读取 Referenc
 映射到主路径、所属不变量与相邻路径，并执行一次检查后挑战。Routine 工作会批量处理
 相互独立的读取与最终状态检查，避免不能改变下一步决策的模型/工具往返。
 
+Governed 与 Evidence 必须在首次编辑前、相对于 Change `SKILL.md` 加载所有列出的
+Reference；任何必需文件无法加载时停止。Governed Completion 现在采用紧凑的
+Compatibility、Migration/Coexistence、Rollback/Compensation、Verification 与
+Residual Risk 合同。
+
+Project Guidance 现在也会把最终工作树与初始状态、授权路径对照，防止验证命令在目标
+Guidance 文件之外留下 Cache 或其他生成 Artifact。
+
 ## Strict Evidence 快捷路径
 
 原有 `begin_review.py`、`seal_contract.py` 与 `finalize_change.py` 仍受支持。常见的
@@ -57,10 +65,12 @@ Command、迁移、Mixed-version、安全边界或 Build + Runtime 证明的默�
 历史 v1 矩阵和 4.0 结果仍是历史证据。新候选使用 v2 套件，包含 Guidance 与 Setup
 场景、实际完成回合 Token 字段、精确路由评分、确定性随机化和每次运行独立的 Codex
 Home。
-当前 `rootloom-core-reset-mechanical-v3` Scorer 能识别合法的托管 Marker 属性、
-绝对或 Codex-home 相对的缓存 Skill 路径，以及有界的等价质量表述；正式门禁会拒绝
-缺少或使用旧 Scoring Identifier 的结果。若命令把一个有界 Shell Loop 中的相对
-Reference 列表连接到已观察到的缓存 Skill 目录，Scorer 也会解析这些路径。
+当前 `rootloom-core-reset-mechanical-v4` Scorer 能识别合法的托管 Marker 属性、
+绝对或 Codex-home 相对的缓存 Skill 路径（包括带空格的引号路径）、关联到此前已加载
+Skill 目录的后续相对 Reference 命令，以及 `false-connected`、`repeat-safe`、
+`byte-for-byte unchanged`、`repeated migration` 等有界等价质量表述。它也会解析
+有界 Shell Loop 中的 Reference 列表；正式门禁会拒绝缺少或使用旧 Scoring
+Identifier 的结果。
 
 使用 `make core-reset-eval` 执行当前结构门禁；它有意不声称行为验收。正式候选需要一份
 至少三轮的已评分 v2 结果：
@@ -74,8 +84,8 @@ make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json
 
 仓库保留的 [`results-4.1.0.json`](../evals/core-reset/results-4.1.0.json) 与
 [候选报告](../evals/core-reset/reports/4.1.0.md)包含全部 126 个 Cell。此前两项效率
-失败均已修复；一次 Governed Reference 路由漏读与两项轻微质量评分回退使完整正式门禁
-和版本 Tag Workflow 继续失败关闭。
+失败和三个评分误判均已修复；Project Guidance 也阻止验证 Artifact 越过授权路径后，
+完整正式门禁已经通过。
 
 ## Project Guidance Hook
 

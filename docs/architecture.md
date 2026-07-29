@@ -65,9 +65,11 @@ diagnosis establishes one local owner; only material uncertainty that remains af
 escalates. Direct and Scoped are self-contained in the Change Skill and load no
 Reference; Scoped retains proportional repository evidence, behavior-mapped
 verification, and one post-check challenge without an extra model/tool round. Governed
-mode loads compatibility, rollout, rollback, and detailed verification instructions;
-explicit Evidence Mode adds deterministic capture. Installing Rootloom never starts the
-analyzer or finalizer.
+mode loads compatibility, rollout, rollback, and detailed verification instructions
+before the first edit, stopping if a required Reference cannot load. Its completion
+contract reports compatibility, migration/coexistence, rollback/compensation,
+verification, and residual risk. Explicit Evidence Mode adds deterministic capture.
+Installing Rootloom never starts the analyzer or finalizer.
 
 For defects, `ROOT_CAUSE_ALIGNMENT: PASS` requires the observed trigger, owning boundary, violated invariant, evidence-backed cause, and rejection of the strongest plausible alternative. For features and mechanical work, alignment is `NOT_APPLICABLE` and the intended invariant is explicit.
 
@@ -130,7 +132,10 @@ blocks; the SessionStart Hook never does. Active guidance may request read-only
 validation automatically. Persistent refinement without a current user request requires
 the exact standalone `<!-- rootloom:refine-once version=1 -->` marker, applies only to
 that file, and consumes the marker in the successful write; natural-language guidance
-alone cannot authorize persistence. Optional historical lessons live in the separately installed `rootloom-memory`
+alone cannot authorize persistence. Guidance completion compares the final worktree
+with its starting state and authorized paths, and removes only current-task verification
+artifacts rather than leaving cache, coverage, or build output. Optional historical
+lessons live in the separately installed `rootloom-memory`
 plugin. Its `$project-memory` Skill selects bounded task/path
 matches, separates stale lifecycle states, and keeps every result advisory.
 

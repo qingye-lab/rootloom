@@ -194,13 +194,14 @@ and repeated isolated runs. A structural reduction is useful during development,
 formal 4.1 candidate needs a scored v2 matrix with at least three repetitions; see
 [the 4.1 efficiency decision](docs/decisions/2026-07-29-rootloom-4.1-efficiency-loop.md).
 Direct and Scoped are self-contained routine routes and load no Reference; Governed and
-Evidence load their detailed contracts only when those modes apply.
+Evidence load their detailed contracts before the first edit and stop when a required
+Reference cannot be loaded.
 Run `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
 to enforce that formal gate.
 The retained [4.1.0 candidate report](evals/core-reset/reports/4.1.0.md) records all
-126 cells. Both previous efficiency failures are corrected, but one Governed route
-miss and two small quality-score regressions keep the complete gate fail-closed. The
-version-tag workflow runs that retained result.
+126 cells. Scoring v4 corrects the three prior false negatives, the final Project
+Guidance contract prevents verification pollution, and the complete formal gate now
+passes. The version-tag workflow runs that retained result.
 
 Repository state is accepted only after **two consecutive bounded captures** agree. Each capture lifecycle is bounded by `--max-capture-seconds`. A **material metadata change**, including a **newly discovered ignored addition**, activates metadata-only quarantine before ordinary content capture. Classification uses `is_sensitive_material_path`; Rootloom is not a content-aware secret scanner.
 

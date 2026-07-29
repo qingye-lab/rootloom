@@ -23,6 +23,15 @@ It still maps verification to the primary path, owning invariant, and an adjacen
 then performs one post-check challenge. Routine work batches independent reads and final
 state inspection to avoid model/tool rounds that cannot change the next decision.
 
+Governed and Evidence must load every listed Reference relative to the Change
+`SKILL.md` before the first edit and stop if any required file cannot load. Governed
+completion now uses a compact compatibility, migration/coexistence,
+rollback/compensation, verification, and residual-risk contract.
+
+Project Guidance now also verifies the final worktree against its starting state and
+authorized paths, preventing validation commands from leaving caches or other generated
+artifacts outside the requested guidance file.
+
 ## Strict Evidence shortcut
 
 The existing `begin_review.py`, `seal_contract.py`, and `finalize_change.py` commands
@@ -64,11 +73,13 @@ an unreviewed bundle pass.
 The historical v1 matrix and its 4.0 result remain historical. New candidates use the
 v2 suite, including Guidance and Setup scenarios, actual completion-token fields,
 exact route scoring, deterministic randomization, and per-run Codex-home isolation.
-Its current `rootloom-core-reset-mechanical-v3` scorer recognizes legal managed marker
-attributes, absolute or Codex-home-relative cached Skill paths, and bounded equivalent
-quality wording. It also resolves a bounded shell-loop Reference list when the command
-joins those relative paths to one observed cached Skill directory. The formal gate
-rejects an older or missing scoring identifier.
+Its current `rootloom-core-reset-mechanical-v4` scorer recognizes legal managed marker
+attributes, absolute or Codex-home-relative cached Skill paths (including quoted paths
+with spaces), later relative Reference commands associated with the previously loaded
+Skill directory, and bounded equivalent quality wording such as `false-connected`,
+`repeat-safe`, `byte-for-byte unchanged`, and `repeated migration`. It also resolves a
+bounded shell-loop Reference list. The formal gate rejects an older or missing scoring
+identifier.
 
 Use `make core-reset-eval` for the current structural gate. It intentionally does not
 claim behavioral acceptance. A formal candidate requires a scored v2 result with at
@@ -83,9 +94,9 @@ final `plugins/rootloom/` tree digest.
 
 The retained [`results-4.1.0.json`](../evals/core-reset/results-4.1.0.json) and
 [candidate report](../evals/core-reset/reports/4.1.0.md) contain all 126 cells. The
-report records that both previous efficiency failures are corrected. One Governed
-Reference-route miss and two small quality-score regressions keep the complete formal
-gate and version-tag workflow fail-closed.
+report records that both previous efficiency failures and the three scoring false
+negatives are corrected. After Project Guidance also prevented validation artifacts
+from escaping its authorized path, the complete formal gate passed.
 
 ## Project guidance Hook
 

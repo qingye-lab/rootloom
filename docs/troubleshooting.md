@@ -30,6 +30,16 @@ Rollback protects post-setup edits. Preserve or merge the current file manually,
 
 Use `codex execpolicy check` against every active Rules file. The most restrictive matching decision wins, so a broader `git` prompt may override Rootloom's local `git commit` allow. Rules inspect argv prefixes; nested shell commands need their own policy and approval boundary.
 
+If the user explicitly authorizes an exact action but the command is rejected before
+launch with an approval-policy error, do not ask for the same authorization again.
+Compare the active task permission profile with `approval_policy` in
+`~/.codex/config.toml` and the `execpolicy check` result. Rootloom's ordinary
+`git push` Rule is `allow`; the host or organization can still classify the remote
+mutation as approval-requiring while the active task profile forbids asking, such as
+`AskForApproval=Never`. That controlling policy must be changed or the exact command
+run outside the blocked task. Treat this as a platform blocker, not as absent user
+consent.
+
 ## Verification helper rejects a command
 
 `finalize_change.py` parses commands with platform-aware `shlex` rules and does not run a shell. Windows parsing preserves backslash paths and removes matching outer quotes from arguments; quote an executable path when it contains spaces. Pipelines, redirects, `&&`, environment assignment, or command substitution are not interpreted. Put complex verification in a reviewed repository-owned script or Make target and invoke that executable directly.

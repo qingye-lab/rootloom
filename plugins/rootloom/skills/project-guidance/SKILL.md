@@ -86,3 +86,8 @@ python3 <skill-dir>/scripts/seed_project_guidance.py validate \
 Inspect the effective root-to-current-directory chain for contradictions, duplication,
 stale paths, broken commands, oversized context, placeholders, secrets, and rules that
 cannot be verified. Continue the user's original task after guidance work.
+
+Before completion, compare the final worktree with the starting state and authorized
+paths. Verification must not leave caches, coverage, build output, or other generated
+artifacts. Prefer no-cache options; otherwise remove only artifacts created by this
+task, never pre-existing user work.

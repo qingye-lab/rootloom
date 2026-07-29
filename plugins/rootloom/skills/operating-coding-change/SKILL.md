@@ -43,10 +43,10 @@ gap, residual risk, and removal condition. Never call symptom suppression a fix.
   release/governed decision. Read [references/evidence-mode.md](references/evidence-mode.md),
   [references/evidence-contract.md](references/evidence-contract.md), and
   [references/verification-contract.md](references/verification-contract.md).
-
-Modes compose. Governed external operations also read [references/external-actions.md](references/external-actions.md).
-Evidence Mode records proof; it never replaces diagnosis, change discipline, or approval.
-
+Before the first edit in Governed or Evidence mode, load every required Reference relative
+to this `SKILL.md`. If any required Reference cannot be loaded, stop instead of proceeding.
+Modes compose. Governed external operations also read [references/external-actions.md](references/external-actions.md);
+Evidence Mode records proof, never a replacement for diagnosis, discipline, or approval.
 Initial cause uncertainty routes through bounded diagnosis, not directly to Governed:
 an established local owner and repair boundary → `scoped`; materially different owners,
 compatibility strategies, or high-risk assumptions remaining afterward → `governed`.

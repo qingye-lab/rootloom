@@ -81,6 +81,11 @@ separately installed `rootloom-memory` plugin may complement guidance with revie
 risks and failure lessons; it never replaces `AGENTS.md` authority or current repository
 evidence.
 
+Guidance completion compares the final worktree with the starting state and authorized
+paths. Verification uses no-cache options where practical and must not leave cache,
+coverage, build, or other generated output; only artifacts created by the current task
+may be removed.
+
 Nested guidance is created lazily. A folder deserves its own `AGENTS.md` only when it has a distinct manifest, commands, ownership, contracts, or operational rules. Ordinary directories and individual files do not.
 
 ## Maintenance test
