@@ -4,7 +4,7 @@ Rootloom 4.1 保持四个公共 Skill 和所有冻结的 Evidence Wire Format。
 v2–v4、Summary revision 5、Change Contract、Review Manifest 与 Seal 都继续可读，
 无需迁移 Artifact。
 
-## Direct Change 路由
+## Routine Change 路由
 
 机械、局部、可逆的工作现在走明确的 Direct 快速路径：不读取 Change Reference，只应
 检查目标、完成修改、运行最小相关检查并检查目标 Diff。脏工作树本身不会使任务切换为
@@ -15,6 +15,9 @@ Governed 或 Evidence Mode；它仍是必须精确保留的已有工作。
 初始根因未知时保持 Scoped，并通过有限诊断确定所属边界。只有诊断后仍存在材料级根因
 不确定性，或出现其他 Governed 信号时才升级；公开/持久契约与显式证据请求仍分别进入
 Governed 或 Evidence 路由。
+Scoped 现在由 Change Skill 自包含，并与 Direct 一样不读取 Reference。它仍将验证
+映射到主路径、所属不变量与相邻路径，并执行一次检查后挑战。Routine 工作会批量处理
+相互独立的读取与最终状态检查，避免不能改变下一步决策的模型/工具往返。
 
 ## Strict Evidence 快捷路径
 
@@ -70,8 +73,9 @@ make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json
 `plugins/rootloom/` Tree Digest。
 
 仓库保留的 [`results-4.1.0.json`](../evals/core-reset/results-4.1.0.json) 与
-[候选报告](../evals/core-reset/reports/4.1.0.md)包含全部 126 个 Cell。报告记录正式
-门禁未通过：路由和质量证据通过，两项效率阈值未通过。版本 Tag 会运行该结果并失败关闭。
+[候选报告](../evals/core-reset/reports/4.1.0.md)包含全部 126 个 Cell。此前两项效率
+失败均已修复；一次 Governed Reference 路由漏读与两项轻微质量评分回退使完整正式门禁
+和版本 Tag Workflow 继续失败关闭。
 
 ## Project Guidance Hook
 

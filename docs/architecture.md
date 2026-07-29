@@ -62,9 +62,12 @@ or a local callable/signature shape also does not establish a public contract;
 Governed routing requires shared/external consumers, compatibility obligations, or
 another governed risk signal. Initial cause uncertainty stays Scoped while bounded
 diagnosis establishes one local owner; only material uncertainty that remains afterward
-escalates. Scoped mode adds proportional repository evidence; Governed mode loads
-compatibility, rollout, and rollback instructions; explicit Evidence Mode adds
-deterministic capture. Installing Rootloom never starts the analyzer or finalizer.
+escalates. Direct and Scoped are self-contained in the Change Skill and load no
+Reference; Scoped retains proportional repository evidence, behavior-mapped
+verification, and one post-check challenge without an extra model/tool round. Governed
+mode loads compatibility, rollout, rollback, and detailed verification instructions;
+explicit Evidence Mode adds deterministic capture. Installing Rootloom never starts the
+analyzer or finalizer.
 
 For defects, `ROOT_CAUSE_ALIGNMENT: PASS` requires the observed trigger, owning boundary, violated invariant, evidence-backed cause, and rejection of the strongest plausible alternative. For features and mechanical work, alignment is `NOT_APPLICABLE` and the intended invariant is explicit.
 

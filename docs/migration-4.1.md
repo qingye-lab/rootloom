@@ -4,7 +4,7 @@ Rootloom 4.1 keeps the four public Skills and all frozen Evidence wire formats. 
 Baseline v2–v4, Summary revision 5, change-contract, review-manifest, and seal files
 remain readable; no artifact migration is required.
 
-## Direct Change routing
+## Routine Change routing
 
 Mechanical, local, reversible work now takes an explicit Direct fast path. It reads no
 Change Reference and should inspect only the target, make the change, run the smallest
@@ -18,6 +18,10 @@ Initial cause uncertainty stays in Scoped while bounded diagnosis establishes th
 owning boundary. Governed routing applies only when material root-cause uncertainty
 remains after that diagnosis, or another governed signal is present. Public/persisted
 contracts and explicit evidence requests retain their Governed or Evidence routing.
+Scoped is now self-contained in the Change Skill and, like Direct, reads no Reference.
+It still maps verification to the primary path, owning invariant, and an adjacent path,
+then performs one post-check challenge. Routine work batches independent reads and final
+state inspection to avoid model/tool rounds that cannot change the next decision.
 
 ## Strict Evidence shortcut
 
@@ -79,8 +83,9 @@ final `plugins/rootloom/` tree digest.
 
 The retained [`results-4.1.0.json`](../evals/core-reset/results-4.1.0.json) and
 [candidate report](../evals/core-reset/reports/4.1.0.md) contain all 126 cells. The
-report records a failed formal gate: route and quality evidence passed, while two
-efficiency thresholds did not. Version tags run that retained result and fail closed.
+report records that both previous efficiency failures are corrected. One Governed
+Reference-route miss and two small quality-score regressions keep the complete formal
+gate and version-tag workflow fail-closed.
 
 ## Project guidance Hook
 

@@ -381,7 +381,7 @@ class CoreResetEvalTests(unittest.TestCase):
             },
         )
 
-    def test_route_score_requires_the_owning_reference_path(self) -> None:
+    def test_scoped_route_is_self_contained(self) -> None:
         scenario = next(
             item for item in self.scenarios if item["id"] == "dirty-worktree"
         )
@@ -390,17 +390,26 @@ class CoreResetEvalTests(unittest.TestCase):
             ["operating-coding-change"],
             ["verification-contract.md"],
         )
-        self.assertEqual((exact, over, under), (0, 1, 1))
+        self.assertEqual((exact, over, under), (0, 1, 0))
 
         exact, over, under = self.scorer.route_score(
             scenario,
             ["operating-coding-change"],
-            [
-                "operating-coding-change/references/"
-                "verification-contract.md"
-            ],
+            [],
         )
         self.assertEqual((exact, over, under), (1, 0, 0))
+
+    def test_routine_change_contract_avoids_extra_reference_rounds(self) -> None:
+        skill = CHANGE_SKILL_PATH.read_text(encoding="utf-8")
+        self.assertIn(
+            "Use this Skill's verification and challenge steps; load no Reference.",
+            skill,
+        )
+        self.assertIn("Batch independent reads", skill)
+        self.assertIn("Use one post-check challenge pass", skill)
+        for scenario in self.scenarios:
+            if scenario["mode_group"] in {"direct", "scoped"}:
+                self.assertEqual(scenario["expected_route"]["references"], [])
 
     def test_activated_context_records_skill_relative_reference_paths(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

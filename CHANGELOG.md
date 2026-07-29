@@ -12,6 +12,9 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Make Direct and Scoped self-contained routine routes with no Reference load, batch
+  independent inspection, and retain behavior-mapped verification plus one challenge
+  pass inside the Change Skill.
 - Keep initially unknown defect causes in bounded Scoped diagnosis and escalate only
   material root-cause uncertainty that remains afterward.
 - Allow repository guidance to request automatic validation while requiring explicit
@@ -20,6 +23,9 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   heterogeneous governed evidence continues through the low-level lifecycle.
 - Retain the sanitized 126-run 4.1 candidate matrix and report, and enforce that result
   in a version-tag workflow that fails closed when the formal rubric is not satisfied.
+- Refresh that matrix against the self-contained Routine tree: both previous token
+  efficiency failures now pass, while observed route and quality deltas remain
+  fail-closed instead of being hidden by replacement runs or weaker thresholds.
 
 ### Fixed
 

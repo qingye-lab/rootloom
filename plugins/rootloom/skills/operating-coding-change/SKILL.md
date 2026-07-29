@@ -1,85 +1,85 @@
 ---
 name: operating-coding-change
-description: The single Rootloom entry point for code changes. Route mechanical, scoped, governed, evidence-strict, and external-action work; diagnose defects at the owning boundary, preserve unrelated work, and report only verification that actually ran.
+description: The single Rootloom entry for code changes. Route Direct, Scoped, Governed, Evidence, and external-action work; repair owning invariants, preserve unrelated work, and report only verification that ran.
 ---
 
 # Coding change
 
-Deliver the observable result with the smallest complete change. This Skill owns every implementation tier; do not ask the user to select a second Rootloom change workflow.
+Deliver the smallest complete result. This Skill owns every implementation tier; never ask
+the user to choose another Rootloom change workflow.
 
-## 1. Resolve the task
+## 1. Resolve
 
-Identify the requested outcome, repository and scope, constraints, non-goals, and proof
-of completion. Read the active `AGENTS.md` chain and inspect only enough repository
-evidence to route the mode. A dirty worktree is a preservation constraint, not by
-itself a reason to escalate. Preserve unrelated user work and record relevant
-pre-existing failures.
+Identify the outcome, repository and scope, constraints, non-goals, and proof. Read the
+active `AGENTS.md` chain and the smallest evidence needed to route.
+A dirty worktree is a preservation constraint, not an escalation signal. Preserve unrelated
+user work and record relevant pre-existing failures.
 
-For a defect, establish this evidence chain before editing:
+For a defect, establish:
 
 ```text
 symptom → trigger/state → owning boundary → violated invariant → root cause
 ```
 
-If the cause is external or cannot be proved, label a reversible workaround `MITIGATION`
-with its gap, residual risk, and removal condition. Never present symptom suppression as a root-cause fix.
+If the cause is external or unproved, label a reversible workaround `MITIGATION` with its
+gap, residual risk, and removal condition. Never call symptom suppression a fix.
 
-## 2. Route the mode
+## 2. Route
 
 - `direct`: mechanical, local, reversible work with an unambiguous target and no
-  behavior or contract decision. Load no Reference. Inspect the exact target, edit it,
-  run the smallest relevant check, inspect its diff, and report; skip broader inventory
-  and challenge work unless target evidence makes the classification ambiguous.
+  behavior or contract decision. Load no Reference. Inspect the target, edit, run the
+  smallest relevant check, inspect its diff, and report; skip broader inventory and
+  challenge work unless target evidence is ambiguous.
 - `scoped`: ordinary defects, feature slices, tests, refactors, or bounded multi-file
-  work. Read [references/verification-contract.md](references/verification-contract.md).
+  work. Use this Skill's verification and challenge steps; load no Reference.
 - `governed`: established shared/external public APIs, schemas, persisted contracts,
-  migrations, security boundaries, infrastructure, deployment/release, destructive
-  effects, major dependencies, material root-cause uncertainty remaining after bounded
-  diagnosis, failed repairs, or substantial blast radius. A local callable/signature shape, file count, or dirty worktree alone is not public-contract evidence. Read
+  migrations, security, infrastructure, deployment/release, destructive effects, major
+  dependencies, material root-cause uncertainty remaining after bounded diagnosis,
+  failed repairs, or substantial blast radius. A
+  local callable/signature shape, file count, or dirty worktree alone is not public-contract evidence. Read
   [references/governed-change.md](references/governed-change.md) and
   [references/verification-contract.md](references/verification-contract.md).
-- `evidence`: only when the user explicitly requests a machine evidence bundle, the
-  repository requires one, or a release/governed decision needs it. Read
-  [references/evidence-mode.md](references/evidence-mode.md) and
-  [references/evidence-contract.md](references/evidence-contract.md), plus
+- `evidence`: only when explicitly requested, repository-required, or needed for a
+  release/governed decision. Read [references/evidence-mode.md](references/evidence-mode.md),
+  [references/evidence-contract.md](references/evidence-contract.md), and
   [references/verification-contract.md](references/verification-contract.md).
-Modes compose. Governed external operations also require [references/external-actions.md](references/external-actions.md).
-Evidence Mode adds a recording layer; it never replaces semantic diagnosis, change discipline, or approval.
+
+Modes compose. Governed external operations also read [references/external-actions.md](references/external-actions.md).
+Evidence Mode records proof; it never replaces diagnosis, change discipline, or approval.
 
 Initial cause uncertainty routes through bounded diagnosis, not directly to Governed:
 an established local owner and repair boundary → `scoped`; materially different owners,
 compatibility strategies, or high-risk assumptions remaining afterward → `governed`.
 
-## 3. Make the change
+## 3. Change
 
-Repair the invariant at the boundary that owns the behavior. Prefer one source of truth, normalized inputs, explicit outputs and errors, cohesive functions, existing architecture and dependencies, and repository-native test style.
+Repair the invariant at its owner. Prefer one source of truth, normalized inputs, explicit
+outputs and errors, existing architecture and dependencies, and native tests. Keep the diff
+focused; reject speculative abstraction, unrelated cleanup, silent fallbacks, generated
+churn, dependency refreshes, and weakened tests, types, security, observability, or errors.
 
-Keep the diff focused. Reject speculative abstractions, unrelated cleanup, silent
-fallbacks, generated churn, broad dependency refreshes, and weakened tests, types,
-security, observability, or error handling. Do not hand-edit generated or vendored
-output when a canonical generator exists.
+Batch independent reads and final diff/status inspection when practical. For Direct and
+Scoped work, avoid separate narration or commands that cannot change the next decision.
 
 ## 4. Verify and challenge
 
-Prove the primary path, the owning-boundary invariant, and an adjacent negative,
-edge, or alternate path. Run focused checks first, then broader tests, type/lint,
-build/package, runtime, or rendered UI checks in proportion to impact.
+Before choosing commands, map the primary path, owning invariant, and one adjacent negative
+or alternate path. Run focused evidence first, then affected tests and type/lint,
+build/package, runtime, rendered UI, or broader checks in proportion to impact. Prefer
+fail-before/pass-after evidence for defects and classify failures. Never claim unrun checks.
 
-After checks, inspect the actual diff from a fresh adversarial position: test the
-strongest plausible counterexample, inspect one analogous caller or sibling, and
-remove mechanisms that do not change a real decision. Never claim an unrun check
-passed.
+Use one post-check challenge pass: test the strongest counterexample, inspect one
+analogous caller or sibling, review the final diff and worktree, and remove mechanisms
+that do not change a real decision.
 
 ## 5. Report
 
-Lead with the observable outcome, then report:
-
+Lead with the observable outcome:
 ```text
 Cause         Root cause or key design decision
 Change        Files, behavior, compatibility, and external effects
 Verification  Exact checks run, outcomes, and what each proves
 Risk          Remaining gaps, rollback state, or unverified surfaces
 ```
-
-For defect repair include `ROOT_CAUSE_ALIGNMENT: PASS | FAIL`; use `NOT_APPLICABLE`
-for features, documentation, and mechanical work.
+For defect repair include `ROOT_CAUSE_ALIGNMENT: PASS | FAIL`; use `NOT_APPLICABLE` for
+features, documentation, and mechanical work.

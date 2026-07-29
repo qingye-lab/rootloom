@@ -367,6 +367,10 @@ def validate_core_reset_eval(errors: list[str]) -> None:
                 errors.append(
                     f"Core Reset scenario route contract differs: {item.get('id')}"
                 )
+            elif mode in {"direct", "scoped"} and references:
+                errors.append(
+                    f"Routine Core Reset route must load no Reference: {item.get('id')}"
+                )
         if {item.get("mode_group") for item in scenarios} != set(mode_skills):
             errors.append("Core Reset evaluation must cover every public mode group")
     historical_suite = load_json(
@@ -499,7 +503,8 @@ def validate_core_reset_eval(errors: list[str]) -> None:
         "14 scenarios × 3 variants × 3 repetitions = 126",
         "Reference overreach",
         "Routine uncached input",
-        "closed on the two efficiency",
+        "previous efficiency failures are corrected",
+        "fail-closed on the two",
     ):
         if marker not in retained_report:
             errors.append(f"retained 4.1 report is missing {marker!r}")
@@ -600,6 +605,9 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "`scoped`",
             "`governed`",
             "`evidence`",
+            "Use this Skill's verification and challenge steps; load no Reference.",
+            "Batch independent reads",
+            "Use one post-check challenge pass",
             "local callable/signature shape, file count, or dirty worktree alone",
             "material root-cause uncertainty remaining after bounded",
             "Initial cause uncertainty routes through bounded diagnosis",

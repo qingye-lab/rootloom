@@ -188,11 +188,13 @@ Change、Review、Project Guidance 和 Setup。Optional Autonomy 通过 Setup �
 Core Reset v2 会记录实际 Codex 完成回合的 Token 用量、精确 Mode/Reference 路由以及
 隔离的重复运行。结构性缩减可用于开发期间，但正式 4.1 候选需要至少三轮的已评分 v2
 矩阵；详见[4.1 效率决策](docs/decisions/2026-07-29-rootloom-4.1-efficiency-loop.md)。
+Direct 与 Scoped 是自包含的 Routine 路由，不加载 Reference；Governed 与 Evidence
+只在相应模式成立时加载详细合同。
 使用 `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
 执行该正式门禁。
 仓库保留的 [4.1.0 候选报告](evals/core-reset/reports/4.1.0.md)记录了全部 126 个 Cell：
-路由和质量检查通过，但两项效率阈值未通过。版本 Tag Workflow 会运行这份保留结果，
-因此在候选满足完整门禁之前保持失败关闭。
+此前两项效率失败均已修复，但一次 Governed 路由漏读与两项轻微质量评分回退使完整门禁
+继续失败关闭。版本 Tag Workflow 会运行这份保留结果。
 
 仓库状态只有在**连续两次有界采集**一致后才会被接受；每个采集生命周期受 `--max-capture-seconds` 约束。任何**材料元数据变化**——包括**新发现的 Ignored 新增**——都会在普通内容采集前启用仅元数据隔离。分类使用 `is_sensitive_material_path`；Rootloom 不是内容感知型 Secret Scanner。
 

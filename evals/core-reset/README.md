@@ -7,7 +7,9 @@ Compare the same fourteen scenarios with:
 3. the candidate Rootloom 4.1 tree.
 
 The suite covers Direct, Scoped, Governed, Review, Evidence, Project Guidance, and
-Setup. Each task must use the same model, reasoning level, sandbox, fixture commit,
+Setup. Direct and Scoped are expected to activate the Change Skill with no Reference;
+Governed and Evidence retain their exact detailed Reference routes. Each task must use
+the same model, reasoning level, sandbox, fixture commit,
 and timeout. Runs are shuffled from a recorded seed and receive isolated repository,
 Evidence, Setup, and Codex-home directories. Keep raw event transcripts outside the
 repository when they contain proprietary paths or model output; retain only sanitized
@@ -69,7 +71,8 @@ duplicate cells, or an incomplete route.
 It requires:
 
 - at least 30% lower Tier 0/1 context-byte proxy than 3.4;
-- exactly one public Skill and the exact expected Reference route for every 4.1 task;
+- exactly one public Skill and the exact expected Reference route for every 4.1 task,
+  including zero References for Direct and Scoped;
 - no regression in task success, scope escapes, false passing-test claims, or applicable
   quality metrics;
 - lower geometric-mean elapsed time for routine and Evidence groups, with no more than
@@ -93,6 +96,7 @@ The repository retains the sanitized
 final evaluated Core digest. It reuses 84 immutable No Rootloom/3.4 baseline runs,
 rescored with the current scorer, and combines them with 42 fresh candidate runs.
 
-The report is authoritative about the outcome: route and quality checks pass, while
-the complete formal behavioral gate fails two efficiency thresholds. Version-tag
-workflow enforcement therefore fails closed for this candidate.
+The report is authoritative about the outcome: both previous efficiency failures are
+corrected, while one Governed Reference-route miss and two small quality-score
+regressions keep the complete formal behavioral gate and version-tag workflow
+fail-closed.

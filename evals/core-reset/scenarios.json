@@ -35,9 +35,7 @@
       "mode_group": "scoped",
       "expected_route": {
         "skill": "operating-coding-change",
-        "references": [
-          "operating-coding-change/references/verification-contract.md"
-        ]
+        "references": []
       },
       "graded_metrics": [
         "task_success",
@@ -58,9 +56,7 @@
       "mode_group": "scoped",
       "expected_route": {
         "skill": "operating-coding-change",
-        "references": [
-          "operating-coding-change/references/verification-contract.md"
-        ]
+        "references": []
       },
       "graded_metrics": [
         "task_success",
@@ -79,9 +75,7 @@
       "mode_group": "scoped",
       "expected_route": {
         "skill": "operating-coding-change",
-        "references": [
-          "operating-coding-change/references/verification-contract.md"
-        ]
+        "references": []
       },
       "graded_metrics": [
         "task_success",
@@ -190,9 +184,7 @@
       "mode_group": "scoped",
       "expected_route": {
         "skill": "operating-coding-change",
-        "references": [
-          "operating-coding-change/references/verification-contract.md"
-        ]
+        "references": []
       },
       "graded_metrics": [
         "task_success",

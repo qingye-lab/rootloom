@@ -58,9 +58,11 @@ Rootloom Memory
 Reference，只检查精确目标并运行最小相关检查。脏工作树仍是保护约束，不会单独触发
 模式升级；文件数量或局部 Callable/Signature 形态也不能证明公共契约存在。只有共享/
 外部消费者、兼容义务或其他 Governed 风险信号成立时才进入 Governed。初始根因未知时
-先在 Scoped 中做有限诊断；只有诊断后仍存在材料级不确定性才升级。Scoped 增加成比例
-仓库证据；Governed 加载兼容、Rollout 与 Rollback 规则；显式 Evidence Mode 才增加
-确定性采集。安装 Rootloom 永远不会启动 Analyzer 或 Finalizer。
+先在 Scoped 中做有限诊断；只有诊断后仍存在材料级不确定性才升级。Direct 与 Scoped
+都由 Change Skill 自包含且不加载 Reference；Scoped 仍要求成比例的仓库证据、按行为
+映射的验证以及一次检查后挑战，但不再增加一次模型/工具往返。Governed 加载兼容、
+Rollout、Rollback 与详细验证规则；显式 Evidence Mode 才增加确定性采集。安装
+Rootloom 永远不会启动 Analyzer 或 Finalizer。
 
 缺陷的 `ROOT_CAUSE_ALIGNMENT: PASS` 必须包含触发方式、所属边界、被违反的不变量、有证据的根因以及对最强替代假设的否定。功能或机械任务使用 `NOT_APPLICABLE` 并明确目标不变量。
 
