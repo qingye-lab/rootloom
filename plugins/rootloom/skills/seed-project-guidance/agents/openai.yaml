@@ -1,6 +1,0 @@
-interface:
-  display_name: "Seed Project Guidance"
-  short_description: "Seed evidence-backed AGENTS.md guidance"
-  default_prompt: "Use $seed-project-guidance to create or refresh evidence-backed project guidance for this repository."
-policy:
-  allow_implicit_invocation: true

@@ -1,41 +1,52 @@
 # 架构
 
-Rootloom `main` 是 Personal Core。架构目标是个人每天使用的单代理工程闭环，而不是企业审计与审批。
+Rootloom `main` 是四入口 Core。架构目标是个人每天使用的单代理工程闭环，
+而不是企业审计与审批。
 
 ![Rootloom 个人核心授权与工程架构](diagram/architecture-zh.svg)
 
 ## 产品边界
 
 ```text
-Rootloom Personal Core
-├── Core：Change / Review / Guidance
+Rootloom Core
+├── Change：Direct / Scoped / Governed / Evidence
+├── Review
+├── Project Guidance
+├── Setup
 ├── Optional Autonomy：授权模式 / 命令 Rules
-├── Optional Evidence：Analyzer / Baseline / Contract / Seal / Finalizer
-└── Experimental：Project Memory
+└── Optional Evidence Resources：Analyzer / Baseline / Contract / Seal / Finalizer
+
+Rootloom Memory
+└── 独立实验插件
 ```
 
-拆分前的完整实现作为 **Archived Assurance Edition（已归档保障版）** 保留在 `codex/enterprise-assurance`。它是可恢复源码，不是持续维护的产品线。`main` 不包含 Human Review、Decision Pair、protected-deletion approval、自定义代理路由、严格审计 Runner、加固 Artifact 事务或恢复日志。详见[产品边界决策](decisions/2026-07-16-personal-core-product-boundaries.md)。
+拆分前的完整实现作为 **Archived Assurance Edition（已归档保障版）** 保留在
+`codex/enterprise-assurance`。它是可恢复源码，不是持续维护的产品线。
+详见 [Rootloom 4 Core Reset 决策](decisions/2026-07-29-rootloom-4-core-reset.md)
+以及 [4.1 效率回环决策](decisions/2026-07-29-rootloom-4.1-efficiency-loop.md)。
 
 ## 所属路径
 
 | 关注点 | 所属实现 |
 | --- | --- |
 | 全局任务策略与语义风险规则 | `plugins/rootloom/assets/system/AGENTS.md` |
-| 静态风险与验证智能 | `plugins/rootloom/skills/engineering-change/scripts/runner/intelligence.py` |
-| 个人端到端修改闭环 | `plugins/rootloom/skills/engineering-change/` |
-| Tier 0/1 实施纪律 | `plugins/rootloom/skills/operating-coding-change/` |
-| Tier 2 治理式修改 | `plugins/rootloom/skills/operating-high-risk-change/` |
+| 静态风险与验证智能 | `plugins/rootloom/resources/evidence/runner/intelligence.py` |
+| Direct、Scoped、Governed 与 Evidence 路由 | `plugins/rootloom/skills/operating-coding-change/` |
+| 确定性 Evidence Helper 与两步编排 | `plugins/rootloom/resources/evidence/` |
+| Governed Change 与持久决策记录 | `plugins/rootloom/skills/operating-coding-change/references/governed-change.md` |
 | 仅审查工作流 | `plugins/rootloom/skills/operating-code-review/` |
-| 项目/失败记忆 | `plugins/rootloom/skills/project-memory/` |
-| 持久决策记录 | `plugins/rootloom/skills/record-engineering-decision/` |
-| 确定性项目事实 | `plugins/rootloom/skills/seed-project-guidance/` |
-| 语义指导精炼 | `plugins/rootloom/skills/refine-project-guidance/` |
+| 独立项目/失败记忆插件 | `experiments/rootloom-memory/` |
+| 确定性项目事实 | `plugins/rootloom/skills/project-guidance/scripts/seed_project_guidance.py` |
+| 语义指导精炼 | `plugins/rootloom/skills/project-guidance/references/semantic-refinement.md` |
 | Codex-home setup | `plugins/rootloom/skills/setup-rootloom/` |
 | 生命周期 Hook 门禁 | `plugins/rootloom/hooks/run_component_hook.py` |
 
 ## Task Intelligence
 
-风险判断依据影响，而不只是任务大小。`analyze_change.py` 检查任务文本、预期/当前路径、Git 操作、有界 tracked patch 与仓库命令。只有显式传入 `--include-project-memory` 时，相关活跃/过期 Project Memory 才会进入 Assessment；仅仅存在 `.project-memory/` 不代表当前任务选择使用它。Analyzer 输出具体信号、检测/有效风险、最低 Tier、置信度、可选 Memory 匹配与验证计划。
+风险判断依据影响，而不只是任务大小。`analyze_change.py` 检查任务文本、
+预期/当前路径、Git 操作、有界 Tracked Patch 与仓库命令。Analyzer 输出具体信号、
+检测/有效风险、最低 Tier、置信度与验证计划。Rootloom Core 永远不读取
+`.project-memory/`。
 
 路径上下文避免明显误判：单独的 `docs/auth.md` 或 auth 测试仍属于文档/测试范围，`src/auth/token.py` 等产品代码则会提高下限。持久状态、资金、认证/授权、并发、状态机、迁移、公共契约、基础设施、破坏性操作或跨越多个所属边界都会提高 Tier。人工风险声明只能提高、不能降低静态下限。
 
@@ -43,7 +54,12 @@ Rootloom Personal Core
 
 ## Engineering Workflow
 
-`engineering-change` 是显式按需的指导工作流，不是自主多代理状态机或安装时门禁。当前 Codex 代理负责证据、诊断、范围、实现、验证和最终接受。普通 Tier 0/1 工作直接使用仓库证据与成比例测试；安装 Rootloom 永远不会启动 analyzer 或 finalizer。
+`operating-coding-change` 拥有实现工作流。Direct 是有边界的快速路径：不加载
+Reference，只检查精确目标并运行最小相关检查。脏工作树仍是保护约束，不会单独触发
+模式升级；文件数量或局部 Callable/Signature 形态也不能证明公共契约存在。只有共享/
+外部消费者、兼容义务或其他 Governed 风险信号成立时才进入 Governed。Scoped 增加
+成比例仓库证据；Governed 加载兼容、Rollout 与 Rollback 规则；显式 Evidence Mode
+才增加确定性采集。安装 Rootloom 永远不会启动 Analyzer 或 Finalizer。
 
 缺陷的 `ROOT_CAUSE_ALIGNMENT: PASS` 必须包含触发方式、所属边界、被违反的不变量、有证据的根因以及对最强替代假设的否定。功能或机械任务使用 `NOT_APPLICABLE` 并明确目标不变量。
 
@@ -51,7 +67,7 @@ Rootloom Personal Core
 
 ## 轻量产物辅助工具
 
-`engineering-change/scripts/finalize_change.py` 不使用 shell 执行操作方给定命令，并写入：
+`resources/evidence/finalize_change.py` 不使用 shell 执行操作方给定命令，并写入：
 
 ```text
 run/
@@ -60,13 +76,19 @@ run/
 └── summary.json
 ```
 
+`orchestrate_evidence.py prepare` 与 `finish` 是常见 Strict 生命周期的附加两命令
+封装。`prepare` 创建 Intake，只替换精确生成的 Placeholder Draft 为结构化 Claim
+Binding 并完成 Seal。`finish` 读取 Sealed Verification Command，调用现有 Strict
+Finalizer，并要求显式确认已经完成语义审查。它不新增或重解释任何 Evidence Format；
+底层 Intake、Seal 与 Finalizer CLI 仍拥有高级 Flag。
+
 只有明确要求严格 Tier 1/2 证据时，`begin_review.py` 才以事务方式创建仓库外 Intake，默认写入 `rootloom-change-baseline-v3`、可编辑的 `change-contract.draft.json` 与 `rootloom-review-run-v2`。Baseline v3 用 `intake-sealed` 描述本地 Intake 工作流事实；带历史 Wire Value 的 Baseline v2 继续可读、可 Seal。Intake-only 的 `--reviewable-path FILE` 可把精确文件密封为可审查，并具有独立固定的 64 项上限。声明先通过有界 Git Listing 规范到 Repository 的实际拼写，然后要求目标既有、Link Count 为一、非 Symlink、为常规文件，且 Worktree 变化不会被 Git Status/Diff 隐藏；它既能固定默认已可审查的环境模板或公共证书，也能降级公共 `.pem` 或 `.der` 等歧义材料。Ignored 路径、带 `assume-unchanged` / `skip-worktree` 标志的条目、Glob、大小写折叠歧义/重复、Hardlink、与显式 Sensitive Root 重叠及强秘密都会失败关闭。每次稳定 Capture 都会重复检查可见性、Index State、拼写、类型与 Link Count。声明仍然进入安全领域风险，并被纳入 Policy Hash，同时让本次 Intake 使用 `rootloom-change-baseline-v4`。
 
 Baseline Reader 只按历史 v2/v3/v4 Wire Structure 与 Hash 验证，不再用最新分类器否定旧 Reviewable 声明。Finalizer 独立应用当前 64 项上限与材料策略；历史声明不兼容时，会在捕获 Reviewable 内容前返回 `reintake-required`。Summary 继续使用 Revision 5；`reviewability_policy` 通过实际校验链写入 `policy_provenance`，通过 `captured_files_provenance: final-capture-observed` 表达最终捕获来源，兼容字段 `source` 使用同一诚实值。除非显式允许全仓库范围，否则必须至少指定一个 Scope Path；默认要求干净 HEAD/Index，已有修改只能通过 `--allow-dirty-baseline` 显式纳入。发布使用平台的原子不可替换目录原语，因此不会覆盖并发创建的空目标目录。Draft 使用一个精确 Rootloom Placeholder，不再通过子串匹配误伤 Todo 业务文本。`seal_contract.py` 校验完成后的 Draft，再独占创建规范化 Final Contract 与 `rootloom-contract-seal-v1`。`--recover` 只会验证并补全精确的 Contract/Seal 中断发布，绝不覆盖不匹配证据。
 
 版本化 Baseline 使用规范 UUID、Nonce、Hash 与 UTC Timestamp，并绑定 Repository Identity、HEAD、符号 HEAD Ref 与 Index。只有连续两次有界 Snapshot/Patch/Git Identity 采集完全一致，Repository Capture 才会被接受。Strict 会拒绝 Base 漂移，并在验证后重新校验证据字节、Seal、Git Base 与 Output Target。脏 Baseline 会记录既有修改；聚合 Tracked Patch 发生变化时，因为 v2/v3/v4 都不保存逐路径 Tracked Patch 字节，仍会把既有脏 Tracked 端点按保守范围归因；Untracked 项则可通过逐路径指纹/元数据把精确未变的既有状态分离出去。任务分区会在风险分析前计算，并同时供 Contract Scope 与 `diff.patch` 使用，因此精确未变的用户文本不会从其他消费者重新进入任务证据。既有脏路径若消失则视为 Gate Failure，因为它无法表示为当前任务 Patch。Strict JSON Decoder 会拒绝重复 Key、非有限或超范围数值。
 
-秘密材料发现先使用共享的大小写不敏感 Git Pathspec 候选策略与用户声明的 Literal Root，再交给 `is_sensitive_material_path()`；不再枚举全部 Tracked/Ignored 路径。有意宽匹配的候选项使用独立有界上限，可配置的材料结果上限只在分类后执行；二者超限都会失败关闭。材料包括 `.env`、`.envrc`、非模板 `.env.<name>`、Credential 配置、Private Key/Keystore 格式、歧义 `.pem` 与 `.der`、显式 Root、常见 Key 命名的 PEM/DER 文件，以及 `clientSecret.json`、`apiToken.json`、`serviceAccountKey.json` 等 CamelCase 形式。`privkey.pem`、`privatekey.pem`、`rsa-key.pem`、`ec-key.pem`、`ecdsa-key.pem`、`ed25519-key.pem`、`encryption-key.pem`、`decryption-key.pem` 属于不可降级的强私钥名。环境模板（`.env.example`、`.env.sample`、`.env.template`、`.env.dist`）与公共证书格式（`.crt`、`.cer`、`.p7b`、`.p7c`）是安全领域路径：保留可审查 Patch，但提高风险。DER 可以编码私钥，因此默认只保留元数据；只有 Intake 对合格精确文件作 Reviewable 声明后才可审查。`.environment`、`.envelope` 与 `.envoy` 是普通路径。`src/auth/token.py` 等安全领域源码遵循相同的仅风险边界。秘密材料的常规文件、目录、Symlink、Tracked/Ignored/Untracked 项及 Rename 两端都不读取内容；Symlink Target 只做 Hash 绑定，不保存原值。在读取普通内容前，Capture 会比较完整发现的材料元数据集合与 Baseline 或验证前 Reference，包括 Git Status 遗漏的 Ignored 新增。任何 Reference Drift 或 Git 可观察的材料变化都会隔离所有变更端点，并停止 Project Memory/Makefile Discovery。被忽略的材料新增、修改和删除会合成为 Risk、Scope 与 Summary 共用的 Task Change。元数据包含身份、链接数、大小、权限、修改时间与变更时间，并明确标记为 `metadata-observed`，而非内容完整性。详见[材料分类与 Capture 决策](decisions/2026-07-15-sensitive-material-and-capture-bounds.md)。
+秘密材料发现先使用共享的大小写不敏感 Git Pathspec 候选策略与用户声明的 Literal Root，再交给 `is_sensitive_material_path()`；不再枚举全部 Tracked/Ignored 路径。有意宽匹配的候选项使用独立有界上限，可配置的材料结果上限只在分类后执行；二者超限都会失败关闭。材料包括 `.env`、`.envrc`、非模板 `.env.<name>`、Credential 配置、Private Key/Keystore 格式、歧义 `.pem` 与 `.der`、显式 Root、常见 Key 命名的 PEM/DER 文件，以及 `clientSecret.json`、`apiToken.json`、`serviceAccountKey.json` 等 CamelCase 形式。`privkey.pem`、`privatekey.pem`、`rsa-key.pem`、`ec-key.pem`、`ecdsa-key.pem`、`ed25519-key.pem`、`encryption-key.pem`、`decryption-key.pem` 属于不可降级的强私钥名。环境模板（`.env.example`、`.env.sample`、`.env.template`、`.env.dist`）与公共证书格式（`.crt`、`.cer`、`.p7b`、`.p7c`）是安全领域路径：保留可审查 Patch，但提高风险。DER 可以编码私钥，因此默认只保留元数据；只有 Intake 对合格精确文件作 Reviewable 声明后才可审查。`.environment`、`.envelope` 与 `.envoy` 是普通路径。`src/auth/token.py` 等安全领域源码遵循相同的仅风险边界。秘密材料的常规文件、目录、Symlink、Tracked/Ignored/Untracked 项及 Rename 两端都不读取内容；Symlink Target 只做 Hash 绑定，不保存原值。在读取普通内容前，Capture 会比较完整发现的材料元数据集合与 Baseline 或验证前 Reference，包括 Git Status 遗漏的 Ignored 新增。任何 Reference Drift 或 Git 可观察的材料变化都会隔离所有变更端点，并停止额外仓库命令发现。被忽略的材料新增、修改和删除会合成为 Risk、Scope 与 Summary 共用的 Task Change。元数据包含身份、链接数、大小、权限、修改时间与变更时间，并明确标记为 `metadata-observed`，而非内容完整性。详见[材料分类与 Capture 决策](decisions/2026-07-15-sensitive-material-and-capture-bounds.md)。
 
 `rootloom-change-contract-v1` 使用路径段感知的 Repository Glob（`*`/`?` 不跨段，`**` 才跨段），要求根因对齐，并把行为 Claim 映射到显式执行命令。只有来自 Sealed Contract 的结构化 Binding 能完成 Strict Claim Coverage；CLI Claim 只作诊断声明。Summary 保持 `rootloom-engineering-summary-v1`，升级到 `schema_revision: 5`，保留 `risk_assessment`，并分开一般声明、合格 Claim 与 `semantic_review`。`semantic_coverage: reviewed` 表达为 `operator-asserted`，不是机器证明；语义未知最高只能得到 `MECHANICALLY_VERIFIED`，未封存断言是 `SEMANTIC_REVIEW_ASSERTED`，Workflow-sealed 机械证据加该断言得到 `REVIEW_EVIDENCE_COMPLETE`。该状态表示证据链完成，不表示正确性已被证明。`evidence_complete` 是供自动化使用的稳定能力字段，`quality_status` 保留详细诊断枚举；Summary Provenance 用 `intake-sealed` 与 `workflow-sealed` 描述本地工作流事实，不表示身份保证。敏感遮蔽会把原本完整的审查限制为 `REVIEW_REQUIRED_WITH_REDACTIONS`、`evidence_complete: false` 与 `passed: false`。Strict 默认采用 Quality Exit，`--strict-bundle-only` 是显式非阻断形式；Advisory 仍保持按需和 Bundle 导向。详见[证据诚实的 Strict Review 决策](decisions/2026-07-15-evidence-honest-strict-review.md)。
 
@@ -84,17 +106,21 @@ Runner 辅助模块保持小型：
 - `evidence_paths.py`：证据路径的词法无 Symlink 检查；
 - `strict_json.py`：拒绝重复 Key 且只接受有限数值的 Evidence JSON Decoder；
 - `verification.py`：命令解析与顺序检查；
-- `intelligence.py`：建议式风险、记忆匹配与验证规划；
+- `intelligence.py`：建议式风险与验证规划；
 - `contracts.py`：摘要/结果格式；
 - `errors.py`：稳定本地失败。
 
-## Experimental Project Memory
+## 独立 Project Memory
 
-只有显式调用 `seed-project-guidance` 才会把可复现事实写入托管 `AGENTS.md` 区块；SessionStart Hook 绝不写入。Experimental `.project-memory/` 保存可选、可审查的架构、风险、决策索引和失败经验。`project_memory.py context` 根据任务/路径做词法相关性选择，限制输出，并把过期/已解决/已替代条目与活跃上下文分开。Analyzer 与 Finalizer 同样要求显式传入 `--include-project-memory`，不会因为目录存在就读取 Memory。新记录带确定性 ID、证据引用、生命周期状态与可选过期时间；完全重复会被抑制。记忆只会显式创建/更新，并且永远不能高于当前可执行证据。
+只有显式调用 `project-guidance` 才会把可复现事实写入托管 `AGENTS.md` 区块；
+SessionStart Hook 绝不写入。可选历史经验属于单独安装的 `rootloom-memory` 插件。
+它的 `$project-memory` Skill 只选择有界任务/路径匹配，分离过期生命周期状态，
+所有结果都只是线索。
 
-持久 envelope 继续使用 `rootloom-project-memory-v1`。没有 ID 或生命周期元数据的旧条目继续可读，`context` 永远不会重写它们。CLI 与 Analyzer 共用同一套严格 no-follow descriptor reader、Schema、条目上限、Legacy ID、相关性、状态与过期契约；某个消费者不会再静默截断另一个消费者判为非法的文件。显式写入会在持有 `.project-memory/memory.lock` 时重新读取、去重并原子替换。
-
-接受后的持久架构与契约决策仍应写入仓库决策记录；memory 中的 decision 文件只是简短索引。
+可选插件保留 `rootloom-project-memory-v1`、Legacy Entry 可读性、严格 No-follow
+读取、有界 Collection、确定性 ID、显式加锁写入与原子替换。Rootloom Core 不导入
+Memory Reader，Analyzer/Finalizer 也不暴露 Memory Flag。接受后的持久决策仍写入
+仓库 Decision Record；Memory 的 Decision File 只作索引。
 
 ## Setup 与 Hook 边界
 

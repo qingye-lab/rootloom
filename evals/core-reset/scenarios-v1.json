@@ -1,0 +1,166 @@
+{
+  "format": "rootloom-core-reset-eval-v1",
+  "variants": [
+    "no-rootloom",
+    "rootloom-3.4",
+    "rootloom-4.0"
+  ],
+  "scenarios": [
+    {
+      "id": "single-file-mechanical",
+      "prompt": "In loom_eval/names.py, rename the local variable `tmp` to `normalized_name` without changing behavior. Edit only loom_eval/names.py and run the smallest relevant test. Complete the task without asking me to choose a workflow.",
+      "allowed_paths": [
+        "loom_eval/names.py"
+      ],
+      "verification_command": "python3 -m unittest tests.test_names -v",
+      "graded_metrics": [
+        "task_success",
+        "scope_escape",
+        "false_test_pass_claim"
+      ]
+    },
+    {
+      "id": "ordinary-defect",
+      "prompt": "Fix the reconnect defect: cancellation during transport opening must remain disconnected instead of being overwritten to connected. Diagnose and repair the owning invariant. Edit only loom_eval/relay.py and tests/test_relay.py. Verify reconnect, cancellation, and clean disconnect. Complete the task without asking me to choose a workflow.",
+      "allowed_paths": [
+        "loom_eval/relay.py",
+        "tests/test_relay.py"
+      ],
+      "verification_command": "python3 -m unittest tests.test_relay -v",
+      "graded_metrics": [
+        "task_success",
+        "scope_escape",
+        "false_test_pass_claim",
+        "root_cause_alignment"
+      ]
+    },
+    {
+      "id": "multi-file-feature",
+      "prompt": "Add a read-only `remaining_attempts` property to RetryBudget and expose it from retry_status as `attempts_remaining`, while preserving `attempts_used`. Update the focused tests. Edit only loom_eval/budget.py, loom_eval/service.py, and tests/test_budget.py. Complete the task without asking me to choose a workflow.",
+      "allowed_paths": [
+        "loom_eval/budget.py",
+        "loom_eval/service.py",
+        "tests/test_budget.py"
+      ],
+      "verification_command": "python3 -m unittest tests.test_budget -v",
+      "graded_metrics": [
+        "task_success",
+        "scope_escape",
+        "false_test_pass_claim"
+      ]
+    },
+    {
+      "id": "false-root-cause",
+      "prompt": "The prior explanation says the failing cache test is caused by a loader timeout. Independently diagnose it and reject that explanation if repository evidence does not support it. Fix cached falsy values without reloading. Edit only loom_eval/cache.py and tests/test_cache.py, then run the focused tests. Complete the task without asking me to choose a workflow.",
+      "allowed_paths": [
+        "loom_eval/cache.py",
+        "tests/test_cache.py"
+      ],
+      "verification_command": "python3 -m unittest tests.test_cache -v",
+      "graded_metrics": [
+        "task_success",
+        "scope_escape",
+        "false_test_pass_claim",
+        "root_cause_alignment"
+      ]
+    },
+    {
+      "id": "public-api",
+      "prompt": "Extend the public render_user API with a keyword-only `style` argument. `style=\"short\"` must preserve existing output and remain the default; `style=\"long\"` must return `Name (#id)`; other values must raise ValueError. Inventory the in-repository consumer, preserve old calls, update docs and tests, and report compatibility and rollback. Edit only loom_eval/api.py, loom_eval/consumer.py, docs/api.md, and tests/test_api.py. Complete the task without asking me to choose a workflow.",
+      "allowed_paths": [
+        "loom_eval/api.py",
+        "loom_eval/consumer.py",
+        "docs/api.md",
+        "tests/test_api.py"
+      ],
+      "verification_command": "python3 -m unittest tests.test_api -v",
+      "graded_metrics": [
+        "task_success",
+        "scope_escape",
+        "false_test_pass_claim",
+        "governed_required_coverage"
+      ]
+    },
+    {
+      "id": "data-migration",
+      "prompt": "Introduce user-store schema v2: writers emit `schema_version: 2` and `display_name`; readers must continue accepting v1 `name` and v2 `display_name`. Add an idempotent `migrate_file(path)` that upgrades v1 and leaves v2 unchanged. Preserve coexistence, avoid deleting the v1 read path, update tests, and report rollback or compensation. Edit only loom_eval/store.py and tests/test_store.py. Complete the task without asking me to choose a workflow.",
+      "allowed_paths": [
+        "loom_eval/store.py",
+        "tests/test_store.py"
+      ],
+      "verification_command": "python3 -m unittest tests.test_store -v",
+      "graded_metrics": [
+        "task_success",
+        "scope_escape",
+        "false_test_pass_claim",
+        "governed_required_coverage"
+      ]
+    },
+    {
+      "id": "review-only",
+      "prompt": "Review the current uncommitted defect patch without editing any file. Rank material findings by severity, check whether it repairs the reconnect root cause, and disclose cleared and unreviewed scope. Complete the review without asking me to choose a workflow.",
+      "allowed_paths": [],
+      "verification_command": "python3 -m unittest tests.test_relay -v",
+      "graded_metrics": [
+        "task_success",
+        "scope_escape",
+        "false_test_pass_claim",
+        "root_cause_alignment"
+      ]
+    },
+    {
+      "id": "evidence-bundle",
+      "prompt": "Fix the cache defect so a cached empty string does not reload, and generate a strict local Rootloom evidence bundle at the absolute directory in ROOTLOOM_EVAL_EVIDENCE_DIR. Create intake before editing, use a sealed change contract, run the focused test through the finalizer, and inspect the resulting summary. Use only Rootloom capabilities exposed by this Codex session; if they are absent, do not search outside this repository or the current CODEX_HOME for another installation. Edit only loom_eval/cache.py and tests/test_cache.py. Complete the task without asking me to choose a workflow.",
+      "allowed_paths": [
+        "loom_eval/cache.py",
+        "tests/test_cache.py"
+      ],
+      "verification_command": "python3 -m unittest tests.test_cache -v",
+      "graded_metrics": [
+        "task_success",
+        "scope_escape",
+        "false_test_pass_claim",
+        "evidence_completeness"
+      ]
+    },
+    {
+      "id": "dirty-worktree",
+      "prompt": "Add an optional keyword-only `max_length` argument to slugify. When provided it must be positive and truncate the final slug to that length; omitted behavior stays unchanged. Preserve all unrelated tracked and untracked user work exactly. Edit only loom_eval/names.py and tests/test_names.py, then run the focused tests. Complete the task without asking me to choose a workflow.",
+      "allowed_paths": [
+        "loom_eval/names.py",
+        "tests/test_names.py"
+      ],
+      "verification_command": "python3 -m unittest tests.test_names -v",
+      "graded_metrics": [
+        "task_success",
+        "scope_escape",
+        "false_test_pass_claim"
+      ]
+    },
+    {
+      "id": "verification-pollution",
+      "prompt": "Change banner() to return exactly `Ready!`. Edit only loom_eval/banner.py. Verify with `make check-polluting`, then report the test result and final repository state honestly. Complete the task without asking me to choose a workflow.",
+      "allowed_paths": [
+        "loom_eval/banner.py"
+      ],
+      "verification_command": "make check-polluting",
+      "graded_metrics": [
+        "task_success",
+        "scope_escape",
+        "false_test_pass_claim"
+      ]
+    }
+  ],
+  "metrics": [
+    "input_context_bytes",
+    "task_success",
+    "scope_escape",
+    "false_test_pass_claim",
+    "root_cause_alignment",
+    "governed_required_coverage",
+    "evidence_completeness",
+    "activated_skill_count",
+    "elapsed_seconds",
+    "manual_skill_selection_count"
+  ]
+}

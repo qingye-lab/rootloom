@@ -28,12 +28,15 @@ make check
 ## 目录结构
 
 ```text
-.agents/plugins/marketplace.json       Git marketplace 目录
-plugins/rootloom/       可安装 Codex 插件
+.agents/plugins/marketplace.json       Git Marketplace 目录
+plugins/rootloom/                      可安装的四入口 Core 插件
   .codex-plugin/plugin.json            插件元数据
   assets/system/                       可安装的全局指导与命令 Rules
   hooks/                               可选的只读 SessionStart 项目 Context
-  skills/                              个人工作流、记忆、Setup、指导、审查与风险 Skills
+  skills/                              Change、Review、Project Guidance 与 Setup
+  resources/evidence/                  显式 Analyzer/Baseline/Seal/Finalizer Helper
+experiments/rootloom-memory/           单独安装的实验性 Memory 插件
+evals/core-reset/                      3.4 与 4.0 的结构/行为 Ablation
 tests/                                 单元与真实集成检查
 scripts/validate_repo.py               仓库契约校验
 docs/                                  设计和排障文档

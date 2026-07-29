@@ -1,6 +1,6 @@
 interface:
-  display_name: "Operating Code Review"
-  short_description: "Review code with evidence-backed findings first"
+  display_name: "Rootloom Review"
+  short_description: "Review without editing and rank evidence-backed findings"
   default_prompt: "Use $operating-code-review to review this change and report evidence-backed findings without modifying code."
 policy:
   allow_implicit_invocation: true

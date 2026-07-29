@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
-  <title id="title">Rootloom personal engineering architecture</title>
-  <desc id="desc">A light professional architecture diagram. An explicit goal may use optional authorization modes, then flows through the Personal Core change, review, and guidance loop. Optional Evidence, experimental Memory, and the Archived Assurance Edition are shown below.</desc>
+  <title id="title">Rootloom four-entry engineering architecture</title>
+  <desc id="desc">An explicit goal may use optional authorization modes, then flows through the four-entry Core. Evidence loads as a Change mode, while Rootloom Memory is a separate optional plugin.</desc>
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
       <path d="M0 0 L10 5 L0 10 Z" fill="#64748b"/>
@@ -57,7 +57,7 @@
   <path d="M710 353 L750 353" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
 
   <rect x="770" y="232" width="570" height="242" rx="18" fill="#ffffff" stroke="#c4b5fd" stroke-width="2"/>
-  <text x="796" y="270" class="card-title">Personal Core · Change / Review / Guidance</text>
+  <text x="796" y="270" class="card-title">Four-entry Core · Change / Review / Guidance / Setup</text>
   <path d="M815 353 L1297 353" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round"/>
 
   <g>
@@ -111,19 +111,19 @@
   <rect x="98" y="636" width="205" height="46" rx="12" fill="#eff6ff"/>
   <text x="200" y="664" text-anchor="middle" class="label">Project Guidance</text>
   <rect x="318" y="636" width="205" height="46" rx="12" fill="#f5f3ff"/>
-  <text x="420" y="656" text-anchor="middle" class="label">Experimental Memory</text>
-  <text x="420" y="674" text-anchor="middle" class="small">explicit · advisory</text>
+  <text x="420" y="656" text-anchor="middle" class="label">Rootloom Memory</text>
+  <text x="420" y="674" text-anchor="middle" class="small">separate · advisory</text>
   <rect x="538" y="636" width="205" height="46" rx="12" fill="#fff7ed"/>
   <text x="640" y="664" text-anchor="middle" class="label">Decision Records</text>
   <rect x="758" y="636" width="244" height="46" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="6 5"/>
-  <text x="880" y="656" text-anchor="middle" class="label">Optional Evidence</text>
+  <text x="880" y="656" text-anchor="middle" class="label">Change Evidence Mode</text>
   <text x="880" y="674" text-anchor="middle" class="small">analyze · baseline · finalize</text>
 
   <rect x="1060" y="578" width="470" height="132" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
   <text x="1088" y="615" class="section" fill="#64748b">DELIVERY LAYERS</text>
   <rect x="1088" y="636" width="180" height="46" rx="12" fill="#eff6ff"/>
   <text x="1178" y="656" text-anchor="middle" class="label">Plugin Install</text>
-  <text x="1178" y="674" text-anchor="middle" class="small">skills only</text>
+  <text x="1178" y="674" text-anchor="middle" class="small">four Core skills</text>
   <rect x="1282" y="636" width="220" height="46" rx="12" fill="#f5f3ff"/>
   <text x="1392" y="656" text-anchor="middle" class="label">Optional Personal Setup</text>
   <text x="1392" y="674" text-anchor="middle" class="small">guidance · autonomy · context</text>

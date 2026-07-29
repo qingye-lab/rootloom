@@ -2,7 +2,7 @@
 
 ## The project-guidance Hook does nothing
 
-Check that the personal or guidance preset is installed and that `~/.codex/.rootloom/components.json` contains exact integer `version: 1` plus managed boolean `project-guidance-hook: true`. Missing, malformed, wrong-type, unsupported-version, or symlinked policy disables the Hook. The Hook only injects temporary context and never writes `AGENTS.md`; use `$seed-project-guidance` explicitly when persistence is intended. Start a new Codex task after plugin or setup changes and review `/hooks` again.
+Check that the personal or guidance preset is installed and that `~/.codex/.rootloom/components.json` contains exact integer `version: 1` plus managed boolean `project-guidance-hook: true`. Missing, malformed, wrong-type, unsupported-version, or symlinked policy disables the Hook. The Hook only injects temporary context and never writes `AGENTS.md`; use `$project-guidance` explicitly when persistence is intended. Start a new Codex task after plugin or setup changes and review `/hooks` again.
 
 The scanner also skips untrusted repositories unless the platform marks them trusted. `ROOTLOOM_ALLOW_UNTRUSTED=1` is intended only for controlled tests.
 
@@ -14,7 +14,7 @@ Symlinked targets are always refused. Move or resolve the symlink explicitly rat
 
 ## Setup stopped partway through
 
-Personal Core has per-file atomic writes and pre-mutation backups, not a recovery journal. Run:
+Rootloom Core has per-file atomic writes and pre-mutation backups, not a recovery journal. Run:
 
 ```bash
 python3 <setup-skill>/scripts/setup_rootloom.py status
@@ -40,7 +40,12 @@ The output directory must be outside the captured repository. A tracked patch la
 
 ## The risk scanner looks too strict or too lenient
 
-Inspect `signals`, `changed_paths`, matching memory, and `confidence` in `analyze_change.py` output. Pass anticipated `--path` values before editing so documentation/tests can be distinguished from product code. The reported Tier is a minimum advisory floor: current semantic evidence may raise it, but neither `--declared-risk` nor finalizer `--risk` can lower it. If a false positive is repeatable, add a focused analyzer regression rather than hiding the signal.
+Inspect `signals`, `changed_paths`, and `confidence` in `analyze_change.py` output.
+Pass anticipated `--path` values before editing so documentation/tests can be
+distinguished from product code. The reported Tier is a minimum advisory floor: current
+semantic evidence may raise it, but neither `--declared-risk` nor finalizer `--risk`
+can lower it. If a false positive is repeatable, add a focused analyzer regression
+rather than hiding the signal.
 
 ## The verification plan says suggested-not-executed
 
@@ -52,8 +57,15 @@ The helper detected an exact `.env`, secret, migration, or database path deletio
 
 ## Project memory is stale or malformed
 
-Repository evidence wins. `context` excludes expired, resolved, and superseded matches by default and lists them under `stale`; use `--include-stale` only for historical investigation. Use explicit `set-status` lifecycle changes instead of deleting lessons. Correct malformed `.project-memory/` files in a reviewed change. The helper refuses unknown formats, oversized collections, unsafe paths, symlinks, or invalid entries and never silently migrates ambiguous content.
+Install `rootloom-memory` separately; Core does not read `.project-memory/`. Repository
+evidence wins. Its `context` command excludes expired, resolved, and superseded matches
+by default and lists them under `stale`; use `--include-stale` only for historical
+investigation. Use explicit `set-status` lifecycle changes instead of deleting lessons.
+The helper refuses unknown formats, oversized collections, unsafe paths, symlinks, or
+invalid entries and never silently migrates ambiguous content.
 
 ## I need the old Human Review or strict Runner
 
-Those features are not hidden flags in Personal Core. Use `codex/enterprise-assurance`, which preserves Rootloom 1.2.19. Roll back one product's setup with its own version before installing the other.
+Those features are not hidden flags in Rootloom Core. Use `codex/enterprise-assurance`,
+which preserves Rootloom 1.2.19. Roll back one product's setup with its own version
+before installing the other.

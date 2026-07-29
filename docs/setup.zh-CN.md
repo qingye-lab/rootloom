@@ -1,6 +1,8 @@
 # Setup、更新与回滚
 
-安装插件只会暴露 Skills 和经过审查的 `SessionStart` Hook 定义；不会安装全局策略、启用 Hook 或触发工程审查工具。应用全局 Personal Core 资产是独立且可选的操作。
+安装插件只会暴露四个 Core Skills 和经过审查的 `SessionStart` Hook 定义；
+不会安装全局策略、启用 Hook、运行 Evidence Resource 或安装 Rootloom Memory。
+应用全局 Core 资产是独立且可选的操作。
 
 ## 安装
 
@@ -11,7 +13,17 @@ codex plugin add rootloom@rootloom
 
 新建任务并检查 `/hooks`。唯一 Hook 只检测仓库事实并注入临时只读项目 Context；只有精确的托管组件策略版本 1 启用后才会执行，并且绝不写入 `AGENTS.md`。
 
-此时插件已经可以完整使用，不需要 setup 命令、analyzer、baseline、contract、finalizer 或 project-memory 查询。
+此时插件已经可以完整使用，不需要 Setup 命令、Analyzer、Baseline、Contract、
+Finalizer 或 Memory 插件。
+
+明确用自然语言请求规划、安装、检查、更新或回滚 Rootloom 时可以自动路由到 Setup；
+`$setup-rootloom` 是确定性的显式形式。Skill 激活本身不授权覆盖用户拥有的冲突文件。
+
+只有需要实验性 Memory 时才单独安装：
+
+```bash
+codex plugin add rootloom-memory@rootloom
+```
 
 ## Preset
 

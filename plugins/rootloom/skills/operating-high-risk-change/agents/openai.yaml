@@ -1,6 +1,0 @@
-interface:
-  display_name: "Operating High-risk Change"
-  short_description: "Govern contracts, migrations, security, and releases"
-  default_prompt: "Use $operating-high-risk-change to plan and execute this high-risk change with explicit gates and rollback."
-policy:
-  allow_implicit_invocation: true

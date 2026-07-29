@@ -119,6 +119,6 @@ OK
 
 - 已接受决策：[Personal Engineering Intelligence Contract](../decisions/2026-07-14-personal-intelligence-contract.md)
 - 回归测试：[`tests/test_engineering_change.py`](../../tests/test_engineering_change.py)
-- Capture Owner：[`runner/state.py`](../../plugins/rootloom/skills/engineering-change/scripts/runner/state.py)
-- Final Decision Owner：[`finalize_change.py`](../../plugins/rootloom/skills/engineering-change/scripts/finalize_change.py)
+- Capture Owner：[`runner/state.py`](../../plugins/rootloom/resources/evidence/runner/state.py)
+- Final Decision Owner：[`finalize_change.py`](../../plugins/rootloom/resources/evidence/finalize_change.py)
 - 包含该回归的发布：[Rootloom Personal Core 2.2.2](https://github.com/liyanqing90/rootloom/releases/tag/v2.2.2)

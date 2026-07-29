@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import inspect
 from datetime import UTC, datetime, timedelta
 import os
 from pathlib import Path
@@ -18,23 +19,13 @@ SCRIPT = (
     REPO_ROOT
     / "plugins"
     / "rootloom"
-    / "skills"
-    / "engineering-change"
-    / "scripts"
+    / "resources"
+    / "evidence"
     / "finalize_change.py"
 )
 ANALYZE = SCRIPT.parent / "analyze_change.py"
 BEGIN_REVIEW = SCRIPT.parent / "begin_review.py"
 SEAL_CONTRACT = SCRIPT.parent / "seal_contract.py"
-PROJECT_MEMORY = (
-    REPO_ROOT
-    / "plugins"
-    / "rootloom"
-    / "skills"
-    / "project-memory"
-    / "scripts"
-    / "project_memory.py"
-)
 sys.path.insert(0, str(SCRIPT.parent))
 import begin_review as begin_review_module
 import finalize_change as finalize_change_module
@@ -2275,67 +2266,14 @@ class EngineeringChangeTests(unittest.TestCase):
                 {"behavioral-code"},
             )
 
-    def test_analyzer_requires_explicit_memory_opt_in(self) -> None:
+
+
+    def test_core_evidence_does_not_read_project_memory(self) -> None:
         with tempfile.TemporaryDirectory(prefix="rootloom-change-", dir=Path.home()) as temporary:
             repo = self.make_repo(Path(temporary))
             memory = repo / ".project-memory"
             memory.mkdir()
-            collection = {
-                "format": "rootloom-project-memory-v1",
-                "kind": "risks",
-                "entries": [
-                    {
-                        "id": "risk-active",
-                        "date": "2026-01-01",
-                        "summary": "relay reconnect ordering",
-                        "mitigation": "check lifecycle transitions",
-                        "paths": ["src/relay.py"],
-                    },
-                    {
-                        "id": "risk-expired",
-                        "date": "2025-01-01",
-                        "summary": "retired relay transport",
-                        "mitigation": "none",
-                        "paths": ["src/relay.py"],
-                        "expires": "2025-12-31",
-                    },
-                ],
-            }
-            (memory / "known-risks.json").write_text(json.dumps(collection), encoding="utf-8")
-            default = self.analyze(repo, "--path", "src/relay.py")
-            self.assertEqual(default.returncode, 0, default.stderr)
-            default_assessment = json.loads(default.stdout)
-            self.assertEqual(default_assessment["memory"]["matches"], [])
-            self.assertEqual(default_assessment["memory"]["stale"], [])
-            self.assertNotIn(
-                "project-memory",
-                {item["id"] for item in default_assessment["signals"]},
-            )
-
-            completed = self.analyze(
-                repo,
-                "--path",
-                "src/relay.py",
-                "--include-project-memory",
-            )
-            self.assertEqual(completed.returncode, 0, completed.stderr)
-            assessment = json.loads(completed.stdout)
-            self.assertEqual(
-                [item["id"] for item in assessment["memory"]["matches"]],
-                ["risk-active"],
-            )
-            self.assertEqual(
-                [item["id"] for item in assessment["memory"]["stale"]],
-                ["risk-expired"],
-            )
-            self.assertEqual(assessment["detected_risk"], "medium")
-
-    def test_sensitive_quarantine_disables_additional_repository_reads(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="rootloom-change-", dir=Path.home()) as temporary:
-            repo = self.make_repo(Path(temporary))
-            memory = repo / ".project-memory"
-            memory.mkdir()
-            secret = "must-never-enter-quarantined-assessment"
+            sentinel = "must-not-enter-core-evidence"
             (memory / "known-risks.json").write_text(
                 json.dumps(
                     {
@@ -2343,34 +2281,37 @@ class EngineeringChangeTests(unittest.TestCase):
                         "kind": "risks",
                         "entries": [
                             {
-                                "id": "secret-risk",
-                                "date": "2026-01-01",
-                                "summary": secret,
-                                "mitigation": "do not read this record",
-                                "paths": ["app.py"],
+                                "summary": sentinel,
+                                "mitigation": "query the optional plugin explicitly",
                             }
                         ],
                     }
                 ),
                 encoding="utf-8",
             )
-            assessment = analyze_change_intelligence(
-                repo,
-                task="change app behavior",
-                anticipated_paths=["app.py"],
-                changes=[],
-                tracked_patch=b"",
-                declared_risk=None,
-                include_project_memory=True,
-                allow_repository_reads=False,
-            )
-            serialized = json.dumps(assessment, ensure_ascii=True)
-            self.assertNotIn(secret, serialized)
-            self.assertEqual(assessment["memory"]["matches"], [])
+
+            completed = self.analyze(repo, "--path", "src/relay.py")
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertNotIn(sentinel, completed.stdout)
+            assessment = json.loads(completed.stdout)
             self.assertEqual(
-                assessment["verification_plan"]["suggested_commands"], []
+                assessment["memory"],
+                {"matches": [], "stale": [], "warnings": []},
             )
-            self.assertIn("sensitive-change quarantine", serialized)
+
+            removed_flag = self.analyze(
+                repo,
+                "--path",
+                "src/relay.py",
+                "--include-project-memory",
+            )
+            self.assertNotEqual(removed_flag.returncode, 0)
+            self.assertIn("unrecognized arguments", removed_flag.stderr)
+
+            self.assertNotIn(
+                "include_project_memory",
+                inspect.signature(analyze_change_intelligence).parameters,
+            )
 
     def test_repository_command_discovery_is_bounded_and_no_follow(self) -> None:
         with tempfile.TemporaryDirectory(prefix="rootloom-change-", dir=Path.home()) as temporary:
@@ -2396,235 +2337,10 @@ class EngineeringChangeTests(unittest.TestCase):
                         makefile, max_bytes=MAX_COMMAND_DISCOVERY_BYTES
                     )
 
-    def test_analyzer_and_memory_cli_share_the_entry_limit(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="rootloom-change-", dir=Path.home()) as temporary:
-            repo = self.make_repo(Path(temporary))
-            memory = repo / ".project-memory"
-            memory.mkdir()
-            collection = {
-                "format": "rootloom-project-memory-v1",
-                "kind": "risks",
-                "entries": [
-                    {
-                        "summary": f"risk {index}",
-                        "mitigation": "inspect current source",
-                        "paths": ["src/relay.py"],
-                    }
-                    for index in range(1001)
-                ],
-            }
-            (memory / "known-risks.json").write_text(
-                json.dumps(collection), encoding="utf-8"
-            )
-            analyzed = self.analyze(
-                repo,
-                "--path",
-                "src/relay.py",
-                "--include-project-memory",
-            )
-            self.assertEqual(analyzed.returncode, 0, analyzed.stderr)
-            payload = json.loads(analyzed.stdout)
-            self.assertEqual(payload["memory"]["matches"], [])
-            self.assertIn("entries exceed 1000", payload["memory"]["warnings"][0])
-            context = subprocess.run(
-                [
-                    sys.executable,
-                    str(PROJECT_MEMORY),
-                    "--repo",
-                    str(repo),
-                    "context",
-                    "--path",
-                    "src/relay.py",
-                ],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            self.assertNotEqual(context.returncode, 0)
-            self.assertIn("entries exceed 1000", context.stderr)
 
-    def test_legacy_memory_identity_matches_the_memory_cli(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="rootloom-change-", dir=Path.home()) as temporary:
-            repo = self.make_repo(Path(temporary))
-            memory = repo / ".project-memory"
-            memory.mkdir()
-            collection = {
-                "format": "rootloom-project-memory-v1",
-                "kind": "failures",
-                "entries": [
-                    {
-                        "date": "2026-01-01",
-                        "summary": "relay reconnect race",
-                        "root_cause": "transition ordering",
-                        "fix": "serialize transitions",
-                        "paths": ["src/relay.py"],
-                    }
-                ],
-            }
-            (memory / "failures.json").write_text(json.dumps(collection), encoding="utf-8")
-            analyzed = self.analyze(
-                repo,
-                "--path",
-                "src/relay.py",
-                "--include-project-memory",
-            )
-            self.assertEqual(analyzed.returncode, 0, analyzed.stderr)
-            analyzer_id = json.loads(analyzed.stdout)["memory"]["matches"][0]["id"]
-            context = subprocess.run(
-                [
-                    sys.executable,
-                    str(PROJECT_MEMORY),
-                    "--repo",
-                    str(repo),
-                    "context",
-                    "--path",
-                    "src/relay.py",
-                ],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            self.assertEqual(context.returncode, 0, context.stderr)
-            memory_id = json.loads(context.stdout)["failures"][0]["id"]
-            self.assertEqual(analyzer_id, memory_id)
 
-    def test_matching_docs_memory_does_not_promote_a_docs_only_change(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="rootloom-change-", dir=Path.home()) as temporary:
-            repo = self.make_repo(Path(temporary))
-            memory = repo / ".project-memory"
-            memory.mkdir()
-            collection = {
-                "format": "rootloom-project-memory-v1",
-                "kind": "decisions",
-                "entries": [
-                    {
-                        "id": "decision-auth-docs",
-                        "date": "2026-01-01",
-                        "summary": "document token boundary",
-                        "record": "docs/auth.md",
-                        "paths": ["docs/auth.md"],
-                    }
-                ],
-            }
-            (memory / "decisions.json").write_text(json.dumps(collection), encoding="utf-8")
-            subprocess.run(["git", "add", ".project-memory/decisions.json"], cwd=repo, check=True)
-            subprocess.run(["git", "commit", "-qm", "memory"], cwd=repo, check=True)
-            completed = self.analyze(
-                repo,
-                "--path",
-                "docs/auth.md",
-                "--include-project-memory",
-            )
-            self.assertEqual(completed.returncode, 0, completed.stderr)
-            assessment = json.loads(completed.stdout)
-            self.assertEqual(assessment["detected_risk"], "low")
-            self.assertEqual(
-                [item["id"] for item in assessment["memory"]["matches"]],
-                ["decision-auth-docs"],
-            )
-            self.assertNotIn(
-                "project-memory",
-                {item["id"] for item in assessment["signals"]},
-            )
 
-    @unittest.skipIf(os.name == "nt", "symlink creation is not portable on Windows CI")
-    def test_analyzer_warns_without_reading_symlinked_memory(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="rootloom-change-", dir=Path.home()) as temporary:
-            root = Path(temporary)
-            repo = self.make_repo(root)
-            outside = root / "outside"
-            outside.mkdir()
-            (outside / "known-risks.json").write_text(
-                '{"format":"rootloom-project-memory-v1","kind":"risks","entries":[]}',
-                encoding="utf-8",
-            )
-            (repo / ".project-memory").symlink_to(outside, target_is_directory=True)
-            completed = self.analyze(
-                repo,
-                "--path",
-                "src/relay.py",
-                "--include-project-memory",
-            )
-            self.assertEqual(completed.returncode, 0, completed.stderr)
-            assessment = json.loads(completed.stdout)
-            self.assertEqual(assessment["memory"]["matches"], [])
-            self.assertEqual(
-                assessment["memory"]["warnings"],
-                ["ignored symlinked .project-memory directory"],
-            )
 
-    def test_finalizer_requires_explicit_memory_opt_in(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="rootloom-change-", dir=Path.home()) as temporary:
-            root = Path(temporary)
-            repo = self.make_repo(root)
-            memory = repo / ".project-memory"
-            memory.mkdir()
-            (memory / "known-risks.json").write_text(
-                json.dumps(
-                    {
-                        "format": "rootloom-project-memory-v1",
-                        "kind": "risks",
-                        "entries": [
-                            {
-                                "id": "app-lifecycle-risk",
-                                "date": "2026-01-01",
-                                "summary": "app lifecycle ordering",
-                                "mitigation": "check transitions",
-                                "paths": ["app.py"],
-                            }
-                        ],
-                    }
-                ),
-                encoding="utf-8",
-            )
-            subprocess.run(
-                ["git", "add", ".project-memory/known-risks.json"],
-                cwd=repo,
-                check=True,
-            )
-            subprocess.run(["git", "commit", "-qm", "memory"], cwd=repo, check=True)
-            (repo / "app.py").write_text("value = 2\n", encoding="utf-8")
-            command = f"{sys.executable} -c 'assert 2 == 2'"
-
-            def finalize(name: str, *extra: str) -> dict[str, object]:
-                output = root / name
-                completed = subprocess.run(
-                    [
-                        sys.executable,
-                        str(SCRIPT),
-                        "--repo",
-                        str(repo),
-                        "--output",
-                        str(output),
-                        "--task",
-                        "change app lifecycle",
-                        "--verify",
-                        command,
-                        *extra,
-                    ],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                self.assertEqual(completed.returncode, 0, completed.stderr)
-                return json.loads(
-                    (output / "summary.json").read_text(encoding="utf-8")
-                )
-
-            default = finalize("default-run")
-            self.assertEqual(
-                default["risk_assessment"]["memory"]["matches"],
-                [],
-            )
-
-            explicit = finalize("explicit-run", "--include-project-memory")
-            self.assertEqual(
-                [
-                    item["id"]
-                    for item in explicit["risk_assessment"]["memory"]["matches"]
-                ],
-                ["app-lifecycle-risk"],
-            )
 
     def test_writes_compact_summary_and_verification_bundle(self) -> None:
         with tempfile.TemporaryDirectory(prefix="rootloom-change-", dir=Path.home()) as temporary:

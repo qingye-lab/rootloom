@@ -1,0 +1,8 @@
+[project]
+name = "loom-eval-service"
+version = "0.1.0"
+description = "Independent service module used by the Rootloom guidance evaluation."
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

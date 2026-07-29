@@ -16,7 +16,7 @@ MAX_EVENT_BYTES = 1_048_576
 MANAGED_BY = "rootloom:managed"
 HOOK_COMMANDS = {
     "project-guidance-hook": (
-        "skills/seed-project-guidance/scripts/seed_project_guidance.py",
+        "skills/project-guidance/scripts/seed_project_guidance.py",
         "hook",
     ),
 }

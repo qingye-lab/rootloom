@@ -1,4 +1,5 @@
-.PHONY: check test validate smoke compatibility-smoke telemetry-check
+.PHONY: check test validate smoke compatibility-smoke telemetry-check \
+	core-reset-eval core-reset-release-eval
 
 check: validate test
 
@@ -16,3 +17,13 @@ compatibility-smoke:
 
 telemetry-check:
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/verify_vibeloft_runtime.py
+
+core-reset-eval:
+	PYTHONDONTWRITEBYTECODE=1 python3 evals/core-reset/evaluate.py
+
+core-reset-release-eval:
+	@test -n "$(CORE_RESET_RESULTS)" || { echo "set CORE_RESET_RESULTS to a v2 scored result" >&2; exit 2; }
+	PYTHONDONTWRITEBYTECODE=1 python3 evals/core-reset/evaluate.py \
+		--results "$(CORE_RESET_RESULTS)" \
+		--require-behavioral \
+		--minimum-repetitions 3

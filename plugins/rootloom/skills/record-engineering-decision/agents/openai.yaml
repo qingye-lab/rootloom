@@ -1,7 +1,0 @@
-interface:
-  display_name: "Record engineering decision"
-  short_description: "Capture durable repository decisions with evidence"
-  default_prompt: "Use $record-engineering-decision to capture this durable architecture decision and its evidence."
-
-policy:
-  allow_implicit_invocation: true

@@ -1,6 +1,10 @@
 # Maturity, guarantees, and compatibility
 
-Rootloom Personal Core is an early-stage, single-maintainer product. Its goal is to make Codex engineering behavior more deliberate and inspectable without imposing deep-review cost on installation or routine work; the repository does not yet contain controlled evidence that it reduces defects or review time, or a third-party security audit or fuzzing report.
+Rootloom Core is an early-stage, single-maintainer product. Its goal is to make Codex
+engineering behavior more deliberate and inspectable without imposing deep-review cost
+on installation or routine work. The repository does not yet contain completed
+comparative model evidence that it reduces defects or review time, or a third-party
+security audit or fuzzing report.
 
 Release `v2.0.0` passed the repository's Linux Python 3.11–3.14, macOS, Windows, and pinned Codex CLI contract matrix. That proves the checked mechanics on those environments, not model-level engineering quality.
 
@@ -18,9 +22,10 @@ Release `v2.0.0` passed the repository's Linux Python 3.11–3.14, macOS, Window
 - ordinary untracked content fingerprints, task-partitioned applyable bounded text patches and risk signals, with separate targeted-candidate and classified-result path ceilings, recursive metadata-observed sensitive capture, and sensitive-change quarantine;
 - evidence-honest revision-4 review states that keep the operator semantic assertion separate and make redacted reviews non-passing;
 - exact dangerous-path deletion confirmation;
-- explainable static risk floors over task, path, tracked/non-sensitive-untracked diff, operation, and explicitly included active-memory signals;
+- explainable static risk floors over task, path, tracked/non-sensitive-untracked diff, and operation;
 - risk-specific verification recommendations kept separate from executed test evidence;
-- bounded, relevant, stale-aware project-memory context plus explicit Analyzer/Finalizer opt-in, locked explicit updates, and one shared strict reader contract;
+- separately installed, bounded, stale-aware Project Memory with locked explicit updates
+  and a strict reader contract that Core does not import;
 - repository validation, unit tests, and an offline Codex compatibility smoke.
 
 ## What remains semantic
@@ -42,7 +47,9 @@ Skills guide these decisions; current repository and runtime evidence must verif
 
 The personal artifact bundle is mutable and local. Verification commands are trusted operator input, not sandboxed workloads; argv and output are retained verbatim and must not carry credentials. Capture does not cover non-sensitive ignored files, Git administrative files, external state, detached managers, or a secret copied to an ordinary path without an observable change at its sensitive source. Rootloom's privacy classifier is path-based, not a content-aware secret scanner; broader detection requires a separate trusted local scanner whose findings are redacted before they enter Rootloom evidence. The setup lock is cooperative and ordinary. Setup is atomic per file but not across the complete target set. Backup/rollback is designed for normal local mistakes, not power-loss recovery, hostile same-user races, signed approval, immutable audit, regulated retention, or multi-operator environments.
 
-Those assurance mechanisms remain as the unmaintained Archived Assurance Edition on `codex/enterprise-assurance`; they are not implied by Personal Core or presented as an active product line.
+Those assurance mechanisms remain as the unmaintained Archived Assurance Edition on
+`codex/enterprise-assurance`; they are not implied by Rootloom Core or presented as an
+active product line.
 
 ## Compatibility
 
@@ -65,3 +72,20 @@ Personal Core 3.2 keeps the v3/v4 wire formats but rejects ignored or Git-index-
 Personal Core 3.3 batches the Core Reset while keeping those wire versions frozen. Historical Baseline readers validate structure and hashes without applying the latest reviewability classifier; Finalizer applies current policy separately and returns `reintake-required` before reading incompatible reviewable content. Reviewable declarations have a fixed 64-path ceiling, provenance distinguishes validated intake policy from final capture observation, SessionStart context is read-only, and Project Memory is explicitly experimental.
 
 Personal Core 3.4 completes the executable boundary for dynamic context and Experimental Project Memory without changing Baseline or Summary formats. SessionStart uses a dedicated incremental renderer, caps the complete additional context at 4 KiB, and skips Plan sessions. Analyzer and Finalizer no longer infer consent from a checked-in `.project-memory/`; callers opt in with the additive `--include-project-memory` flag, while sensitive-change quarantine still prevents repository reads. Existing automation that did not rely on implicit Memory reads keeps its prior CLI and evidence contracts.
+
+Rootloom 4.0 contracts the public Core to Change, Review, Project Guidance, and Setup.
+High-risk and Evidence behavior becomes on-demand Change mode References; deterministic
+Evidence helpers move to `plugins/rootloom/resources/evidence/`; Seeder and Refiner
+merge under `project-guidance`; durable decision recording becomes a Governed step.
+Project Memory moves to the separately installed `rootloom-memory` plugin, and Core
+Analyzer/Finalizer remove `--include-project-memory`. Baseline v2–v4, Summary revision
+5, contract, manifest, and seal wire formats remain unchanged. See the
+[3.x migration guide](migration-4.0.md) and [Core Reset evaluation](../evals/core-reset/).
+
+Rootloom 4.1 preserves those frozen formats and public four-Skill boundary. Its v2
+evaluation harness records actual Codex token fields, exact routes, and repeated
+isolated runs, but a formal behavioral acceptance still requires a reviewed
+three-repetition candidate result bound to the final Core tree. The `prepare`/`finish`
+Evidence orchestration is an additive ergonomic wrapper, not a new assurance state or
+machine proof; its semantic-review flag remains an operator assertion. SessionStart
+omits unsafe package-script names rather than rendering untrusted command-like text.

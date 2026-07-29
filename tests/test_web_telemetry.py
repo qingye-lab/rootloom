@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+import subprocess
 import unittest
 from html.parser import HTMLParser
 from pathlib import Path
@@ -14,6 +15,33 @@ PRODUCT_ID = "b34aed90-7b26-4ca0-b420-e31177be66e1"
 PRODUCTION_URL = "https://liyanqing90.github.io/rootloom/"
 AUTH_KEY_SHA256 = "cbe18f13cd6245e2c27402ce96677486236c105a9c18e96be3f425ecfb9a85fc"
 AUTH_KEY_PATTERN = re.compile(r"vl_web\.[A-Za-z0-9_-]{43}")
+GENERATED_PARTS = {
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "node_modules",
+    "outputs",
+    "tmp",
+}
+
+
+def repository_sources() -> list[Path]:
+    completed = subprocess.run(
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    )
+    return sorted(
+        ROOT / raw.decode("utf-8", "surrogateescape")
+        for raw in completed.stdout.split(b"\0")
+        if raw
+        and not (
+            set(Path(raw.decode("utf-8", "surrogateescape")).parts)
+            & GENERATED_PARTS
+        )
+    )
 
 
 class ScriptParser(HTMLParser):
@@ -44,8 +72,8 @@ class WebTelemetryIntegrationTests(unittest.TestCase):
 
     def test_auth_key_appears_only_in_the_global_document_configuration(self) -> None:
         occurrences: list[Path] = []
-        for path in ROOT.rglob("*"):
-            if not path.is_file() or ".git" in path.parts or path.suffix.lower() not in {
+        for path in repository_sources():
+            if not path.is_file() or path.suffix.lower() not in {
                 ".css", ".html", ".js", ".json", ".md", ".py", ".yml"
             }:
                 continue
@@ -58,7 +86,7 @@ class WebTelemetryIntegrationTests(unittest.TestCase):
 
     def test_static_site_has_one_html_entry_and_no_manual_page_view_path(self) -> None:
         html_entries = sorted(
-            path for path in ROOT.rglob("*.html") if ".git" not in path.parts
+            path for path in repository_sources() if path.suffix.lower() == ".html"
         )
         self.assertEqual(html_entries, [INDEX])
         main_js = (ROOT / "site" / "main.js").read_text(encoding="utf-8")

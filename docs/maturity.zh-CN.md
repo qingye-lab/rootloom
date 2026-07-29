@@ -1,6 +1,8 @@
 # 成熟度、保证与兼容性
 
-Rootloom Personal Core 是早期、单维护者产品。目标是在不把深度审查成本强加给安装与普通工作的前提下，让 Codex 工程行为更审慎、更可检查；仓库目前还没有受控证据证明它能降低缺陷或审查时间，也没有第三方安全审计或 Fuzzing 报告。
+Rootloom Core 是早期、单维护者产品。目标是在不把深度审查成本强加给安装与
+普通工作的前提下，让 Codex 工程行为更审慎、更可检查。仓库目前还没有完成的
+对比模型证据证明它能降低缺陷或审查时间，也没有第三方安全审计或 Fuzzing 报告。
 
 `v2.0.0` 发布版已经通过 Linux Python 3.11–3.14、macOS、Windows 与固定 Codex CLI 契约矩阵。这只能证明这些环境中的已检查机制，不代表模型层面的工程质量保证。
 
@@ -18,9 +20,9 @@ Rootloom Personal Core 是早期、单维护者产品。目标是在不把深度
 - 普通 Untracked 内容指纹、按任务分区的可应用有界文本 Patch 与风险信号，以及具有独立定向候选/分类结果上限、递归的 Metadata-observed 敏感捕获与敏感变化隔离；
 - 证据诚实的 Revision 4 审查状态：操作方语义断言独立表达，发生遮蔽的审查不通过；
 - 敏感删除路径精确确认；
-- 综合任务、路径、Tracked/非敏感 Untracked Diff、操作与显式纳入的活跃记忆信号的可解释静态风险下限；
+- 综合任务、路径、Tracked/非敏感 Untracked Diff 与操作的可解释静态风险下限；
 - 与已执行测试证据分离的风险专属验证建议；
-- 有界、相关性检索、过期感知的项目记忆上下文、Analyzer/Finalizer 显式选择、加锁显式更新与统一严格 reader contract；
+- 单独安装、有界、过期感知的 Project Memory、加锁显式更新与 Core 不导入的严格 Reader Contract；
 - 仓库校验、单元测试与离线 Codex 兼容冒烟。
 
 ## 仍属于语义判断的部分
@@ -42,7 +44,8 @@ Skills 负责指导这些判断，当前仓库与运行时证据必须再次验�
 
 个人 Artifact Bundle 是可变的本地文件。验证命令属于可信的操作方输入，不是沙箱工作负载；命令参数与输出会原样保留，因此不能携带 Credential。Capture 不覆盖非敏感 Ignored 文件、Git 管理文件、外部状态、Detached Manager，也无法识别敏感源没有可观察变化时复制到普通路径的 Secret。Rootloom 的隐私分类器基于路径，不是内容感知型 Secret Scanner；更广泛的检测需要独立、可信的本地扫描器，并在发现进入 Rootloom Evidence 前完成脱敏。Setup 锁是普通协作锁。Setup 逐文件原子，但整个目标集不是一个原子事务。备份/回滚用于普通本地失误，不面向掉电恢复、敌对同用户竞态、签名审批、不可变审计、合规保留或多操作方环境。
 
-这些 Assurance 机制作为未持续维护的 Archived Assurance Edition 保留在 `codex/enterprise-assurance`；Personal Core 不隐含它们，也不把它作为活跃产品线宣传。
+这些 Assurance 机制作为未持续维护的 Archived Assurance Edition 保留在
+`codex/enterprise-assurance`；Rootloom Core 不隐含它们，也不把它作为活跃产品线宣传。
 
 ## 兼容性
 
@@ -65,3 +68,19 @@ Personal Core 3.2 保持 v3/v4 Wire Format，但拒绝 Ignored 或被 Git Index 
 Personal Core 3.3 批量交付 Core Reset，同时继续冻结这些 Wire Version。历史 Baseline Reader 只校验结构与 Hash，不再套用最新 Reviewability 分类器；Finalizer 独立执行当前策略，并在读取不兼容 Reviewable 内容前返回 `reintake-required`。Reviewable 声明使用固定 64 项上限，Provenance 区分已验证 Intake Policy 与最终 Capture Observation，SessionStart Context 改为只读，Project Memory 明确标为 Experimental。
 
 Personal Core 3.4 在不改变 Baseline 或 Summary Format 的前提下，闭合动态 Context 与 Experimental Project Memory 的可执行边界。SessionStart 使用独立的增量 Renderer，把完整 Additional Context 限制在 4 KiB，并跳过 Plan Session。Analyzer 与 Finalizer 不再根据仓库中存在 `.project-memory/` 推断同意；调用方通过新增的 `--include-project-memory` Flag 显式选择，敏感变化隔离仍会阻止仓库读取。不依赖隐式 Memory 读取的现有自动化继续沿用原有 CLI 与 Evidence Contract。
+
+Rootloom 4.0 把公共 Core 收缩为 Change、Review、Project Guidance 与 Setup。
+高风险和 Evidence 行为变为按需 Change Mode Reference；确定性 Evidence Helper
+迁移到 `plugins/rootloom/resources/evidence/`；Seeder 与 Refiner 合并到
+`project-guidance`；持久决策记录成为 Governed 步骤。Project Memory 迁移到单独
+安装的 `rootloom-memory` 插件，Core Analyzer/Finalizer 删除
+`--include-project-memory`。Baseline v2–v4、Summary revision 5、Contract、
+Manifest 与 Seal Wire Format 保持不变。参见 [3.x 迁移指南](migration-4.0.zh-CN.md)
+与 [Core Reset Eval](../evals/core-reset/)。
+
+Rootloom 4.1 保持这些冻结 Format 和四个公共 Skill 的边界。其 v2 评测 Harness 会
+记录实际 Codex Token 字段、精确路由和隔离的重复运行；但正式行为验收仍需要一份经过
+审阅、至少三轮并绑定最终 Core Tree 的候选结果。`prepare`/`finish` Evidence 编排只是
+附加的易用性封装，不新增 Assurance State，也不构成机器证明；语义审查 Flag 仍是操作方
+断言。SessionStart 会省略不安全的 package-script 名称，而不会渲染来自不可信元数据的
+类命令文本。

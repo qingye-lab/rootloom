@@ -34,6 +34,7 @@
 ## Deep review
 
 - Ordinary work follows Evidence → Diagnosis → Scoped Change → Verification directly.
-- Analyzer, Baseline, Contract, Seal, Finalizer, and Project Memory are opt-in; installation or upgrade never makes them a routine gate.
-- Use the deep `engineering-change` workflow only when explicitly requested or when Tier 2/release evidence changes a real decision.
+- Use `operating-coding-change` for Direct, Scoped, Governed, and explicit Evidence modes; use `operating-code-review` for review-only work and `project-guidance` for persistent repository guidance.
+- Analyzer, Baseline, Contract, Seal, and Finalizer are opt-in Evidence resources; installation or upgrade never makes them a routine gate.
+- Project Memory is a separate optional plugin and is never read by Rootloom Core.
 <!-- rootloom:managed-end -->

@@ -12,7 +12,7 @@ Before filing, run:
 ```bash
 codex --version
 python3 --version
-python3 plugins/rootloom/skills/seed-project-guidance/scripts/seed_project_guidance.py \
+python3 plugins/rootloom/skills/project-guidance/scripts/seed_project_guidance.py \
   probe --cwd /path/to/repository
 python3 plugins/rootloom/skills/setup-rootloom/scripts/setup_rootloom.py \
   list-components

@@ -119,6 +119,6 @@ The two tests prove adjacent parts of the invariant:
 
 - Accepted decision: [Personal engineering intelligence contract](../decisions/2026-07-14-personal-intelligence-contract.md)
 - Regression tests: [`tests/test_engineering_change.py`](../../tests/test_engineering_change.py)
-- Capture owner: [`runner/state.py`](../../plugins/rootloom/skills/engineering-change/scripts/runner/state.py)
-- Final decision owner: [`finalize_change.py`](../../plugins/rootloom/skills/engineering-change/scripts/finalize_change.py)
+- Capture owner: [`runner/state.py`](../../plugins/rootloom/resources/evidence/runner/state.py)
+- Final decision owner: [`finalize_change.py`](../../plugins/rootloom/resources/evidence/finalize_change.py)
 - Release containing the regression: [Rootloom Personal Core 2.2.2](https://github.com/liyanqing90/rootloom/releases/tag/v2.2.2)

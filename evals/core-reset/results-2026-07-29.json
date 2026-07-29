@@ -1,0 +1,730 @@
+{
+  "codex_cli": "codex-cli 0.146.0-alpha.3.1",
+  "format": "rootloom-core-reset-results-v1",
+  "generated_at": "2026-07-29T03:43:51.165092+00:00",
+  "model": "gpt-5.6-sol",
+  "reasoning": "xhigh",
+  "runs": [
+    {
+      "activated_skill_count": 0,
+      "elapsed_seconds": 33.204,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 0,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:3acedc99a9d03029f5a1cdc4fdf6a45176298e7d5ec7db5857eb74bf873de8e8",
+      "scenario": "single-file-mechanical",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [],
+        "changed_paths": [
+          "loom_eval/names.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "no-rootloom"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 59.304,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 8296,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:1d15e494f304b0bb79835053fbb2cb09ad16208e80a292011d79398eee734415",
+      "scenario": "single-file-mechanical",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/names.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-3.4"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 55.448,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 3855,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:8c277a662b6f76d8983f8352cd1358eb310e9b7694b128c323bb7d04769f3bc1",
+      "scenario": "single-file-mechanical",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/names.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-4.0"
+    },
+    {
+      "activated_skill_count": 0,
+      "elapsed_seconds": 216.133,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 0,
+      "manual_skill_selection_count": 0,
+      "root_cause_alignment": 1.0,
+      "run_reference": "sha256:5c34dd94db647b10ca7c5e72e3249bfef4d8a2d09315b1029faf9556f906dce1",
+      "scenario": "ordinary-defect",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [],
+        "changed_paths": [
+          "loom_eval/relay.py",
+          "tests/test_relay.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "no-rootloom"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 210.797,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 8296,
+      "manual_skill_selection_count": 0,
+      "root_cause_alignment": 1.0,
+      "run_reference": "sha256:62fe95b73b1772cea50aad94abf3931f95dc9df7ce9fd115a6e0ed803771e2f5",
+      "scenario": "ordinary-defect",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/relay.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-3.4"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 237.016,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 5781,
+      "manual_skill_selection_count": 0,
+      "root_cause_alignment": 1.0,
+      "run_reference": "sha256:032a72b8b2b2dfb0afd773dbf6f277b1e8f90790e263ad4ec4fd118e55fb1821",
+      "scenario": "ordinary-defect",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/relay.py",
+          "tests/test_relay.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-4.0"
+    },
+    {
+      "activated_skill_count": 0,
+      "elapsed_seconds": 37.217,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 0,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:603a4e36f2c6c43870735aaedac85b81912547daf19fb94743fbee16d52381b7",
+      "scenario": "multi-file-feature",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [],
+        "changed_paths": [
+          "loom_eval/budget.py",
+          "loom_eval/service.py",
+          "tests/test_budget.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "no-rootloom"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 52.993,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 8296,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:d67d5005c116eb14f0812f6c11e56825b1bd4c71b0ad4ca8cf8f1bdfe8fe8cf3",
+      "scenario": "multi-file-feature",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/budget.py",
+          "loom_eval/service.py",
+          "tests/test_budget.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-3.4"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 62.761,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 5781,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:fb360a39ab4c7ad0d617783e15157aec215d7b4772ff3245e315ecf8513b801c",
+      "scenario": "multi-file-feature",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/budget.py",
+          "loom_eval/service.py",
+          "tests/test_budget.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-4.0"
+    },
+    {
+      "activated_skill_count": 0,
+      "elapsed_seconds": 39.838,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 0,
+      "manual_skill_selection_count": 0,
+      "root_cause_alignment": 1.0,
+      "run_reference": "sha256:b8bd401b97326ea931eff85e61552520114e2ec823208d1a705877fc611caa91",
+      "scenario": "false-root-cause",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [],
+        "changed_paths": [
+          "loom_eval/cache.py",
+          "tests/test_cache.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "no-rootloom"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 66.234,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 8296,
+      "manual_skill_selection_count": 0,
+      "root_cause_alignment": 1.0,
+      "run_reference": "sha256:08fc5eb3b839c42671949ef713985b67c18d54ae8e89af959eb273ce3e7063c0",
+      "scenario": "false-root-cause",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/cache.py",
+          "tests/test_cache.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-3.4"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 83.124,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 5781,
+      "manual_skill_selection_count": 0,
+      "root_cause_alignment": 1.0,
+      "run_reference": "sha256:e8a2526ab3620d64bc6d93fc2704b377c780f55e5eabdf47b6f26d0d2b8088c4",
+      "scenario": "false-root-cause",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/cache.py",
+          "tests/test_cache.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-4.0"
+    },
+    {
+      "activated_skill_count": 0,
+      "elapsed_seconds": 54.113,
+      "false_test_pass_claim": 0,
+      "governed_required_coverage": 1.0,
+      "input_context_bytes": 0,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:9bb351b7bf957d72da233bf09f0bd461e4831db52a47bb142dc256bf6b0471e6",
+      "scenario": "public-api",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [],
+        "changed_paths": [
+          "docs/api.md",
+          "loom_eval/api.py",
+          "tests/test_api.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "no-rootloom"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 98.728,
+      "false_test_pass_claim": 0,
+      "governed_required_coverage": 1.0,
+      "input_context_bytes": 9152,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:8606f609e814aa8641815f867a2fe866443b5c5aa906d18039769ce7776bf3d3",
+      "scenario": "public-api",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-high-risk-change"
+        ],
+        "changed_paths": [
+          "docs/api.md",
+          "loom_eval/api.py",
+          "tests/test_api.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-3.4"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 98.592,
+      "false_test_pass_claim": 0,
+      "governed_required_coverage": 1.0,
+      "input_context_bytes": 8913,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:c4daba6e4474e71f38325c53eaa52efd59cf85798dc008bd657fd730f6a8219c",
+      "scenario": "public-api",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "docs/api.md",
+          "loom_eval/api.py",
+          "tests/test_api.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-4.0"
+    },
+    {
+      "activated_skill_count": 0,
+      "elapsed_seconds": 80.396,
+      "false_test_pass_claim": 0,
+      "governed_required_coverage": 1.0,
+      "input_context_bytes": 0,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:fe5a945aae4266e00432c842d172718ec396091f3b6cd11c98963efdab9acbf1",
+      "scenario": "data-migration",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [],
+        "changed_paths": [
+          "loom_eval/store.py",
+          "tests/test_store.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "no-rootloom"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 145.503,
+      "false_test_pass_claim": 0,
+      "governed_required_coverage": 1.0,
+      "input_context_bytes": 9152,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:6ef903627bc450d4966bbf3a3e5db06727d0b8b4ebbe6fab257411708f4ba3fa",
+      "scenario": "data-migration",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-high-risk-change"
+        ],
+        "changed_paths": [
+          "loom_eval/store.py",
+          "tests/test_store.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-3.4"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 152.96,
+      "false_test_pass_claim": 0,
+      "governed_required_coverage": 1.0,
+      "input_context_bytes": 8913,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:2cfd56e01ad7ba245713ec38ea4f863cc5ffb6dcb72d22ef46a5848a3e37d13b",
+      "scenario": "data-migration",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/store.py",
+          "tests/test_store.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-4.0"
+    },
+    {
+      "activated_skill_count": 0,
+      "elapsed_seconds": 100.422,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 0,
+      "manual_skill_selection_count": 0,
+      "root_cause_alignment": 1.0,
+      "run_reference": "sha256:96475ace2d7b9b2b8b1031aa5da4fea4c1cc0465784a0a7c57de8520bd0a2284",
+      "scenario": "review-only",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [],
+        "changed_paths": [],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "no-rootloom"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 83.249,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 6162,
+      "manual_skill_selection_count": 0,
+      "root_cause_alignment": 1.0,
+      "run_reference": "sha256:699585d8d4b40bb0f368ae7e3518e4aa12b2f4054716001c25a0f4ee3e897bf6",
+      "scenario": "review-only",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-code-review"
+        ],
+        "changed_paths": [],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-3.4"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 84.763,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 3035,
+      "manual_skill_selection_count": 0,
+      "root_cause_alignment": 1.0,
+      "run_reference": "sha256:18fb932aadf5c7a2537ad12feae433365dda500ec476daa21ec8e06dd590dccf",
+      "scenario": "review-only",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-code-review"
+        ],
+        "changed_paths": [],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-4.0"
+    },
+    {
+      "activated_skill_count": 0,
+      "elapsed_seconds": 44.477,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 0,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:0be3f663a403e87dc27ed55e08347f1700dc1fadaa353a3441071782a4b69b6c",
+      "scenario": "dirty-worktree",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [],
+        "changed_paths": [
+          "loom_eval/names.py",
+          "tests/test_names.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "no-rootloom"
+    },
+    {
+      "activated_skill_count": 2,
+      "elapsed_seconds": 89.754,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 17448,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:472b3a852d3b9d1c5d48d60bd1a85059792def1ffac925bd4297effdeee8d602",
+      "scenario": "dirty-worktree",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change",
+          "operating-high-risk-change"
+        ],
+        "changed_paths": [
+          "loom_eval/names.py",
+          "tests/test_names.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-3.4"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 76.939,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 8913,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:f80fe7cd32a4b326c2a3eddd408955c3278cc4c7b65a9af80fb28777cfedf2c5",
+      "scenario": "dirty-worktree",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/names.py",
+          "tests/test_names.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-4.0"
+    },
+    {
+      "activated_skill_count": 0,
+      "elapsed_seconds": 28.153,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 0,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:1e15271c0d691596b01e235936d85fcdf06f03b481902e4c77c0c5891f32ad00",
+      "scenario": "verification-pollution",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [],
+        "changed_paths": [
+          "loom_eval/banner.py",
+          "verification-output.txt"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "no-rootloom"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 47.461,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 8296,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:581a9132793d1aca4434d0711968fba1238a5886b82ee0f510248204de223d77",
+      "scenario": "verification-pollution",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/banner.py",
+          "verification-output.txt"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-3.4"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 45.091,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 3855,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:0066d714ac44eecd3d9bcf9797dcecdc2c12cc7fccc24129b543511c7a060ad8",
+      "scenario": "verification-pollution",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/banner.py",
+          "verification-output.txt"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-4.0"
+    },
+    {
+      "activated_skill_count": 0,
+      "elapsed_seconds": 91.89,
+      "evidence_completeness": 0.0,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 0,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:1ec516e55895cb4664365aa3888640ccd78133fc86c8b90b81f19cd65b310264",
+      "scenario": "evidence-bundle",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [],
+        "changed_paths": [
+          "loom_eval/cache.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "no-rootloom"
+    },
+    {
+      "activated_skill_count": 2,
+      "elapsed_seconds": 337.43,
+      "evidence_completeness": 1.0,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 28114,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:7faf6e3ba83cea34d5274baa3ab7bd49117922c31af1f931516c10713421e96a",
+      "scenario": "evidence-bundle",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "engineering-change",
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/cache.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-3.4"
+    },
+    {
+      "activated_skill_count": 1,
+      "elapsed_seconds": 293.391,
+      "evidence_completeness": 1.0,
+      "false_test_pass_claim": 0,
+      "input_context_bytes": 10180,
+      "manual_skill_selection_count": 0,
+      "run_reference": "sha256:ff1229226f4a18a0dda97bbbfe2a69517146cca8074424449fdd7c159ca14008",
+      "scenario": "evidence-bundle",
+      "scope_escape": 0,
+      "scoring_notes": {
+        "activated_skills": [
+          "operating-coding-change"
+        ],
+        "changed_paths": [
+          "loom_eval/cache.py",
+          "tests/test_cache.py"
+        ],
+        "codex_returncode": 0,
+        "escaped_paths": [],
+        "verification_observed": true
+      },
+      "task_success": 1,
+      "variant": "rootloom-4.0"
+    }
+  ],
+  "scoring": "rootloom-core-reset-mechanical-v1",
+  "evidence_rerun": {
+    "reason": "Original no-rootloom Evidence cell discovered a host Rootloom installation outside its isolated CODEX_HOME.",
+    "correction": "All three Evidence cells were rerun with the same explicit session/CODEX_HOME-only capability boundary.",
+    "contamination_scan": "passed"
+  },
+  "candidate": {
+    "root": "plugins/rootloom",
+    "tree_sha256": "de952b75a5cf1f06b12c251e4c43622dd7041b9d24abf9735c8f0eafb195744e"
+  }
+}

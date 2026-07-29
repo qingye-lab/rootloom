@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rootloom Memory"
+  short_description: "Retrieve relevant risks, decisions, and failure lessons"
+  default_prompt: "Use $project-memory to retrieve or explicitly record durable engineering knowledge."

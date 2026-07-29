@@ -1,0 +1,32 @@
+{
+  "name": "rootloom-memory",
+  "version": "1.0.0",
+  "description": "Optional, local, reviewable project memory for Rootloom users.",
+  "author": {
+    "name": "liyanqing",
+    "url": "https://github.com/liyanqing90"
+  },
+  "homepage": "https://github.com/liyanqing90/rootloom#rootloom-memory",
+  "repository": "https://github.com/liyanqing90/rootloom",
+  "license": "MIT",
+  "keywords": [
+    "rootloom",
+    "codex",
+    "project-memory",
+    "engineering-memory"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Rootloom Memory",
+    "shortDescription": "Explicit, advisory project memory for Codex.",
+    "longDescription": "Rootloom Memory is an optional experimental plugin for bounded, repository-owned engineering lessons. It is installed separately from Rootloom Core and never overrides current repository evidence.",
+    "developerName": "liyanqing",
+    "category": "Productivity",
+    "capabilities": [
+      "Experimental Project Memory"
+    ],
+    "defaultPrompt": [
+      "Retrieve relevant project lessons for this task and verify them against current repository evidence."
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 ---
 name: setup-rootloom
-description: Plan, install, inspect, update, or roll back Rootloom Personal Core in a user's Codex home. Supports Skills-only, guidance, and the recommended personal preset. Use when the user explicitly asks to install, configure, bootstrap, repair, audit, update, reduce, or remove Rootloom. Never overwrite user-owned files without showing the plan and obtaining exact replacement authorization.
+description: Plan, install, inspect, update, or roll back Rootloom Personal Core in a user's Codex home. Supports Skills-only, guidance, and the recommended personal preset. Use when the user explicitly asks for a Rootloom setup plan, installation, configuration, bootstrap, repair, audit, status, update, reduction, rollback, or removal. Never overwrite user-owned files without showing the plan and obtaining exact replacement authorization.
 ---
 
 # Set up Rootloom Personal Core

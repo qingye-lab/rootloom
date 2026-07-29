@@ -1,6 +1,8 @@
 # Setup, update, and rollback
 
-Installing the plugin exposes Skills and the reviewed `SessionStart` Hook definition. It does not install global policy, enable the Hook, or trigger engineering review tools. Applying global Personal Core assets is a separate optional operation.
+Installing the plugin exposes the four Core Skills and the reviewed `SessionStart` Hook
+definition. It does not install global policy, enable the Hook, run Evidence resources,
+or install Rootloom Memory. Applying global Core assets is a separate optional operation.
 
 ## Install
 
@@ -11,7 +13,18 @@ codex plugin add rootloom@rootloom
 
 Start a new task and inspect `/hooks`. The only Hook detects repository facts and injects temporary read-only project context. It does nothing until exact managed component policy version 1 enables it, and it never writes `AGENTS.md`.
 
-The plugin is fully usable at this point. No setup command, analyzer, baseline, contract, finalizer, or project-memory lookup is required.
+The plugin is fully usable at this point. No setup command, analyzer, baseline,
+contract, finalizer, or Memory plugin is required.
+
+An explicit natural-language request to plan, install, inspect, update, or roll back
+Rootloom may route to Setup; `$setup-rootloom` is the deterministic explicit form.
+Activation does not authorize overwriting a user-owned conflict.
+
+Install experimental Memory separately only when wanted:
+
+```bash
+codex plugin add rootloom-memory@rootloom
+```
 
 ## Presets
 

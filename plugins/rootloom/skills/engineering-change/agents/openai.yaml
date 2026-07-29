@@ -1,4 +1,0 @@
-interface:
-  display_name: "Engineering Change"
-  short_description: "Run Rootloom's personal engineering quality loop"
-  default_prompt: "Use $engineering-change for this explicitly requested deep review and produce an honest evidence summary."

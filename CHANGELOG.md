@@ -12,11 +12,59 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
-- Keep the three website workflow rows equal in height and prevent hover styling from changing padding, content position, or layout.
+- Keep the website workflow cards equal in height and prevent hover styling from
+  changing padding, content position, or layout.
 
 ### Security
 
 - Keep the VibeLoft browser credential only in the global script configuration, forbid local/manual collectors and Supabase access, and verify the upstream GPC/DNT and `credentials: omit` contract without emitting mock traffic.
+
+## [4.1.0] - 2026-07-29
+
+### Added
+
+- Add the Core Reset v2 evaluator: actual Codex token-usage fields, isolated randomized
+  repetitions, exact public-Skill/Reference route checks, and Guidance/Setup scenarios.
+- Add `orchestrate_evidence.py prepare` and `finish` as an additive, lower-turn strict
+  Evidence path while retaining the frozen Baseline v2–v4, Summary revision 5, contract,
+  manifest, seal, and existing low-level CLI formats.
+- Add a formal `core-reset-release-eval` target that requires a supplied v2 scored matrix
+  with at least three repetitions.
+
+### Changed
+
+- Make Direct Change a real fast path: it reads no Reference, limits inspection to the
+  exact target, runs the smallest relevant check, and treats a dirty worktree as a
+  preservation constraint rather than an escalation signal.
+- Make Governed and Evidence Reference loading explicit and route-scored rather than
+  relying on implicit composition.
+
+### Security
+
+- Exclude unsafe `package.json` script names from generated SessionStart project context
+  so untrusted script metadata cannot be rendered as a suggested shell command.
+
+## [4.0.0] - 2026-07-29
+
+### Changed
+
+- Contract the Rootloom Core public Skill catalog from nine entries to four: Change,
+  Review, Project Guidance, and Setup.
+- Route Direct, Scoped, Governed, Evidence, and External Action work through
+  `$operating-coding-change`, loading detailed References only when required.
+- Move Analyzer, Baseline, Contract, Seal, Finalizer, and Runner helpers from the
+  discoverable Skill tree to `plugins/rootloom/resources/evidence/` without changing
+  Baseline v2–v4 or Summary revision 5 wire formats.
+- Merge deterministic seeding and semantic refinement under `$project-guidance`.
+- Move experimental Project Memory to the separately installed `rootloom-memory`
+  plugin while preserving `rootloom-project-memory-v1`.
+- Fold durable decision recording into Governed Change and remove compatibility alias
+  Skills so Core discovery remains exactly four entries.
+
+### Added
+
+- Add the No Rootloom / Rootloom 3.4 / Rootloom 4.0 Core Reset ablation matrix,
+  structural context gate, behavioral release rubric, and 3.x migration guides.
 
 ## [3.4.0] - 2026-07-16
 
@@ -684,7 +732,10 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A deterministic high-assurance `codex exec` runner with one writer, exact scope gates, structured outputs, real verification, independent review, and a bounded repair cycle.
 - Bilingual documentation, architecture and capability visuals, tests, CI, security policy, contribution guidance, and release governance.
 
-[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v4.1.0...HEAD
+[4.1.0]: https://github.com/liyanqing90/rootloom/compare/v4.0.0...v4.1.0
+[4.0.0]: https://github.com/liyanqing90/rootloom/compare/v3.4.0...v4.0.0
+[3.4.0]: https://github.com/liyanqing90/rootloom/compare/v3.3.0...v3.4.0
 [3.3.0]: https://github.com/liyanqing90/rootloom/compare/v3.2.0...v3.3.0
 [3.2.0]: https://github.com/liyanqing90/rootloom/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/liyanqing90/rootloom/compare/v3.0.0...v3.1.0

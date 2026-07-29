@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Rootloom Personal Core's public repository contract."""
+"""Validate Rootloom Core and optional plugin repository contracts."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import ast
 import hashlib
 import json
 import re
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
@@ -20,18 +21,18 @@ PLUGIN = ROOT / "plugins" / "rootloom"
 MANIFEST = PLUGIN / ".codex-plugin" / "plugin.json"
 HOOKS = PLUGIN / "hooks" / "hooks.json"
 SKILLS = PLUGIN / "skills"
+EVIDENCE = PLUGIN / "resources" / "evidence"
 SYSTEM = PLUGIN / "assets" / "system"
+MEMORY_PLUGIN = ROOT / "experiments" / "rootloom-memory"
+MEMORY_MANIFEST = MEMORY_PLUGIN / ".codex-plugin" / "plugin.json"
+MEMORY_SKILLS = MEMORY_PLUGIN / "skills"
 EXPECTED_SKILLS = {
-    "engineering-change",
     "operating-code-review",
     "operating-coding-change",
-    "operating-high-risk-change",
-    "project-memory",
-    "record-engineering-decision",
-    "refine-project-guidance",
-    "seed-project-guidance",
+    "project-guidance",
     "setup-rootloom",
 }
+EXPECTED_MEMORY_SKILLS = {"project-memory"}
 SEMVER = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
     r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
@@ -85,20 +86,80 @@ def load_json(path: Path, errors: list[str]) -> dict[str, Any]:
     return payload
 
 
+def repository_files() -> list[Path]:
+    excluded_parts = {
+        ".git",
+        "__pycache__",
+        "node_modules",
+        "outputs",
+        "dist",
+        "build",
+        "tmp",
+    }
+    try:
+        completed = subprocess.run(
+            [
+                "git",
+                "ls-files",
+                "-z",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+            ],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+        )
+        candidates = [
+            ROOT / raw.decode("utf-8", "surrogateescape")
+            for raw in completed.stdout.split(b"\0")
+            if raw
+        ]
+    except (OSError, subprocess.CalledProcessError):
+        candidates = [path for path in ROOT.rglob("*") if path.is_file()]
+    return sorted(
+        path
+        for path in candidates
+        if path.is_file() and not (set(path.relative_to(ROOT).parts) & excluded_parts)
+    )
+
+
 def validate_marketplace(errors: list[str]) -> None:
     payload = load_json(MARKETPLACE, errors)
     if payload.get("name") != "rootloom":
         errors.append("marketplace name must be rootloom")
     plugins = payload.get("plugins")
-    if not isinstance(plugins, list) or len(plugins) != 1:
-        errors.append("marketplace must contain exactly one plugin")
+    if not isinstance(plugins, list) or len(plugins) != 2:
+        errors.append("marketplace must contain Core and optional Memory plugins")
         return
-    entry = plugins[0]
-    if not isinstance(entry, dict) or entry.get("name") != "rootloom":
-        errors.append("marketplace plugin name must be rootloom")
-        return
-    if entry.get("source") != {"source": "local", "path": "./plugins/rootloom"}:
-        errors.append("marketplace must point to ./plugins/rootloom")
+    actual = {
+        entry.get("name"): entry.get("source")
+        for entry in plugins
+        if isinstance(entry, dict)
+    }
+    expected = {
+        "rootloom": {"source": "local", "path": "./plugins/rootloom"},
+        "rootloom-memory": {
+            "source": "local",
+            "path": "./experiments/rootloom-memory",
+        },
+    }
+    if actual != expected:
+        errors.append(f"marketplace plugin sources differ: {actual!r}")
+
+
+def validate_memory_manifest(errors: list[str]) -> None:
+    payload = load_json(MEMORY_MANIFEST, errors)
+    if payload.get("name") != "rootloom-memory":
+        errors.append("Memory plugin name must be rootloom-memory")
+    version = payload.get("version")
+    if not isinstance(version, str) or not SEMVER.fullmatch(version):
+        errors.append("Memory plugin version must be strict semver")
+    if payload.get("skills") != "./skills/":
+        errors.append("Memory plugin must expose only its local skills directory")
+    interface = payload.get("interface")
+    if not isinstance(interface, dict) or interface.get("displayName") != "Rootloom Memory":
+        errors.append("Memory plugin interface metadata is missing")
 
 
 def validate_manifest(errors: list[str]) -> None:
@@ -112,10 +173,10 @@ def validate_manifest(errors: list[str]) -> None:
         errors.append("plugin version must have a CHANGELOG section")
     else:
         producer_contracts = {
-            SKILLS / "engineering-change" / "scripts" / "runner" / "baseline.py": (
+            EVIDENCE / "runner" / "baseline.py": (
                 f'PRODUCER_VERSION = "{version}"'
             ),
-            SKILLS / "engineering-change" / "scripts" / "finalize_change.py": (
+            EVIDENCE / "finalize_change.py": (
                 f'"producer_version": "{version}"'
             ),
         }
@@ -195,6 +256,29 @@ def validate_skills(errors: list[str]) -> None:
         agent = SKILLS / name / "agents" / "openai.yaml"
         if not agent.is_file():
             errors.append(f"Skill is missing agents/openai.yaml: {name}")
+    memory_actual = {
+        path.parent.name for path in MEMORY_SKILLS.glob("*/SKILL.md")
+    }
+    if memory_actual != EXPECTED_MEMORY_SKILLS:
+        errors.append(
+            "Memory Skill catalog mismatch: expected project-memory; found "
+            + ", ".join(sorted(memory_actual))
+        )
+    for name in sorted(memory_actual):
+        path = MEMORY_SKILLS / name / "SKILL.md"
+        if frontmatter_name(path) != name:
+            errors.append(f"Memory Skill frontmatter name mismatch: {path.relative_to(ROOT)}")
+        if not (MEMORY_SKILLS / name / "agents" / "openai.yaml").is_file():
+            errors.append(f"Memory Skill is missing agents/openai.yaml: {name}")
+    change_lines = len(
+        (SKILLS / "operating-coding-change" / "SKILL.md")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
+    if not 60 <= change_lines <= 85:
+        errors.append("operating-coding-change must remain approximately 60-85 lines")
+    if any(EVIDENCE.rglob("SKILL.md")):
+        errors.append("Evidence resources must not expose a discoverable Skill")
     forbidden = (
         SKILLS / "high-assurance-coding-change" / "SKILL.md",
         SYSTEM / "profiles" / "high-assurance.config.toml",
@@ -204,6 +288,175 @@ def validate_skills(errors: list[str]) -> None:
             errors.append(f"Assurance artifact must not ship on main: {path.relative_to(ROOT)}")
     if any((SYSTEM / "agents").glob("*.toml")):
         errors.append("Personal Core must not ship custom-agent TOMLs")
+
+
+def validate_core_reset_eval(errors: list[str]) -> None:
+    suite = load_json(ROOT / "evals" / "core-reset" / "scenarios.json", errors)
+    scenarios = suite.get("scenarios")
+    if suite.get("format") != "rootloom-core-reset-eval-v2":
+        errors.append("Core Reset evaluation format differs")
+    if suite.get("variants") != [
+        "no-rootloom",
+        "rootloom-3.4",
+        "rootloom-4.1",
+    ]:
+        errors.append("Core Reset evaluation variants differ")
+    required_metrics = {
+        "input_tokens",
+        "cached_input_tokens",
+        "uncached_input_tokens",
+        "command_count",
+        "agent_message_count",
+        "route_exact",
+        "over_routing_count",
+        "under_routing_count",
+    }
+    metrics = suite.get("metrics")
+    if (
+        not isinstance(metrics, list)
+        or any(not isinstance(metric, str) for metric in metrics)
+        or not required_metrics.issubset(set(metrics))
+    ):
+        errors.append("Core Reset evaluation lacks v2 token or routing metrics")
+    if not isinstance(scenarios, list) or len(scenarios) != 14:
+        errors.append("Core Reset evaluation must contain exactly fourteen scenarios")
+    elif len({item.get("id") for item in scenarios if isinstance(item, dict)}) != 14:
+        errors.append("Core Reset evaluation scenario IDs must be unique")
+    else:
+        mode_skills = {
+            "direct": "operating-coding-change",
+            "scoped": "operating-coding-change",
+            "governed": "operating-coding-change",
+            "evidence": "operating-coding-change",
+            "review": "operating-code-review",
+            "guidance": "project-guidance",
+            "setup": "setup-rootloom",
+        }
+        for item in scenarios:
+            if not isinstance(item.get("allowed_paths"), list):
+                errors.append(f"Core Reset scenario lacks allowed_paths: {item.get('id')}")
+            if not isinstance(item.get("verification_command"), str):
+                errors.append(
+                    f"Core Reset scenario lacks verification_command: {item.get('id')}"
+                )
+            graded = item.get("graded_metrics")
+            if not isinstance(graded, list) or "task_success" not in graded:
+                errors.append(
+                    f"Core Reset scenario must grade task_success: {item.get('id')}"
+                )
+            mode = item.get("mode_group")
+            route = item.get("expected_route")
+            if mode not in mode_skills or not isinstance(route, dict):
+                errors.append(
+                    f"Core Reset scenario lacks a valid mode/route: {item.get('id')}"
+                )
+                continue
+            references = route.get("references")
+            if (
+                route.get("skill") != mode_skills[mode]
+                or not isinstance(references, list)
+                or any(
+                    not isinstance(reference, str)
+                    or reference.startswith("/")
+                    or any(part in {"", ".", ".."} for part in Path(reference).parts)
+                    or not reference.endswith(".md")
+                    for reference in references
+                )
+                or len(set(references)) != len(references)
+            ):
+                errors.append(
+                    f"Core Reset scenario route contract differs: {item.get('id')}"
+                )
+        if {item.get("mode_group") for item in scenarios} != set(mode_skills):
+            errors.append("Core Reset evaluation must cover every public mode group")
+    historical_suite = load_json(
+        ROOT / "evals" / "core-reset" / "scenarios-v1.json",
+        errors,
+    )
+    if (
+        historical_suite.get("format") != "rootloom-core-reset-eval-v1"
+        or not isinstance(historical_suite.get("scenarios"), list)
+        or len(historical_suite["scenarios"]) != 10
+    ):
+        errors.append("historical Core Reset v1 scenario suite differs")
+    evaluator = ROOT / "evals" / "core-reset" / "evaluate.py"
+    text = evaluator.read_text(encoding="utf-8")
+    for marker in (
+        "EXPECTED_SKILLS",
+        "ordinary_change_context_reduction",
+        "reduction < 0.30",
+        "--require-behavioral",
+        "--minimum-repetitions",
+        "uncached_input_tokens",
+        "bootstrap_ratio_interval",
+        "rootloom-core-reset-mechanical-v3",
+        "rootloom-3.4",
+        "rootloom-4.1",
+    ):
+        if marker not in text:
+            errors.append(f"Core Reset evaluator is missing {marker!r}")
+    for path, markers in (
+        (
+            ROOT / "evals" / "core-reset" / "run_matrix.py",
+            (
+                "--output-root",
+                "CODEX_HOME",
+                "PYTHONDONTWRITEBYTECODE",
+                "--ephemeral",
+                "--repetitions",
+                "--random-seed",
+                "runtime-homes",
+            ),
+        ),
+        (
+            ROOT / "evals" / "core-reset" / "score_matrix.py",
+            (
+                "task_success",
+                "scope_escape",
+                "activated_context",
+                "run_reference",
+                "turn.completed",
+                "uncached_input_tokens",
+                "route_score",
+                "runtime_codex_home",
+                "MANAGED_GUIDANCE_START",
+                "rootloom-core-reset-mechanical-v3",
+            ),
+        ),
+    ):
+        text = path.read_text(encoding="utf-8")
+        for marker in markers:
+            if marker not in text:
+                errors.append(
+                    f"Core Reset tool {path.name} is missing {marker!r}"
+                )
+    result = load_json(
+        ROOT / "evals" / "core-reset" / "results-2026-07-29.json",
+        errors,
+    )
+    if result.get("format") != "rootloom-core-reset-results-v1":
+        errors.append("recorded Core Reset result format differs")
+    runs = result.get("runs")
+    if not isinstance(runs, list) or len(runs) != 30:
+        errors.append("recorded Core Reset result must contain exactly 30 runs")
+    candidate = result.get("candidate")
+    if (
+        not isinstance(candidate, dict)
+        or candidate.get("root") != "plugins/rootloom"
+        or not re.fullmatch(r"[0-9a-f]{64}", str(candidate.get("tree_sha256", "")))
+    ):
+        errors.append("recorded Core Reset result must identify its Core tree digest")
+    example = load_json(
+        ROOT / "evals" / "core-reset" / "results.example.json",
+        errors,
+    )
+    if (
+        example.get("format") != "rootloom-core-reset-results-v2"
+        or example.get("suite") != "rootloom-core-reset-eval-v2"
+        or example.get("scoring") != "rootloom-core-reset-mechanical-v3"
+        or example.get("repetitions") != 3
+    ):
+        errors.append("Core Reset v2 result example differs")
 
 
 def validate_hooks(errors: list[str]) -> None:
@@ -239,29 +492,36 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "global AGENTS.md must remain approximately 3-4 KiB and 30-45 lines"
         )
     seeder_text = (
-        SKILLS / "seed-project-guidance" / "scripts" / "seed_project_guidance.py"
+        SKILLS / "project-guidance" / "scripts" / "seed_project_guidance.py"
     ).read_text(encoding="utf-8")
     if "MAX_SESSION_CONTEXT_BYTES = 4 * 1024" not in seeder_text:
         errors.append("SessionStart additional context must remain capped at 4 KiB")
     if 'permission_mode == "plan"' not in seeder_text:
         errors.append("SessionStart project context must remain disabled in Plan sessions")
-    intelligence_text = (
-        SKILLS / "engineering-change" / "scripts" / "runner" / "intelligence.py"
-    ).read_text(encoding="utf-8")
-    if "include_project_memory: bool = False" not in intelligence_text:
-        errors.append("Analyzer Project Memory must remain an explicit default-off input")
+    intelligence_text = (EVIDENCE / "runner" / "intelligence.py").read_text(
+        encoding="utf-8"
+    )
+    for forbidden in (
+        "import rootloom_memory",
+        "load_memory_matches",
+        "include_project_memory",
+    ):
+        if forbidden in intelligence_text:
+            errors.append(f"Core Evidence must not read Project Memory: {forbidden}")
     for path, label in (
         (
-            SKILLS / "engineering-change" / "scripts" / "analyze_change.py",
+            EVIDENCE / "analyze_change.py",
             "Analyzer",
         ),
         (
-            SKILLS / "engineering-change" / "scripts" / "finalize_change.py",
+            EVIDENCE / "finalize_change.py",
             "Finalizer",
         ),
     ):
-        if '"--include-project-memory"' not in path.read_text(encoding="utf-8"):
-            errors.append(f"{label} must expose explicit Project Memory opt-in")
+        if '"--include-project-memory"' in path.read_text(encoding="utf-8"):
+            errors.append(f"{label} must not expose Core Project Memory opt-in")
+    if (PLUGIN / "lib" / "rootloom_memory.py").exists():
+        errors.append("Rootloom Core must not ship the Project Memory reader")
     root_guidance = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     root_rules = [line for line in root_guidance.splitlines() if line.startswith("- ")]
     if not 5 <= len(root_rules) <= 8:
@@ -279,43 +539,70 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "version != 1",
             "component policy version must be the integer 1",
         ),
-        SKILLS / "seed-project-guidance" / "scripts" / "seed_project_guidance.py": (
+        SKILLS / "project-guidance" / "scripts" / "seed_project_guidance.py": (
             "temporary_project_context",
             "MAX_SESSION_CONTEXT_BYTES",
+            "PACKAGE_SCRIPT_NAME",
             "_render_session_context",
             'permission_mode == "plan"',
             "creating or updating AGENTS.md",
             "guidance only when the user explicitly invokes",
         ),
-        SKILLS / "engineering-change" / "SKILL.md": (
-            "Evidence → Diagnosis → Change Contract → Implementation → Verification",
-            "ROOT_CAUSE_ALIGNMENT: PASS",
-            "Final Review Summary",
-            "analyze_change.py",
-            "suggested-not-executed",
-            "--write-baseline",
-            "rootloom-change-contract-v1",
-            "opt-in",
+        SKILLS / "operating-coding-change" / "SKILL.md": (
+            "This Skill owns every",
+            "`direct`",
+            "`scoped`",
+            "`governed`",
+            "`evidence`",
+            "local callable/signature shape, file count, or dirty worktree alone",
+            "symptom → trigger/state → owning boundary",
+            "ROOT_CAUSE_ALIGNMENT",
+            "Cause",
+            "Verification",
+        ),
+        SKILLS / "operating-coding-change" / "references" / "evidence-mode.md": (
+            "resources/evidence/analyze_change.py",
+            "begin_review.py",
+            "seal_contract.py",
+            "orchestrate_evidence.py",
+            "finalize_change.py",
+            "suggestions are plans",
             "--strict",
+        ),
+        SKILLS / "operating-coding-change" / "references" / "evidence-contract.md": (
+            "Baseline v2–v4",
+            "Summary revision 5",
+            "rootloom-change-contract-v1",
             "--confirm-dangerous-delete",
             "REVIEW_EVIDENCE_COMPLETE",
             "REVIEW_REQUIRED_WITH_REDACTIONS",
-            "--max-capture-seconds",
-            "--max-git-seconds",
-            "--max-sensitive-paths",
             "--reviewable-path",
         ),
-        SKILLS / "engineering-change" / "scripts" / "analyze_change.py": (
+        SKILLS / "project-guidance" / "SKILL.md": (
+            "seed",
+            "refresh",
+            "refine",
+            "validate",
+            "semantic-refinement.md",
+            "seed_project_guidance.py",
+        ),
+        SKILLS / "operating-code-review" / "SKILL.md": (
+            "ROOT_CAUSE_ALIGNMENT",
+            "cleared surfaces",
+            "unreviewed evidence",
+            "security-review.md",
+            "data-and-migration-review.md",
+        ),
+        EVIDENCE / "analyze_change.py": (
             "analyze_change",
             "--declared-risk",
-            "--include-project-memory",
             "--write-baseline",
             "tracked_patch",
             "--max-capture-seconds",
             "--max-git-seconds",
             "--max-sensitive-paths",
         ),
-        SKILLS / "engineering-change" / "scripts" / "begin_review.py": (
+        EVIDENCE / "begin_review.py": (
             "REVIEW_MANIFEST_FORMAT",
             "change-contract.draft.json",
             "--allow-all-paths",
@@ -328,7 +615,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "--max-git-seconds",
             "--max-sensitive-paths",
         ),
-        SKILLS / "engineering-change" / "scripts" / "seal_contract.py": (
+        EVIDENCE / "seal_contract.py": (
             "contract.seal.json",
             "change-contract.json",
             "contains_contract_placeholder",
@@ -336,16 +623,23 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "--recover",
             "validate_contract_seal",
         ),
-        SKILLS / "engineering-change" / "scripts" / "runner" / "intelligence.py": (
+        EVIDENCE / "orchestrate_evidence.py": (
+            "prepare",
+            "finish",
+            "--semantic-review-confirmed",
+            "CONTRACT_DRAFT_SENTINEL",
+            "load_change_contract",
+            "prepared-and-sealed",
+        ),
+        EVIDENCE / "runner" / "intelligence.py": (
             "rootloom-change-assessment-v1",
             "dependency-supply-chain",
             "suggested-not-executed",
             "Static signals cannot prove semantic risk",
-            "include_project_memory: bool = False",
             "allow_repository_reads",
             "read_bounded_repository_text",
         ),
-        SKILLS / "engineering-change" / "scripts" / "runner" / "baseline.py": (
+        EVIDENCE / "runner" / "baseline.py": (
             "rootloom-change-baseline-v1",
             "rootloom-change-baseline-v2",
             "rootloom-change-baseline-v3",
@@ -358,7 +652,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "write_new_baseline",
             "head_ref",
         ),
-        SKILLS / "engineering-change" / "scripts" / "runner" / "change_contract.py": (
+        EVIDENCE / "runner" / "change_contract.py": (
             "rootloom-change-contract-v1",
             "allowed_paths",
             "verification_claim_bindings",
@@ -366,7 +660,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "segment",
             "verification_coverage",
         ),
-        SKILLS / "engineering-change" / "scripts" / "runner" / "review_run.py": (
+        EVIDENCE / "runner" / "review_run.py": (
             "rootloom-review-run-v2",
             "rootloom-contract-seal-v1",
             "canonical-json-without-contract_sha256",
@@ -374,7 +668,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "unexpected or missing fields",
             "CONTRACT_DRAFT_SENTINEL",
         ),
-        SKILLS / "engineering-change" / "scripts" / "runner" / "evidence_paths.py": (
+        EVIDENCE / "runner" / "evidence_paths.py": (
             "validate_no_symlink_chain",
             "validate_outside_repository_storage",
             "Git common directory",
@@ -382,12 +676,12 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "fsync_directory",
             "rename_directory_no_replace",
         ),
-        SKILLS / "engineering-change" / "scripts" / "runner" / "strict_json.py": (
+        EVIDENCE / "runner" / "strict_json.py": (
             "duplicate JSON key",
             "non-standard JSON constant",
             "out-of-range JSON number",
         ),
-        SKILLS / "engineering-change" / "scripts" / "runner" / "state.py": (
+        EVIDENCE / "runner" / "state.py": (
             "stable_repository_capture",
             "canonical_reviewable_paths",
             "git_index_path_tags",
@@ -407,13 +701,13 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "CaptureDeadline",
             "run_command",
         ),
-        SKILLS / "engineering-change" / "scripts" / "runner" / "process.py": (
+        EVIDENCE / "runner" / "process.py": (
             "output_bytes_observed",
             "process_tree_converged",
             "TerminateJobObject",
             "_controlled_tree_active",
         ),
-        SKILLS / "engineering-change" / "scripts" / "finalize_change.py": (
+        EVIDENCE / "finalize_change.py": (
             "diff.patch",
             "test.log",
             "summary.json",
@@ -427,7 +721,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             '"exit_policy"',
             '"mode"',
             "--strict",
-            "--include-project-memory",
             "--strict-bundle-only",
             "--require-verified",
             '"sensitive_integrity"',
@@ -456,20 +749,20 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "REINTAKE_REQUIRED_EXIT",
             "reintake-required",
         ),
-        SKILLS / "project-memory" / "SKILL.md": (
+        MEMORY_SKILLS / "project-memory" / "SKILL.md": (
             ".project-memory/",
             "current source",
             "record-failure",
             "set-status",
             "--include-stale",
         ),
-        SKILLS / "project-memory" / "scripts" / "project_memory.py": (
+        MEMORY_SKILLS / "project-memory" / "scripts" / "project_memory.py": (
             "rootloom-project-context-v1",
             "deduplicated",
             "memory.lock",
             "project-memory directory must not be a symlink",
         ),
-        PLUGIN / "lib" / "rootloom_memory.py": (
+        MEMORY_PLUGIN / "lib" / "rootloom_memory.py": (
             "rootloom-project-memory-v1",
             "O_NOFOLLOW",
             "entries exceed",
@@ -506,17 +799,25 @@ def validate_personal_contracts(errors: list[str]) -> None:
             'selected.add("global-policy")',
         ),
         SKILLS / "setup-rootloom" / "SKILL.md": (
+            "Rootloom setup plan",
+            "status",
+            "rollback",
             "three authorization modes",
             "persistent cross-task default",
             "Full covers high-risk steps only in the current task",
             "Rules avoid duplicating that semantic decision",
+        ),
+        SKILLS / "setup-rootloom" / "agents" / "openai.yaml": (
+            "plan, install, inspect, update, or roll back Rootloom",
+            "allow_implicit_invocation: true",
         ),
         SYSTEM / "AGENTS.md": (
             "Diagnose the observable path",
             "Preserve unrelated user changes",
             "Tier 0 Direct",
             "proportional evidence",
-            "deep `engineering-change` workflow",
+            "Use `operating-coding-change`",
+            "Project Memory is a separate optional plugin",
             "Single action",
             "Standard",
             "Full",
@@ -531,20 +832,22 @@ def validate_personal_contracts(errors: list[str]) -> None:
             'pattern = ["gh", "release", "delete"]',
         ),
         ROOT / "README.md": (
-            "Rootloom Personal Core",
+            "Rootloom 4 Core",
             "An inspectable personal engineering workflow for Codex.",
             "codex/enterprise-assurance",
             "Archived Assurance Edition",
             "Optional Autonomy",
-            "Optional Evidence",
-            "Experimental Project Memory",
-            "$engineering-change",
+            "Optional Evidence resources",
+            "Rootloom Memory",
+            "$project-guidance",
             "$project-memory",
             "analyze_change.py",
             "quality_status",
             "--write-baseline",
             "--strict",
             "seal_contract.py",
+            "orchestrate_evidence.py",
+            "core-reset-release-eval",
             "two consecutive bounded captures",
             "material metadata change",
             "newly discovered ignored addition",
@@ -567,21 +870,22 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "official VibeLoft browser runtime",
         ),
         ROOT / "README.zh-CN.md": (
-            "Rootloom Personal Core",
+            "Rootloom 4 Core",
             "面向 Codex 的可检查个人工程工作流。",
             "codex/enterprise-assurance",
             "Archived Assurance Edition",
             "Optional Autonomy",
-            "Optional Evidence",
-            "Experimental Project Memory",
-            "$engineering-change",
+            "Optional Evidence Resources",
+            "Rootloom Memory",
+            "$project-guidance",
             "$project-memory",
             "analyze_change.py",
-            "Engineering Memory",
             "quality_status",
             "--write-baseline",
             "--strict",
             "seal_contract.py",
+            "orchestrate_evidence.py",
+            "core-reset-release-eval",
             "连续两次有界采集",
             "材料元数据变化",
             "新发现的 Ignored 新增",
@@ -685,7 +989,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
         ROOT / "docs" / "architecture.md": (
             "intelligence.py",
             "risk_assessment",
-            "relevant entries",
+            "Core never reads",
+            "separately installed `rootloom-memory`",
             "rootloom-change-baseline-v3",
             "rootloom-change-baseline-v4",
             "schema_revision: 5",
@@ -699,11 +1004,14 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "policy_provenance",
             "reintake-required",
             "skip-worktree",
+            "orchestrate_evidence.py",
+            "Direct is a bounded fast",
         ),
         ROOT / "docs" / "architecture.zh-CN.md": (
             "intelligence.py",
             "risk_assessment",
-            "相关性选择",
+            "Rootloom Core 永远不读取",
+            "单独安装的 `rootloom-memory`",
             "rootloom-change-baseline-v3",
             "rootloom-change-baseline-v4",
             "schema_revision: 5",
@@ -717,6 +1025,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "policy_provenance",
             "reintake-required",
             "skip-worktree",
+            "orchestrate_evidence.py",
+            "Direct 是有边界的快速路径",
         ),
         ROOT / "docs" / "decisions" / "2026-07-14-tiered-authorization-modes.md": (
             "Status: accepted",
@@ -759,11 +1069,36 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "reintake-required",
             "verified-quality layer",
         ),
+        ROOT / "docs" / "decisions" / "2026-07-29-rootloom-4-core-reset.md": (
+            "Status: accepted",
+            "exactly four public Skills",
+            "rootloom-memory",
+            "Baseline v2–v4",
+            "Summary revision 5",
+            "behavioral matrix",
+        ),
+        ROOT / "docs" / "decisions" / "2026-07-29-rootloom-4.1-efficiency-loop.md": (
+            "Status: accepted",
+            "three repetitions",
+            "orchestrate_evidence.py",
+            "Baseline v2–v4",
+            "package-script",
+        ),
+        ROOT / "docs" / "migration-4.1.md": (
+            "orchestrate_evidence.py",
+            "core-reset-release-eval",
+            "semantic-review-confirmed",
+        ),
+        ROOT / "docs" / "migration-4.1.zh-CN.md": (
+            "orchestrate_evidence.py",
+            "core-reset-release-eval",
+            "semantic-review-confirmed",
+        ),
         PLUGIN / "AGENTS.md": (
             "exact integer `version: 1`",
             "SessionStart project-context Hook is read-only",
         ),
-        SKILLS / "engineering-change" / "AGENTS.md": (
+        EVIDENCE / "AGENTS.md": (
             "wire formats are frozen",
             "reintake-required",
         ),
@@ -771,7 +1106,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Public presets are only",
             "`autonomy` is the canonical",
         ),
-        SKILLS / "project-memory" / "AGENTS.md": (
+        MEMORY_SKILLS / "project-memory" / "AGENTS.md": (
             "Project Memory is experimental",
         ),
         ROOT / "CONTRIBUTING.md": (
@@ -795,7 +1130,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Single Action",
             "Standard",
             "Full",
-            "Personal Core",
+            "Four-entry Core",
+            "Rootloom Memory",
             "Archived Assurance Edition",
             "Inspectable",
         ),
@@ -804,7 +1140,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "本条命令",
             "普通权限",
             "所有权限",
-            "个人核心",
+            "四入口核心",
+            "根织记忆",
             "已归档保障版",
             "可检查",
         ),
@@ -825,13 +1162,23 @@ def validate_personal_contracts(errors: list[str]) -> None:
         if forbidden in ci:
             errors.append(f"CI retains Assurance-only surface: {forbidden}")
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-    for target in ("check:", "validate:", "test:", "compatibility-smoke:", "telemetry-check:"):
+    for target in (
+        "check:",
+        "validate:",
+        "test:",
+        "compatibility-smoke:",
+        "telemetry-check:",
+        "core-reset-eval:",
+    ):
         if target not in makefile:
             errors.append(f"Makefile is missing {target}")
 
 
 def validate_python(errors: list[str]) -> None:
-    for path in sorted((PLUGIN, ROOT / "tests", ROOT / "scripts"), key=str):
+    for path in sorted(
+        (PLUGIN, MEMORY_PLUGIN, ROOT / "tests", ROOT / "scripts", ROOT / "evals"),
+        key=str,
+    ):
         candidates = path.rglob("*.py") if path.is_dir() else ()
         for candidate in candidates:
             if "__pycache__" in candidate.parts:
@@ -886,14 +1233,13 @@ def validate_web_telemetry(errors: list[str]) -> None:
         elif hashlib.sha256(auth_key.encode()).hexdigest() != VIBELOFT_AUTH_KEY_SHA256:
             errors.append("VibeLoft browser auth key differs from the configured product credential")
 
-    html_entries = sorted(path for path in ROOT.rglob("*.html") if ".git" not in path.parts)
+    files = repository_files()
+    html_entries = [path for path in files if path.suffix.lower() == ".html"]
     if html_entries != [index]:
         errors.append("GitHub Pages must keep one global HTML entry with one telemetry initializer")
 
     credential_paths: list[Path] = []
-    for path in ROOT.rglob("*"):
-        if not path.is_file() or ".git" in path.parts:
-            continue
+    for path in files:
         if path.suffix.lower() not in {".css", ".html", ".js", ".json", ".md", ".py", ".yml"}:
             continue
         try:
@@ -1009,9 +1355,7 @@ def validate_secrets(errors: list[str]) -> None:
         ".yaml",
         ".yml",
     }
-    for path in ROOT.rglob("*"):
-        if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
-            continue
+    for path in repository_files():
         if "tests" in path.parts:
             continue
         if path.suffix.lower() not in suffixes and path.name not in {"Makefile", "AGENTS.md"}:
@@ -1030,7 +1374,9 @@ def main() -> int:
     errors: list[str] = []
     validate_marketplace(errors)
     validate_manifest(errors)
+    validate_memory_manifest(errors)
     validate_skills(errors)
+    validate_core_reset_eval(errors)
     validate_hooks(errors)
     validate_personal_contracts(errors)
     validate_python(errors)
@@ -1043,7 +1389,7 @@ def main() -> int:
         for error in errors:
             print(f"ERROR: {error}")
         return 1
-    print("Rootloom Personal Core repository validation passed.")
+    print("Rootloom Core repository validation passed.")
     return 0
 
 

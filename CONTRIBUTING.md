@@ -29,11 +29,14 @@ There are no runtime or test dependencies outside the Python standard library.
 
 ```text
 .agents/plugins/marketplace.json       Git marketplace catalog
-plugins/rootloom/       Installable Codex plugin
+plugins/rootloom/                      Installable four-entry Core plugin
   .codex-plugin/plugin.json            Plugin metadata
   assets/system/                       Installable global guidance and command Rules
   hooks/                               Optional read-only SessionStart project context
-  skills/                              Personal workflow, memory, setup, guidance, review, and risk Skills
+  skills/                              Change, Review, Project Guidance, and Setup
+  resources/evidence/                  Explicit Analyzer/Baseline/Seal/Finalizer helpers
+experiments/rootloom-memory/           Separately installable experimental Memory plugin
+evals/core-reset/                      3.4 versus 4.0 structural and behavioral ablation
 tests/                                 Unit and live integration checks
 scripts/validate_repo.py               Repository contract validation
 docs/                                  Design and troubleshooting docs

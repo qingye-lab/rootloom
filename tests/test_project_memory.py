@@ -13,14 +13,14 @@ from unittest import mock
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = (
     REPO_ROOT
-    / "plugins"
-    / "rootloom"
+    / "experiments"
+    / "rootloom-memory"
     / "skills"
     / "project-memory"
     / "scripts"
     / "project_memory.py"
 )
-sys.path.insert(0, str(REPO_ROOT / "plugins" / "rootloom" / "lib"))
+sys.path.insert(0, str(REPO_ROOT / "experiments" / "rootloom-memory" / "lib"))
 import rootloom_memory
 
 

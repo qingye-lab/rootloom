@@ -1,0 +1,6 @@
+interface:
+  display_name: "Project Guidance"
+  short_description: "Seed, refresh, refine, or validate AGENTS.md guidance"
+  default_prompt: "Use $project-guidance to seed, refresh, refine, or validate this repository's guidance."
+policy:
+  allow_implicit_invocation: true

@@ -30,7 +30,7 @@
 
 ## What is Rootloom?
 
-Rootloom is a local plugin for OpenAI Codex. It is not another coding agent and it does not replace your editor, tests, or CI. It gives Codex a small set of Skills for changing code, reviewing changes, maintaining repository guidance, and—when you explicitly ask for it—capturing a machine-readable evidence bundle.
+Rootloom is a local plugin for OpenAI Codex. It is not another coding agent and it does not replace your editor, tests, or CI. It exposes four Skills for changing code, reviewing changes, maintaining repository guidance, and managing optional setup. Governed and machine-evidence work are modes of Change, not extra public workflows.
 
 You still describe the task in plain language. Rootloom changes how Codex approaches it:
 
@@ -105,14 +105,13 @@ That is Rootloom's everyday path. You do not need an evidence bundle, global set
 
 | You want Codex to… | Use | When to reach for it |
 | --- | --- | --- |
-| Build, fix, or refactor ordinary code | `$operating-coding-change` | The default for daily implementation |
+| Build, fix, refactor, migrate, deploy, or capture strict evidence | `$operating-coding-change` | The single implementation entry; it routes Direct, Scoped, Governed, Evidence, and External Action modes |
 | Review a diff, PR, migration, or design without editing | `$operating-code-review` | You want findings and evidence, not a patch |
-| Handle a public API, migration, security, infrastructure, release, or destructive change | `$operating-high-risk-change` | A wrong change would have a meaningful blast radius |
-| Create or improve repository `AGENTS.md` guidance | `$seed-project-guidance`, then `$refine-project-guidance` | Project-specific commands or invariants should persist |
-| Capture bounded state and a machine-readable evidence summary | `$engineering-change` | You explicitly need a stronger review record |
-| Retrieve or record a durable project lesson | `$project-memory` | Experimental; current repository evidence still wins |
+| Seed, refresh, refine, or validate repository `AGENTS.md` | `$project-guidance` | Project commands or durable invariants should persist |
+| Install, upgrade, inspect, or roll back optional global setup | `$setup-rootloom` | You want cross-project guidance or Autonomy Rules |
 
-These Skills are alternatives and layers, not a checklist. Start with the lightest one that fits the task.
+Rootloom Core always presents these four entries. Change loads detailed governed,
+external-action, verification, or Evidence References only when the task requires them.
 
 ## How an ordinary change works
 
@@ -150,7 +149,8 @@ The full scenario and executable regression are documented in [The command passe
 
 ## When you need stronger evidence
 
-Most tasks should stay on the normal edit-and-test path. When a review or high-risk change needs a reproducible local record, invoke `$engineering-change` explicitly.
+Most tasks should stay on the normal edit-and-test path. When a change needs a
+reproducible local record, ask `$operating-coding-change` explicitly for Evidence Mode.
 
 The optional evidence path can bind:
 
@@ -162,12 +162,33 @@ The optional evidence path can bind:
 
 It produces a local bundle containing the captured patch, test log, and machine-readable summary. This is an inspectable review record, not a security proof or an immutable audit system. See [Architecture](docs/architecture.md) and [Maturity and guarantees](docs/maturity.md) for the exact contract.
 
+For the usual strict intake → edit → finalize loop, `resources/evidence/orchestrate_evidence.py`
+offers `prepare` and `finish`. It composes the existing intake, sealed contract, and
+finalizer without changing their wire formats. `finish` still requires an explicit
+semantic-review assertion; advanced callers can keep using the low-level helpers.
+
 <details>
 <summary><strong>Technical contract reference</strong></summary>
 
-Rootloom Personal Core remains **An inspectable personal engineering workflow for Codex.** Its optional layers are Optional Autonomy, Optional Evidence, and Experimental Project Memory (also exposed through `$project-memory`). Project Memory is advisory; repository evidence remains authoritative.
+Rootloom 4 Core remains **An inspectable personal engineering workflow for Codex.**
+Its public surface is Change, Review, Project Guidance, and Setup. Optional Autonomy is
+installed through Setup; deterministic Evidence is an explicit Change mode. Experimental
+Project Memory is a separate plugin and repository evidence remains authoritative.
 
-The opt-in `$engineering-change` path uses `analyze_change.py` for advisory analysis. `analyze_change.py --write-baseline` can write analyzer-only evidence, while governed intake publishes an exact contract with `seal_contract.py`. Strict review uses `--strict`; machine consumers should read `quality_status` and the stable capability field `evidence_complete`. `REVIEW_EVIDENCE_COMPLETE` means the evidence chain is complete, while `REVIEW_REQUIRED_WITH_REDACTIONS` means material redaction prevents that claim.
+The opt-in Evidence path uses `resources/evidence/analyze_change.py` for advisory analysis.
+`analyze_change.py --write-baseline` can write analyzer-only evidence, while governed
+intake publishes an exact contract with `seal_contract.py`. Strict review uses
+`--strict`; machine consumers should read `quality_status` and the stable capability
+field `evidence_complete`. `REVIEW_EVIDENCE_COMPLETE` means the evidence chain is
+complete, while `REVIEW_REQUIRED_WITH_REDACTIONS` means material redaction prevents
+that claim.
+
+Core Reset v2 records actual Codex completion-token usage, exact mode/Reference routes,
+and repeated isolated runs. A structural reduction is useful during development, but a
+formal 4.1 candidate needs a scored v2 matrix with at least three repetitions; see
+[the 4.1 efficiency decision](docs/decisions/2026-07-29-rootloom-4.1-efficiency-loop.md).
+Run `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
+to enforce that formal gate.
 
 Repository state is accepted only after **two consecutive bounded captures** agree. Each capture lifecycle is bounded by `--max-capture-seconds`. A **material metadata change**, including a **newly discovered ignored addition**, activates metadata-only quarantine before ordinary content capture. Classification uses `is_sensitive_material_path`; Rootloom is not a content-aware secret scanner.
 
@@ -179,7 +200,9 @@ Evidence and bundle paths must be outside both the repository worktree and the r
 
 ## Optional personal setup
 
-Installing Rootloom only exposes its Skills. It does **not** write `~/.codex/AGENTS.md`, install command Rules, enable a Hook, run an analyzer, or read Project Memory.
+Installing Rootloom only exposes its four Skills. It does **not** write
+`~/.codex/AGENTS.md`, install command Rules, enable a Hook, run Evidence helpers, or
+install/read Project Memory.
 
 If you want Rootloom's working agreement across projects, ask for the optional setup explicitly:
 
@@ -205,14 +228,31 @@ Specification tools such as [GitHub Spec Kit](https://github.com/github/spec-kit
 ## Product shape
 
 ```text
-Rootloom Personal Core
-├── Core: Change / Review / Guidance
+Rootloom Core
+├── Change: Direct / Scoped / Governed / Evidence
+├── Review
+├── Project Guidance
+├── Setup
 ├── Optional Autonomy: authorization modes / Command Rules
-├── Optional Evidence: Analyzer / Baseline / Contract / Seal / Finalizer
-└── Experimental: Project Memory
+└── Optional Evidence resources: Analyzer / Baseline / Contract / Seal / Finalizer
+
+Rootloom Memory
+└── Separate experimental plugin
 ```
 
 The unmaintained 1.2.19 implementation is preserved as the [Archived Assurance Edition](https://github.com/liyanqing90/rootloom/tree/codex/enterprise-assurance). Human approval state machines, immutable audit chains, multi-agent audit runners, and recovery journals are not part of `main`.
+
+## Optional Rootloom Memory
+
+Project Memory is no longer discovered by Core. Install it only when you want explicit,
+repository-owned historical lessons:
+
+```bash
+codex plugin add rootloom-memory@rootloom
+```
+
+Its `$project-memory` Skill preserves `rootloom-project-memory-v1`, remains advisory,
+and never overrides current source, tests, schemas, or runtime evidence.
 
 ## Documentation
 
@@ -221,6 +261,8 @@ The unmaintained 1.2.19 implementation is preserved as the [Archived Assurance E
 - [Maturity and guarantees](docs/maturity.md)
 - [Guidance design](docs/guidance-design.md)
 - [Troubleshooting](docs/troubleshooting.md)
+- [Migrate from Rootloom 3.x to 4.0](docs/migration-4.0.md)
+- [Migrate from Rootloom 4.0 to 4.1](docs/migration-4.1.md)
 - [Contributing](CONTRIBUTING.md)
 
 ## Website telemetry

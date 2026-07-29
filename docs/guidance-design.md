@@ -70,7 +70,12 @@ Outside Plan sessions, the SessionStart Hook may inject at most 4 KiB of regener
 
 The temporary renderer deliberately omits the full source-of-truth inventory, top-level map, module candidates, and generic verification contract. The complete persistent renderer remains available only through explicit seeding.
 
-Only an explicit `$seed-project-guidance` request persists a managed block. The user-owned section below it may contain only durable, evidence-cited invariants such as ownership direction, generated-code boundaries, public or persisted contracts, and canonical architecture or migration documents. Experimental `.project-memory/` may complement guidance with reviewable risks and failure lessons; it never replaces `AGENTS.md` authority or current repository evidence.
+Only an explicit `$project-guidance` request persists a managed block. The user-owned
+section below it may contain only durable, evidence-cited invariants such as ownership
+direction, generated-code boundaries, public or persisted contracts, and canonical
+architecture or migration documents. The separately installed `rootloom-memory` plugin
+may complement guidance with reviewable risks and failure lessons; it never replaces
+`AGENTS.md` authority or current repository evidence.
 
 Nested guidance is created lazily. A folder deserves its own `AGENTS.md` only when it has a distinct manifest, commands, ownership, contracts, or operational rules. Ordinary directories and individual files do not.
 

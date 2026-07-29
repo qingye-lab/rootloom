@@ -2,7 +2,7 @@
 
 ## 项目指导 Hook 没有执行
 
-确认已安装 personal 或 guidance preset，并且 `~/.codex/.rootloom/components.json` 同时包含精确整数 `version: 1` 与托管布尔值 `project-guidance-hook: true`。策略缺失、损坏、类型错误、版本不支持或为符号链接时 Hook 会关闭。Hook 只注入临时 Context，绝不写入 `AGENTS.md`；需要持久化时显式调用 `$seed-project-guidance`。插件或 setup 变化后新建 Codex 任务，并重新检查 `/hooks`。
+确认已安装 personal 或 guidance preset，并且 `~/.codex/.rootloom/components.json` 同时包含精确整数 `version: 1` 与托管布尔值 `project-guidance-hook: true`。策略缺失、损坏、类型错误、版本不支持或为符号链接时 Hook 会关闭。Hook 只注入临时 Context，绝不写入 `AGENTS.md`；需要持久化时显式调用 `$project-guidance`。插件或 setup 变化后新建 Codex 任务，并重新检查 `/hooks`。
 
 仓库未被平台信任时扫描器也会跳过。`ROOTLOOM_ALLOW_UNTRUSTED=1` 仅用于受控测试。
 
@@ -14,7 +14,7 @@
 
 ## Setup 中途停止
 
-Personal Core 提供逐文件原子写入与修改前备份，不提供恢复日志。运行：
+Rootloom Core 提供逐文件原子写入与修改前备份，不提供恢复日志。运行：
 
 ```bash
 python3 <setup-skill>/scripts/setup_rootloom.py status
@@ -40,7 +40,10 @@ Rollback 会保护 setup 后的修改。手动保留或合并当前文件，把�
 
 ## 风险扫描过严或过松
 
-检查 `analyze_change.py` 输出中的 `signals`、`changed_paths`、匹配记忆与 `confidence`。修改前传入预期 `--path`，让文档/测试和产品代码得到区分。输出 Tier 是建议式最低下限：当前语义证据仍可继续提高，但 `--declared-risk` 与 finalizer 的 `--risk` 都不能压低它。可重复误报应通过聚焦扫描器回归测试修正，而不是隐藏信号。
+检查 `analyze_change.py` 输出中的 `signals`、`changed_paths` 与 `confidence`。
+修改前传入预期 `--path`，让文档/测试和产品代码得到区分。输出 Tier 是建议式
+最低下限：当前语义证据仍可继续提高，但 `--declared-risk` 与 Finalizer 的
+`--risk` 都不能压低它。可重复误报应通过聚焦扫描器回归测试修正，而不是隐藏信号。
 
 ## 验证计划显示 suggested-not-executed
 
@@ -52,8 +55,13 @@ Rollback 会保护 setup 后的修改。手动保留或合并当前文件，把�
 
 ## 项目记忆过期或损坏
 
-仓库证据优先。`context` 默认排除过期、已解决和已替代匹配，并把它们列在 `stale`；只有调查历史时才使用 `--include-stale`。通过显式 `set-status` 调整生命周期，不要删除经验。经过审查后修正损坏的 `.project-memory/`；辅助工具拒绝未知格式、过大集合、不安全路径、符号链接或无效条目，且不会静默迁移模糊内容。
+请单独安装 `rootloom-memory`；Core 不读取 `.project-memory/`。仓库证据优先。
+其 `context` 命令默认排除过期、已解决和已替代匹配，并把它们列在 `stale`；
+只有调查历史时才使用 `--include-stale`。通过显式 `set-status` 调整生命周期，
+不要删除经验。辅助工具拒绝未知格式、过大集合、不安全路径、符号链接或无效条目，
+且不会静默迁移模糊内容。
 
 ## 我需要旧 Human Review 或严格 Runner
 
-这些能力不是 Personal Core 的隐藏开关。请使用保留 Rootloom 1.2.19 的 `codex/enterprise-assurance`。安装另一个产品前，使用对应版本回滚当前 setup。
+这些能力不是 Rootloom Core 的隐藏开关。请使用保留 Rootloom 1.2.19 的
+`codex/enterprise-assurance`。安装另一个产品前，使用对应版本回滚当前 Setup。

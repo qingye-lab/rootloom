@@ -1,6 +1,0 @@
-interface:
-  display_name: "Refine Project Guidance"
-  short_description: "Distill durable project invariants into AGENTS.md"
-  default_prompt: "Use $refine-project-guidance to audit and polish this repository's AGENTS.md without adding documentation noise."
-policy:
-  allow_implicit_invocation: true

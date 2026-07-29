@@ -1,7 +1,7 @@
 {
   "name": "rootloom",
-  "version": "3.4.0",
-  "description": "Make OpenAI Codex show its work: scoped changes, root-cause review, explicit guidance, and evidence-honest verification.",
+  "version": "4.1.0",
+  "description": "Four focused OpenAI Codex Skills for inspectable change, review, project guidance, and setup.",
   "author": {
     "name": "liyanqing",
     "url": "https://github.com/liyanqing90"
@@ -20,8 +20,6 @@
     "agent-skills",
     "openai-codex",
     "personal-engineering",
-    "project-memory",
-    "engineering-memory",
     "risk-analysis",
     "root-cause-analysis",
     "software-engineering",
@@ -32,14 +30,14 @@
   "interface": {
     "displayName": "Rootloom",
     "shortDescription": "Scoped, evidence-honest engineering for OpenAI Codex.",
-    "longDescription": "Rootloom is a local, inspectable OpenAI Codex engineering workflow for scoped changes, root-cause review, explicit AGENTS.md guidance, and honest verification records. Everyday Change, Review, and Guidance stay lightweight; Autonomy and bounded Evidence are optional, and Project Memory remains experimental.",
+    "longDescription": "Rootloom is a local, inspectable OpenAI Codex engineering workflow with four public Skills: Change, Review, Project Guidance, and Setup. Governed and Evidence modes load only through Change; optional Project Memory is installed separately.",
     "developerName": "liyanqing",
     "category": "Productivity",
     "capabilities": [
       "Automation",
       "Write",
       "Review",
-      "Experimental Project Memory"
+      "Project Guidance"
     ],
     "websiteURL": "https://github.com/liyanqing90/rootloom",
     "brandColor": "#8A78FF",
@@ -47,9 +45,9 @@
     "logo": "./assets/logo.svg",
     "logoDark": "./assets/logo-dark.svg",
     "defaultPrompt": [
-      "Fix this defect at its owning boundary and verify the primary, invariant, and adjacent paths.",
-      "Review this change and separate suggested checks from verification that actually ran.",
-      "Create concise, evidence-backed AGENTS.md guidance for this repository."
+      "Use Change to route this task as direct, scoped, governed, or evidence-backed work.",
+      "Review this change and separate findings from suggested or executed verification.",
+      "Seed, refine, or validate concise evidence-backed AGENTS.md guidance."
     ]
   }
 }

@@ -30,7 +30,7 @@
 
 ## Rootloom 是什么？
 
-Rootloom 是一个运行在本地的 OpenAI Codex 插件。它不是另一个 Coding Agent，也不会取代编辑器、测试或 CI。它为 Codex 提供一组 Skills，用于修改代码、审查变更、维护仓库指导；当你明确提出要求时，还能生成机器可读的证据包。
+Rootloom 是一个运行在本地的 OpenAI Codex 插件。它不是另一个 Coding Agent，也不会取代编辑器、测试或 CI。它只暴露四个 Skills：修改、审查、项目指导和设置。高风险治理与机器证据是 Change 的内部模式，不再是额外公共入口。
 
 你仍然用自然语言描述任务。Rootloom 改变的是 Codex 处理任务的顺序：
 
@@ -105,14 +105,13 @@ Worker 在取消后仍能重连，最终会出现两个活跃 Session。
 
 | 你希望 Codex…… | 使用 | 适用场景 |
 | --- | --- | --- |
-| 实现、修复或重构普通代码 | `$operating-coding-change` | 日常开发的默认入口 |
+| 实现、修复、重构、迁移、部署或生成严格证据 | `$operating-coding-change` | 唯一修改入口；自动路由 Direct、Scoped、Governed、Evidence 与 External Action |
 | 只审查 Diff、PR、Migration 或设计，不修改文件 | `$operating-code-review` | 你需要结论与证据，而不是补丁 |
-| 处理公开 API、Migration、安全、基础设施、发布或破坏性修改 | `$operating-high-risk-change` | 改错后会产生明显影响范围 |
-| 创建或完善仓库 `AGENTS.md` 指导 | `$seed-project-guidance`，再用 `$refine-project-guidance` | 项目命令或不变量需要长期保留 |
-| 采集有界状态并生成机器可读证据摘要 | `$engineering-change` | 你明确需要更强的审查记录 |
-| 检索或记录可复用的项目经验 | `$project-memory` | 实验性功能；当前仓库证据始终优先 |
+| 创建、刷新、精炼或检查仓库 `AGENTS.md` | `$project-guidance` | 项目命令或持久不变量需要长期保留 |
+| 安装、升级、检查或回滚可选全局设置 | `$setup-rootloom` | 你需要跨项目指导或 Autonomy Rules |
 
-这些 Skills 是不同入口和可选层，不是一张必须全部完成的清单。先选能覆盖当前任务的最轻工作流。
+Rootloom Core 始终只展示这四个入口。Change 只有在风险和证据模式需要时，
+才按需加载治理、外部动作、验证或 Evidence Reference。
 
 ## 一次日常修改会怎样进行
 
@@ -150,7 +149,8 @@ Rootloom 在开发自身时遇到过一个很典型的例子：一条验证命�
 
 ## 需要更强证据时
 
-多数任务应该留在普通的“编辑—测试”路径上。如果一次审查或高风险修改需要可复现的本地记录，再明确调用 `$engineering-change`。
+多数任务应该留在普通的“编辑—测试”路径上。需要可复现的本地记录时，
+明确要求 `$operating-coding-change` 使用 Evidence Mode。
 
 这条可选证据路径可以绑定：
 
@@ -162,12 +162,29 @@ Rootloom 在开发自身时遇到过一个很典型的例子：一条验证命�
 
 最终会生成包含补丁、测试日志和机器可读摘要的本地 Bundle。它是一份可检查的审查记录，不是安全证明，也不是不可篡改的审计系统。精确合同参见[架构](docs/architecture.zh-CN.md)与[成熟度和保证](docs/maturity.zh-CN.md)。
 
+对于常见的严格 Intake → 编辑 → Finalize 流程，`resources/evidence/orchestrate_evidence.py`
+提供 `prepare` 与 `finish`。它组合现有 Intake、Sealed Contract 和 Finalizer，不改变
+它们的 Wire Format；`finish` 仍要求显式确认已完成语义审查，高级调用方仍可使用底层 Helper。
+
 <details>
 <summary><strong>技术合同速查</strong></summary>
 
-Rootloom Personal Core 仍是**面向 Codex 的可检查个人工程工作流。** 可选层包括 Optional Autonomy、Optional Evidence 与 Experimental Project Memory（也可通过 `$project-memory` 使用）。其中 Engineering Memory 只提供线索，当前仓库证据始终优先。
+Rootloom 4 Core 仍是**面向 Codex 的可检查个人工程工作流。** 公共入口固定为
+Change、Review、Project Guidance 和 Setup。Optional Autonomy 通过 Setup 安装；
+确定性 Evidence 是显式 Change 模式。Experimental Project Memory 已拆为独立插件，
+当前仓库证据始终优先。
 
-显式启用的 `$engineering-change` 使用 `analyze_change.py` 做建议式分析。`analyze_change.py --write-baseline` 可写 Analyzer-only 证据；治理 Intake 则通过 `seal_contract.py` 发布精确合同。Strict Review 使用 `--strict`；机器消费方应读取 `quality_status` 与稳定能力字段 `evidence_complete`。`REVIEW_EVIDENCE_COMPLETE` 表示证据链完整，`REVIEW_REQUIRED_WITH_REDACTIONS` 表示材料脱敏阻止了这一声明。
+显式 Evidence 路径使用 `resources/evidence/analyze_change.py` 做建议式分析。
+`analyze_change.py --write-baseline` 可写 Analyzer-only 证据；治理 Intake 则通过
+`seal_contract.py` 发布精确合同。Strict Review 使用 `--strict`；机器消费方应读取
+`quality_status` 与稳定能力字段 `evidence_complete`。`REVIEW_EVIDENCE_COMPLETE`
+表示证据链完整，`REVIEW_REQUIRED_WITH_REDACTIONS` 表示材料脱敏阻止了这一声明。
+
+Core Reset v2 会记录实际 Codex 完成回合的 Token 用量、精确 Mode/Reference 路由以及
+隔离的重复运行。结构性缩减可用于开发期间，但正式 4.1 候选需要至少三轮的已评分 v2
+矩阵；详见[4.1 效率决策](docs/decisions/2026-07-29-rootloom-4.1-efficiency-loop.md)。
+使用 `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
+执行该正式门禁。
 
 仓库状态只有在**连续两次有界采集**一致后才会被接受；每个采集生命周期受 `--max-capture-seconds` 约束。任何**材料元数据变化**——包括**新发现的 Ignored 新增**——都会在普通内容采集前启用仅元数据隔离。分类使用 `is_sensitive_material_path`；Rootloom 不是内容感知型 Secret Scanner。
 
@@ -179,7 +196,8 @@ Evidence 与 Bundle 路径必须同时位于仓库 Worktree 和解析后的 Git 
 
 ## 可选的个人设置
 
-安装 Rootloom 只会暴露插件 Skills。它**不会**写入 `~/.codex/AGENTS.md`、安装命令 Rules、启用 Hook、运行 Analyzer 或读取 Project Memory。
+安装 Rootloom 只会暴露四个 Skills。它**不会**写入 `~/.codex/AGENTS.md`、
+安装命令 Rules、启用 Hook、运行 Evidence Helper，或安装/读取 Project Memory。
 
 如果希望在不同项目间使用 Rootloom 的工作协议，再明确提出设置请求：
 
@@ -205,14 +223,30 @@ Rootloom 有意保持克制：
 ## 产品组成
 
 ```text
-Rootloom Personal Core
-├── Core：Change / Review / Guidance
+Rootloom Core
+├── Change：Direct / Scoped / Governed / Evidence
+├── Review
+├── Project Guidance
+├── Setup
 ├── Optional Autonomy：授权模式 / Command Rules
-├── Optional Evidence：Analyzer / Baseline / Contract / Seal / Finalizer
-└── Experimental：Project Memory
+└── Optional Evidence Resources：Analyzer / Baseline / Contract / Seal / Finalizer
+
+Rootloom Memory
+└── 独立实验插件
 ```
 
 不再维护的 1.2.19 实现保存在 [Archived Assurance Edition](https://github.com/liyanqing90/rootloom/tree/codex/enterprise-assurance)。Human Review 状态机、不可篡改 Audit Chain、多代理审计 Runner 和 Recovery Journal 不属于 `main`。
+
+## 可选 Rootloom Memory
+
+Core 不再发现 Project Memory。只有明确需要仓库内历史经验时才单独安装：
+
+```bash
+codex plugin add rootloom-memory@rootloom
+```
+
+它的 `$project-memory` Skill 继续兼容 `rootloom-project-memory-v1`，始终只提供
+线索，不能覆盖当前 Source、Test、Schema 或 Runtime Evidence。
 
 ## 文档
 
@@ -221,6 +255,8 @@ Rootloom Personal Core
 - [成熟度与保证](docs/maturity.zh-CN.md)
 - [项目指导设计](docs/guidance-design.zh-CN.md)
 - [排障](docs/troubleshooting.zh-CN.md)
+- [从 Rootloom 3.x 迁移到 4.0](docs/migration-4.0.zh-CN.md)
+- [从 Rootloom 4.0 迁移到 4.1](docs/migration-4.1.zh-CN.md)
 - [参与贡献](CONTRIBUTING.zh-CN.md)
 
 ## 网站遥测

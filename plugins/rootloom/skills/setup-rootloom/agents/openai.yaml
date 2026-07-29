@@ -1,6 +1,6 @@
 interface:
   display_name: "Set Up Rootloom"
-  short_description: "Choose and install a Codex capability layer"
-  default_prompt: "Use $setup-rootloom to plan and apply the Personal Core preset safely."
+  short_description: "Plan, install, inspect, update, or roll back Rootloom"
+  default_prompt: "Use $setup-rootloom to plan, install, inspect, update, or roll back Rootloom safely."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

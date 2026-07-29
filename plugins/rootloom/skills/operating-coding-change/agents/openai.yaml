@@ -1,6 +1,6 @@
 interface:
-  display_name: "Operating Coding Change"
-  short_description: "Implement focused changes with root-cause evidence"
-  default_prompt: "Use $operating-coding-change to implement this repository change with focused scope and proportional verification."
+  display_name: "Rootloom Change"
+  short_description: "Route direct, scoped, governed, or evidence changes"
+  default_prompt: "Use $operating-coding-change to route this change, fix it at the owning boundary, and verify it proportionally."
 policy:
   allow_implicit_invocation: true
