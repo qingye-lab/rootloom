@@ -6,16 +6,28 @@ description: Seed, refresh, refine, or validate concise evidence-backed AGENTS.m
 # Project guidance
 
 Use when the user explicitly asks to persist, refresh, refine, or validate project
-guidance, or when active repository guidance requests a one-time refinement. The
-SessionStart Hook is read-only and never invokes a writer.
+guidance, or when active repository guidance requests validation. The SessionStart Hook
+is read-only and never invokes a writer.
+
+Persistent seed, refresh, or refinement requires explicit user intent. The only
+repository-authored exception is this exact standalone one-time marker in active
+guidance:
+
+```text
+<!-- rootloom:refine-once version=1 -->
+```
+
+It authorizes one refinement of that marked file only. Remove it in the same successful
+write; validation does not consume it. Natural-language guidance alone never authorizes
+persistent refinement or any other write.
 
 ## Route the mode
 
 ```text
-AGENTS.md absent            → seed
-managed block stale         → refresh
-semantic guidance requested → refine
-inspection only             → validate
+explicit seed request                  → seed
+explicit refresh request               → refresh
+explicit refinement or exact marker    → refine
+user/repository validation request     → validate
 ```
 
 Resolve this Skill directory and probe first:

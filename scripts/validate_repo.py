@@ -419,6 +419,7 @@ def validate_core_reset_eval(errors: list[str]) -> None:
                 "uncached_input_tokens",
                 "route_score",
                 "runtime_codex_home",
+                "PLUGIN_SKILL_DIRECTORY",
                 "MANAGED_GUIDANCE_START",
                 "rootloom-core-reset-mechanical-v3",
             ),
@@ -457,6 +458,51 @@ def validate_core_reset_eval(errors: list[str]) -> None:
         or example.get("repetitions") != 3
     ):
         errors.append("Core Reset v2 result example differs")
+    retained = load_json(
+        ROOT / "evals" / "core-reset" / "results-4.1.0.json",
+        errors,
+    )
+    retained_runs = retained.get("runs")
+    retained_candidate = retained.get("candidate")
+    if (
+        retained.get("format") != "rootloom-core-reset-results-v2"
+        or retained.get("suite") != "rootloom-core-reset-eval-v2"
+        or retained.get("scoring") != "rootloom-core-reset-mechanical-v3"
+        or retained.get("repetitions") != 3
+        or not isinstance(retained_runs, list)
+        or len(retained_runs) != 126
+        or not isinstance(retained_candidate, dict)
+        or retained_candidate.get("root") != "plugins/rootloom"
+        or not re.fullmatch(
+            r"[0-9a-f]{64}",
+            str(retained_candidate.get("tree_sha256", "")),
+        )
+    ):
+        errors.append("retained 4.1 behavioral result contract differs")
+    elif len(
+        {
+            (
+                run.get("variant"),
+                run.get("scenario"),
+                run.get("repetition"),
+            )
+            for run in retained_runs
+            if isinstance(run, dict)
+        }
+    ) != 126:
+        errors.append("retained 4.1 behavioral result cells must be unique")
+    retained_report = (
+        ROOT / "evals" / "core-reset" / "reports" / "4.1.0.md"
+    ).read_text(encoding="utf-8")
+    for marker in (
+        "formal behavioral gate not accepted",
+        "14 scenarios × 3 variants × 3 repetitions = 126",
+        "Reference overreach",
+        "Routine uncached input",
+        "closed on the two efficiency",
+    ):
+        if marker not in retained_report:
+            errors.append(f"retained 4.1 report is missing {marker!r}")
 
 
 def validate_hooks(errors: list[str]) -> None:
@@ -555,6 +601,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "`governed`",
             "`evidence`",
             "local callable/signature shape, file count, or dirty worktree alone",
+            "material root-cause uncertainty remaining after bounded",
+            "Initial cause uncertainty routes through bounded diagnosis",
             "symptom → trigger/state → owning boundary",
             "ROOT_CAUSE_ALIGNMENT",
             "Cause",
@@ -566,6 +614,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "seal_contract.py",
             "orchestrate_evidence.py",
             "finalize_change.py",
+            "single-command Evidence convenience path",
+            "heterogeneous governed evidence",
             "suggestions are plans",
             "--strict",
         ),
@@ -583,6 +633,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "refresh",
             "refine",
             "validate",
+            "<!-- rootloom:refine-once version=1 -->",
+            "Natural-language guidance alone never authorizes",
             "semantic-refinement.md",
             "seed_project_guidance.py",
         ),
@@ -943,6 +995,11 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "pages: write",
             "id-token: write",
             "GitHub Pages artifact must not contain symlinks",
+        ),
+        ROOT / ".github" / "workflows" / "release-evidence.yml": (
+            '      - "v*"',
+            "make core-reset-release-eval",
+            "CORE_RESET_RESULTS=evals/core-reset/results-4.1.0.json",
         ),
         ROOT / "PRODUCT.md": (
             "## Register",

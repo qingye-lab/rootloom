@@ -29,6 +29,11 @@ MANUAL_SELECTION = re.compile(
 PLUGIN_MARKDOWN = re.compile(
     r"((?:[A-Za-z]:/|/|plugins/cache/rootloom/rootloom/)[^\s\"']+\.md)"
 )
+PLUGIN_SKILL_DIRECTORY = re.compile(
+    r"((?:[A-Za-z]:/|/|plugins/cache/rootloom/rootloom/)"
+    r"[^\s\"']+/skills/[^/\s\"']+/)"
+)
+RELATIVE_REFERENCE = re.compile(r"\breferences/[A-Za-z0-9._/-]+\.md\b")
 MANAGED_GUIDANCE_START = re.compile(
     r"^<!-- rootloom:managed-start version=1(?: [^<>\r\n]*)? -->$",
     re.MULTILINE,
@@ -83,7 +88,21 @@ def activated_context(
         command = item.get("command", "").replace("\\", "/")
         if "plugins/cache/rootloom/rootloom/" not in command:
             continue
-        for match in PLUGIN_MARKDOWN.findall(command):
+        matches = set(PLUGIN_MARKDOWN.findall(command))
+        relative_references = set(RELATIVE_REFERENCE.findall(command))
+        for directory_match in PLUGIN_SKILL_DIRECTORY.findall(command):
+            directory = Path(directory_match)
+            if (
+                not directory.is_dir()
+                and codex_home is not None
+                and not directory.is_absolute()
+            ):
+                directory = codex_home / directory
+            for reference_match in relative_references:
+                candidate = directory / reference_match
+                if candidate.is_file():
+                    matches.add(str(candidate))
+        for match in matches:
             path = Path(match)
             if not path.is_file() and codex_home is not None and not path.is_absolute():
                 path = codex_home / path

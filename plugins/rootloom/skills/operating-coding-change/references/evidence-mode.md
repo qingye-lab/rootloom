@@ -6,6 +6,17 @@ an everyday prerequisite and does not authorize commands or prove semantic corre
 The deterministic helpers live under `plugins/rootloom/resources/evidence/`. Existing
 low-level CLIs and frozen evidence formats remain compatible.
 
+## Single-command convenience boundary
+
+The orchestrator is a single-command Evidence convenience path: use it only when one
+sealed verification command and one literal target genuinely cover the primary,
+owning-invariant, adjacent, and optional additional claims. It is not the default for
+heterogeneous governed evidence.
+
+Use the low-level lifecycle for multiple specialized commands or targets, multiple
+components, migrations, mixed-version checks, security boundaries, or build-plus-runtime
+proof. Do not compress distinct evidence into one command merely to use the shortcut.
+
 For advisory analysis:
 
 ```bash
@@ -47,8 +58,7 @@ python3 <plugin-root>/resources/evidence/orchestrate_evidence.py finish \
 Use repeatable `--claim CLAIM-ID=EXPECTED-EVIDENCE` during `prepare` when the
 same sealed verification command covers an additional governed behavior. The target
 must occur literally in that command; this prevents an unbound passing command from
-being recorded as claim evidence. For distinct specialized verification commands, use
-the compatible low-level lifecycle below.
+being recorded as claim evidence.
 
 For custom intake, sensitive-path policy, or dangerous-deletion handling, use the
 compatible low-level lifecycle:

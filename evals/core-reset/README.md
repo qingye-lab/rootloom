@@ -84,3 +84,15 @@ is a stability aid, not an inference that the suite represents all repositories.
 No behavioral result is inferred from prompt length, structural bytes, or a passing
 unit test. Record candidate matrices only after reviewing fixture contamination,
 scoring logic, and the final candidate digest.
+
+## Retained 4.1.0 candidate evidence
+
+The repository retains the sanitized
+[`results-4.1.0.json`](results-4.1.0.json) matrix and its
+[`4.1.0 report`](reports/4.1.0.md). The result contains all 126 cells and binds the
+final evaluated Core digest. It reuses 84 immutable No Rootloom/3.4 baseline runs,
+rescored with the current scorer, and combines them with 42 fresh candidate runs.
+
+The report is authoritative about the outcome: route and quality checks pass, while
+the complete formal behavioral gate fails two efficiency thresholds. Version-tag
+workflow enforcement therefore fails closed for this candidate.

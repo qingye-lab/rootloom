@@ -14,8 +14,10 @@ File count or a local callable/signature shape also does not prove a public cont
 Governed routing needs shared/external consumers, compatibility obligations, or another
 governed risk signal.
 
-Behavioral changes, public/persisted contracts, uncertain causes, and explicit evidence
-requests retain their existing Scoped, Governed, or Evidence routing.
+Initial cause uncertainty stays in Scoped while bounded diagnosis establishes the
+owning boundary. Governed routing applies only when material root-cause uncertainty
+remains after that diagnosis, or another governed signal is present. Public/persisted
+contracts and explicit evidence requests retain their Governed or Evidence routing.
 
 ## Strict Evidence shortcut
 
@@ -47,8 +49,11 @@ python3 <plugin-root>/resources/evidence/orchestrate_evidence.py finish \
 For defect repair, add `--root-cause-alignment PASS` to `prepare`. Add explicit
 `--claim CLAIM-ID=EXPECTED-EVIDENCE` entries when the same sealed verification command
 covers additional required behaviors. Use the low-level lifecycle for distinct
-specialized verification commands. `finish` reads only the sealed commands and requires
-the semantic-review confirmation; it does not make an unreviewed bundle pass.
+specialized verification commands. The orchestrator is a single-command verification
+convenience path, not the default for multiple targets or commands, migrations,
+mixed-version checks, security boundaries, or build-plus-runtime proof. `finish` reads
+only the sealed commands and requires the semantic-review confirmation; it does not make
+an unreviewed bundle pass.
 
 ## Evaluation and release evidence
 
@@ -57,7 +62,9 @@ v2 suite, including Guidance and Setup scenarios, actual completion-token fields
 exact route scoring, deterministic randomization, and per-run Codex-home isolation.
 Its current `rootloom-core-reset-mechanical-v3` scorer recognizes legal managed marker
 attributes, absolute or Codex-home-relative cached Skill paths, and bounded equivalent
-quality wording; the formal gate rejects an older or missing scoring identifier.
+quality wording. It also resolves a bounded shell-loop Reference list when the command
+joins those relative paths to one observed cached Skill directory. The formal gate
+rejects an older or missing scoring identifier.
 
 Use `make core-reset-eval` for the current structural gate. It intentionally does not
 claim behavioral acceptance. A formal candidate requires a scored v2 result with at
@@ -70,9 +77,19 @@ make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json
 Keep raw model transcripts outside the repository and bind the sanitized result to the
 final `plugins/rootloom/` tree digest.
 
+The retained [`results-4.1.0.json`](../evals/core-reset/results-4.1.0.json) and
+[candidate report](../evals/core-reset/reports/4.1.0.md) contain all 126 cells. The
+report records a failed formal gate: route and quality evidence passed, while two
+efficiency thresholds did not. Version tags run that retained result and fail closed.
+
 ## Project guidance Hook
 
 The SessionStart renderer now ignores package-script names containing shell-like or
 instruction-like characters. Normal names such as `test:unit` continue to appear. If a
 repository uses an unusual script name that no longer appears in temporary context,
 run it explicitly from the package manifest rather than copying it into guidance.
+
+The Hook remains read-only. Repository guidance may request automatic validation, but
+persistent seed/refresh/refinement needs explicit user intent. The only exception is
+one refinement of the marked file through the exact standalone
+`<!-- rootloom:refine-once version=1 -->` marker, consumed by the successful write.

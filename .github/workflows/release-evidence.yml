@@ -1,0 +1,34 @@
+name: Release evidence
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-evidence-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  core-reset:
+    name: Rootloom 4.1 behavioral gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Verify retained Rootloom 4.1 behavior evidence
+        run: >-
+          make core-reset-release-eval
+          CORE_RESET_RESULTS=evals/core-reset/results-4.1.0.json

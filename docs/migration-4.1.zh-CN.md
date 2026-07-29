@@ -12,8 +12,9 @@ Governed 或 Evidence Mode；它仍是必须精确保留的已有工作。
 文件数量或局部 Callable/Signature 形态同样不能证明公共契约存在；Governed 路由必须
 有共享/外部消费者、兼容义务或其他 Governed 风险信号。
 
-行为变更、公开/持久契约、不确定根因和显式证据请求仍按原规则进入 Scoped、Governed 或
-Evidence 路由。
+初始根因未知时保持 Scoped，并通过有限诊断确定所属边界。只有诊断后仍存在材料级根因
+不确定性，或出现其他 Governed 信号时才升级；公开/持久契约与显式证据请求仍分别进入
+Governed 或 Evidence 路由。
 
 ## Strict Evidence 快捷路径
 
@@ -44,8 +45,9 @@ python3 <plugin-root>/resources/evidence/orchestrate_evidence.py finish \
 
 缺陷修复时，在 `prepare` 增加 `--root-cause-alignment PASS`。同一条已密封验证命令能够
 覆盖额外要求时，增加明确的 `--claim CLAIM-ID=EXPECTED-EVIDENCE`；如果需要彼此不同的专用
-验证命令，请使用底层生命周期。`finish` 只读取已密封的命令，并要求确认语义审查；它不会
-让未审查的 Bundle 变为通过。
+验证命令，请使用底层生命周期。Orchestrator 是单验证命令的便捷路径，不是多 Target/
+Command、迁移、Mixed-version、安全边界或 Build + Runtime 证明的默认入口。`finish`
+只读取已密封的命令，并要求确认语义审查；它不会让未审查的 Bundle 变为通过。
 
 ## 评测与发布证据
 
@@ -54,7 +56,8 @@ python3 <plugin-root>/resources/evidence/orchestrate_evidence.py finish \
 Home。
 当前 `rootloom-core-reset-mechanical-v3` Scorer 能识别合法的托管 Marker 属性、
 绝对或 Codex-home 相对的缓存 Skill 路径，以及有界的等价质量表述；正式门禁会拒绝
-缺少或使用旧 Scoring Identifier 的结果。
+缺少或使用旧 Scoring Identifier 的结果。若命令把一个有界 Shell Loop 中的相对
+Reference 列表连接到已观察到的缓存 Skill 目录，Scorer 也会解析这些路径。
 
 使用 `make core-reset-eval` 执行当前结构门禁；它有意不声称行为验收。正式候选需要一份
 至少三轮的已评分 v2 结果：
@@ -66,8 +69,17 @@ make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json
 原始模型 Transcript 保留在仓库外，并把净化后的结果绑定到最终
 `plugins/rootloom/` Tree Digest。
 
+仓库保留的 [`results-4.1.0.json`](../evals/core-reset/results-4.1.0.json) 与
+[候选报告](../evals/core-reset/reports/4.1.0.md)包含全部 126 个 Cell。报告记录正式
+门禁未通过：路由和质量证据通过，两项效率阈值未通过。版本 Tag 会运行该结果并失败关闭。
+
 ## Project Guidance Hook
 
 SessionStart Renderer 现在会忽略带有 Shell 风格或指令风格字符的 package-script 名称。
 `test:unit` 等正常名称仍会出现。若仓库使用不再出现在临时 Context 中的非常规 Script
 名称，请从 package manifest 显式运行它，不要把它复制到 Guidance 中。
+
+Hook 仍然只读。Repository Guidance 可以自动请求 Validate；持久 Seed/Refresh/Refine
+需要用户明确意图。唯一例外是独立且精确的
+`<!-- rootloom:refine-once version=1 -->` Marker，它只授权对标记文件进行一次 Refine，
+并由成功写入消费。

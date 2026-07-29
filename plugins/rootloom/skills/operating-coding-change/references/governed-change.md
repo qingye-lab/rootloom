@@ -20,6 +20,10 @@ For defects or incidents, record observed evidence, competing hypotheses, the ow
 path, violated invariant, and root cause. A complete repair requires evidence that
 explains the material symptoms and rejects plausible alternatives.
 
+An initially unknown cause is normal investigation, not automatic Tier 2 evidence.
+Escalate for uncertainty only after bounded diagnosis still leaves materially different
+owning boundaries, compatibility choices, risk assumptions, or repair scopes.
+
 Stop as `NO_GO` when cause, safe scope, compatibility, recovery, or required authority
 cannot be established. A reversible `MITIGATION` must name observability, rollback,
 residual risk, and its removal or follow-up condition.

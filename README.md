@@ -112,6 +112,10 @@ That is Rootloom's everyday path. You do not need an evidence bundle, global set
 
 Rootloom Core always presents these four entries. Change loads detailed governed,
 external-action, verification, or Evidence References only when the task requires them.
+Project Guidance may validate when active repository guidance requests inspection, but
+persistent seed, refresh, or refinement requires explicit user intent. A repository may
+authorize one refinement of one file only with the exact standalone
+`<!-- rootloom:refine-once version=1 -->` marker; prose alone never authorizes a write.
 
 ## How an ordinary change works
 
@@ -165,7 +169,9 @@ It produces a local bundle containing the captured patch, test log, and machine-
 For the usual strict intake → edit → finalize loop, `resources/evidence/orchestrate_evidence.py`
 offers `prepare` and `finish`. It composes the existing intake, sealed contract, and
 finalizer without changing their wire formats. `finish` still requires an explicit
-semantic-review assertion; advanced callers can keep using the low-level helpers.
+semantic-review assertion. This is a single-command verification convenience path:
+multiple targets or specialized commands, migrations, mixed-version checks, security
+boundaries, and build-plus-runtime proof use the low-level lifecycle.
 
 <details>
 <summary><strong>Technical contract reference</strong></summary>
@@ -189,6 +195,10 @@ formal 4.1 candidate needs a scored v2 matrix with at least three repetitions; s
 [the 4.1 efficiency decision](docs/decisions/2026-07-29-rootloom-4.1-efficiency-loop.md).
 Run `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
 to enforce that formal gate.
+The retained [4.1.0 candidate report](evals/core-reset/reports/4.1.0.md) records all
+126 cells: route and quality checks pass, but two efficiency thresholds do not. The
+version-tag workflow runs the retained result and therefore fails closed until a
+candidate satisfies the complete gate.
 
 Repository state is accepted only after **two consecutive bounded captures** agree. Each capture lifecycle is bounded by `--max-capture-seconds`. A **material metadata change**, including a **newly discovered ignored addition**, activates metadata-only quarantine before ordinary content capture. Classification uses `is_sensitive_material_path`; Rootloom is not a content-aware secret scanner.
 

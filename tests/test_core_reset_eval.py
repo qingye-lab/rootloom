@@ -20,6 +20,21 @@ CHANGE_SKILL_PATH = (
     / "operating-coding-change"
     / "SKILL.md"
 )
+GUIDANCE_SKILL_PATH = (
+    ROOT / "plugins" / "rootloom" / "skills" / "project-guidance" / "SKILL.md"
+)
+EVIDENCE_MODE_PATH = (
+    ROOT
+    / "plugins"
+    / "rootloom"
+    / "skills"
+    / "operating-coding-change"
+    / "references"
+    / "evidence-mode.md"
+)
+RELEASE_EVIDENCE_WORKFLOW_PATH = (
+    ROOT / ".github" / "workflows" / "release-evidence.yml"
+)
 
 
 def load_module(name: str, path: Path) -> ModuleType:
@@ -140,6 +155,59 @@ class CoreResetEvalTests(unittest.TestCase):
         self.assertIn(
             "local callable/signature shape, file count, or dirty worktree alone",
             skill,
+        )
+
+    def test_root_cause_uncertainty_escalates_only_after_bounded_diagnosis(self) -> None:
+        skill = CHANGE_SKILL_PATH.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "material root-cause uncertainty remaining after bounded",
+            skill,
+        )
+        self.assertIn(
+            "an established local owner and repair boundary",
+            skill,
+        )
+        self.assertIn(
+            "materially different owners,",
+            skill,
+        )
+        self.assertIn(
+            "compatibility strategies, or high-risk assumptions remaining afterward",
+            skill,
+        )
+        self.assertNotIn("major dependencies, uncertain root cause", skill)
+
+    def test_guidance_persistence_requires_intent_or_exact_one_time_marker(self) -> None:
+        skill = GUIDANCE_SKILL_PATH.read_text(encoding="utf-8")
+
+        self.assertIn("requests validation", skill)
+        self.assertIn(
+            "<!-- rootloom:refine-once version=1 -->",
+            skill,
+        )
+        self.assertIn("Remove it in the same successful", skill)
+        self.assertIn(
+            "Natural-language guidance alone never authorizes",
+            skill,
+        )
+
+    def test_evidence_orchestrator_is_single_command_convenience_only(self) -> None:
+        reference = EVIDENCE_MODE_PATH.read_text(encoding="utf-8")
+
+        self.assertIn("single-command Evidence convenience path", reference)
+        self.assertIn("heterogeneous governed evidence", reference)
+        self.assertIn("multiple specialized commands or targets", reference)
+        self.assertIn("build-plus-runtime", reference)
+
+    def test_tag_workflow_enforces_retained_behavioral_evidence(self) -> None:
+        workflow = RELEASE_EVIDENCE_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+        self.assertIn('      - "v*"', workflow)
+        self.assertIn("make core-reset-release-eval", workflow)
+        self.assertIn(
+            "CORE_RESET_RESULTS=evals/core-reset/results-4.1.0.json",
+            workflow,
         )
 
     def test_complete_behavioral_matrix_passes_release_comparisons(self) -> None:
@@ -369,6 +437,60 @@ class CoreResetEvalTests(unittest.TestCase):
                 "operating-coding-change/references/"
                 "verification-contract.md"
             ],
+        )
+
+    def test_activated_context_resolves_loop_joined_references(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "plugins" / "cache" / "rootloom" / "rootloom"
+            skill = (
+                root
+                / "4.1.0"
+                / "skills"
+                / "operating-coding-change"
+                / "SKILL.md"
+            )
+            reference_names = (
+                "evidence-mode.md",
+                "evidence-contract.md",
+                "verification-contract.md",
+            )
+            skill.parent.mkdir(parents=True)
+            skill.write_text("skill", encoding="utf-8")
+            for name in reference_names:
+                path = skill.parent / "references" / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(name, encoding="utf-8")
+
+            relative = " ".join(
+                f"references/{name}" for name in reference_names
+            )
+            context_bytes, skills, references = self.scorer.activated_context(
+                [
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "command_execution",
+                            "command": (
+                                f"for rootloom_ref in {relative}; do "
+                                f'sed -n "1,240p" "{skill.parent}/"'
+                                "'$rootloom_ref; done"
+                            ),
+                        },
+                    }
+                ]
+            )
+
+        self.assertEqual(
+            context_bytes,
+            len("".join(reference_names)),
+        )
+        self.assertEqual(skills, [])
+        self.assertEqual(
+            references,
+            sorted(
+                f"operating-coding-change/references/{name}"
+                for name in reference_names
+            ),
         )
 
     def test_activated_context_resolves_codex_home_variable(self) -> None:

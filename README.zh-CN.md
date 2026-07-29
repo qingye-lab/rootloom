@@ -112,6 +112,10 @@ Worker 在取消后仍能重连，最终会出现两个活跃 Session。
 
 Rootloom Core 始终只展示这四个入口。Change 只有在风险和证据模式需要时，
 才按需加载治理、外部动作、验证或 Evidence Reference。
+当仓库指导要求检查时，Project Guidance 可以自动执行只读 Validate；持久化 Seed、
+Refresh 或 Refine 则需要用户明确意图。仓库只能通过独立且精确的
+`<!-- rootloom:refine-once version=1 -->` Marker 授权对该文件进行一次 Refine；
+自然语言说明本身绝不授权写入。
 
 ## 一次日常修改会怎样进行
 
@@ -164,7 +168,8 @@ Rootloom 在开发自身时遇到过一个很典型的例子：一条验证命�
 
 对于常见的严格 Intake → 编辑 → Finalize 流程，`resources/evidence/orchestrate_evidence.py`
 提供 `prepare` 与 `finish`。它组合现有 Intake、Sealed Contract 和 Finalizer，不改变
-它们的 Wire Format；`finish` 仍要求显式确认已完成语义审查，高级调用方仍可使用底层 Helper。
+它们的 Wire Format；`finish` 仍要求显式确认已完成语义审查。这是单验证命令的便捷路径；
+多 Target 或专用命令、迁移、Mixed-version、安全边界以及 Build + Runtime 证据使用底层生命周期。
 
 <details>
 <summary><strong>技术合同速查</strong></summary>
@@ -185,6 +190,9 @@ Core Reset v2 会记录实际 Codex 完成回合的 Token 用量、精确 Mode/R
 矩阵；详见[4.1 效率决策](docs/decisions/2026-07-29-rootloom-4.1-efficiency-loop.md)。
 使用 `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
 执行该正式门禁。
+仓库保留的 [4.1.0 候选报告](evals/core-reset/reports/4.1.0.md)记录了全部 126 个 Cell：
+路由和质量检查通过，但两项效率阈值未通过。版本 Tag Workflow 会运行这份保留结果，
+因此在候选满足完整门禁之前保持失败关闭。
 
 仓库状态只有在**连续两次有界采集**一致后才会被接受；每个采集生命周期受 `--max-capture-seconds` 约束。任何**材料元数据变化**——包括**新发现的 Ignored 新增**——都会在普通内容采集前启用仅元数据隔离。分类使用 `is_sensitive_material_path`；Rootloom 不是内容感知型 Secret Scanner。
 

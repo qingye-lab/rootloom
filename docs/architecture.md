@@ -60,10 +60,11 @@ path: no Reference, only the exact target and smallest relevant check. A dirty
 worktree remains a preservation constraint rather than a mode escalation. File count
 or a local callable/signature shape also does not establish a public contract;
 Governed routing requires shared/external consumers, compatibility obligations, or
-another governed risk signal. Scoped mode adds proportional repository evidence;
-Governed mode loads compatibility, rollout, and rollback instructions; explicit
-Evidence Mode adds deterministic capture. Installing Rootloom never starts the
-analyzer or finalizer.
+another governed risk signal. Initial cause uncertainty stays Scoped while bounded
+diagnosis establishes one local owner; only material uncertainty that remains afterward
+escalates. Scoped mode adds proportional repository evidence; Governed mode loads
+compatibility, rollout, and rollback instructions; explicit Evidence Mode adds
+deterministic capture. Installing Rootloom never starts the analyzer or finalizer.
 
 For defects, `ROOT_CAUSE_ALIGNMENT: PASS` requires the observed trigger, owning boundary, violated invariant, evidence-backed cause, and rejection of the strongest plausible alternative. For features and mechanical work, alignment is `NOT_APPLICABLE` and the intended invariant is explicit.
 
@@ -86,6 +87,10 @@ placeholder draft with structured claim bindings, and seals it. `finish` reads t
 sealed verification commands, invokes the existing strict finalizer, and requires an
 explicit semantic-review assertion. It does not add or reinterpret any Evidence format;
 the low-level Intake, Seal, and Finalizer CLIs retain ownership of their advanced flags.
+The orchestrator is a single-command verification convenience path, not the default for
+heterogeneous governed evidence; multiple targets or specialized commands, migrations,
+mixed-version checks, security boundaries, and build-plus-runtime proof use the
+low-level lifecycle.
 
 When strict Tier 1/2 evidence is explicitly requested, `begin_review.py` transactionally creates an outside-repository intake with a default `rootloom-change-baseline-v3`, editable `change-contract.draft.json`, and `rootloom-review-run-v2`. Baseline v3 names the local workflow fact `intake-sealed`; legacy baseline v2 with its historical wire value remains readable and sealable. An Intake-only `--reviewable-path FILE` may seal one exact file as reviewable, with an independent fixed maximum of 64 declarations. It resolves the declaration through bounded Git listing to the repository's actual spelling, then requires an existing single-link regular non-symlink target whose worktree changes remain visible to Git Status and Diff. It can pin an already-reviewable environment template or public certificate and can downgrade ambiguous material such as a public `.pem` or `.der`; ignored paths, `assume-unchanged` / `skip-worktree` entries, globs, case-fold ambiguity/duplicates, hardlinks, explicit sensitive overlap, and strong material fail closed. The same visibility, Index-state, spelling, type, and link checks run in each stable capture. The declaration remains a security-domain risk, is included in the policy hash, and switches that Intake to `rootloom-change-baseline-v4`.
 
@@ -118,10 +123,13 @@ Runner helpers are deliberately small:
 ## Separate Project Memory
 
 An explicit `project-guidance` call writes reproducible facts to managed `AGENTS.md`
-blocks; the SessionStart Hook never does. Optional historical lessons live in the
-separately installed `rootloom-memory` plugin. Its `$project-memory` Skill selects
-bounded task/path matches, separates stale lifecycle states, and keeps every result
-advisory.
+blocks; the SessionStart Hook never does. Active guidance may request read-only
+validation automatically. Persistent refinement without a current user request requires
+the exact standalone `<!-- rootloom:refine-once version=1 -->` marker, applies only to
+that file, and consumes the marker in the successful write; natural-language guidance
+alone cannot authorize persistence. Optional historical lessons live in the separately installed `rootloom-memory`
+plugin. Its `$project-memory` Skill selects bounded task/path
+matches, separates stale lifecycle states, and keeps every result advisory.
 
 The optional plugin preserves `rootloom-project-memory-v1`, legacy entry readability,
 strict no-follow reads, bounded collections, deterministic identity, explicit locked

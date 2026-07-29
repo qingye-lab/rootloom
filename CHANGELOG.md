@@ -10,6 +10,17 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Load the official VibeLoft browser telemetry runtime exactly once on the public GitHub Pages site, with a repository contract for the registered product, production origin, privacy signals, and collector boundary.
 
+### Changed
+
+- Keep initially unknown defect causes in bounded Scoped diagnosis and escalate only
+  material root-cause uncertainty that remains afterward.
+- Allow repository guidance to request automatic validation while requiring explicit
+  user intent or one exact consumable marker for persistent refinement.
+- Define the Evidence orchestrator as a single-verification-command convenience path;
+  heterogeneous governed evidence continues through the low-level lifecycle.
+- Retain the sanitized 126-run 4.1 candidate matrix and report, and enforce that result
+  in a version-tag workflow that fails closed when the formal rubric is not satisfied.
+
 ### Fixed
 
 - Keep the website workflow cards equal in height and prevent hover styling from

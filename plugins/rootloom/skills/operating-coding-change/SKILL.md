@@ -21,9 +21,8 @@ For a defect, establish this evidence chain before editing:
 symptom → trigger/state → owning boundary → violated invariant → root cause
 ```
 
-If the cause is external or cannot be proved, label a reversible workaround
-`MITIGATION` with its gap, residual risk, and removal condition. Never present symptom
-suppression as a root-cause fix.
+If the cause is external or cannot be proved, label a reversible workaround `MITIGATION`
+with its gap, residual risk, and removal condition. Never present symptom suppression as a root-cause fix.
 
 ## 2. Route the mode
 
@@ -35,9 +34,8 @@ suppression as a root-cause fix.
   work. Read [references/verification-contract.md](references/verification-contract.md).
 - `governed`: established shared/external public APIs, schemas, persisted contracts,
   migrations, security boundaries, infrastructure, deployment/release, destructive
-  effects, major dependencies, uncertain root cause, failed repairs, or substantial
-  blast radius. A local callable/signature shape, file count, or dirty worktree alone
-  is not public-contract evidence. Read
+  effects, major dependencies, material root-cause uncertainty remaining after bounded
+  diagnosis, failed repairs, or substantial blast radius. A local callable/signature shape, file count, or dirty worktree alone is not public-contract evidence. Read
   [references/governed-change.md](references/governed-change.md) and
   [references/verification-contract.md](references/verification-contract.md).
 - `evidence`: only when the user explicitly requests a machine evidence bundle, the
@@ -48,11 +46,13 @@ suppression as a root-cause fix.
 Modes compose. Governed external operations also require [references/external-actions.md](references/external-actions.md).
 Evidence Mode adds a recording layer; it never replaces semantic diagnosis, change discipline, or approval.
 
+Initial cause uncertainty routes through bounded diagnosis, not directly to Governed:
+an established local owner and repair boundary → `scoped`; materially different owners,
+compatibility strategies, or high-risk assumptions remaining afterward → `governed`.
+
 ## 3. Make the change
 
-Repair the invariant at the boundary that owns the behavior. Prefer one source of
-truth, normalized inputs, explicit outputs and errors, cohesive functions, existing
-architecture and dependencies, and repository-native test style.
+Repair the invariant at the boundary that owns the behavior. Prefer one source of truth, normalized inputs, explicit outputs and errors, cohesive functions, existing architecture and dependencies, and repository-native test style.
 
 Keep the diff focused. Reject speculative abstractions, unrelated cleanup, silent
 fallbacks, generated churn, broad dependency refreshes, and weakened tests, types,

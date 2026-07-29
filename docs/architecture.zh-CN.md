@@ -57,9 +57,10 @@ Rootloom Memory
 `operating-coding-change` 拥有实现工作流。Direct 是有边界的快速路径：不加载
 Reference，只检查精确目标并运行最小相关检查。脏工作树仍是保护约束，不会单独触发
 模式升级；文件数量或局部 Callable/Signature 形态也不能证明公共契约存在。只有共享/
-外部消费者、兼容义务或其他 Governed 风险信号成立时才进入 Governed。Scoped 增加
-成比例仓库证据；Governed 加载兼容、Rollout 与 Rollback 规则；显式 Evidence Mode
-才增加确定性采集。安装 Rootloom 永远不会启动 Analyzer 或 Finalizer。
+外部消费者、兼容义务或其他 Governed 风险信号成立时才进入 Governed。初始根因未知时
+先在 Scoped 中做有限诊断；只有诊断后仍存在材料级不确定性才升级。Scoped 增加成比例
+仓库证据；Governed 加载兼容、Rollout 与 Rollback 规则；显式 Evidence Mode 才增加
+确定性采集。安装 Rootloom 永远不会启动 Analyzer 或 Finalizer。
 
 缺陷的 `ROOT_CAUSE_ALIGNMENT: PASS` 必须包含触发方式、所属边界、被违反的不变量、有证据的根因以及对最强替代假设的否定。功能或机械任务使用 `NOT_APPLICABLE` 并明确目标不变量。
 
@@ -80,7 +81,9 @@ run/
 封装。`prepare` 创建 Intake，只替换精确生成的 Placeholder Draft 为结构化 Claim
 Binding 并完成 Seal。`finish` 读取 Sealed Verification Command，调用现有 Strict
 Finalizer，并要求显式确认已经完成语义审查。它不新增或重解释任何 Evidence Format；
-底层 Intake、Seal 与 Finalizer CLI 仍拥有高级 Flag。
+底层 Intake、Seal 与 Finalizer CLI 仍拥有高级 Flag。Orchestrator 是单验证命令便捷
+路径，不是异构 Governed Evidence 的默认入口；多 Target 或专用命令、迁移、
+Mixed-version、安全边界及 Build + Runtime 证明使用底层生命周期。
 
 只有明确要求严格 Tier 1/2 证据时，`begin_review.py` 才以事务方式创建仓库外 Intake，默认写入 `rootloom-change-baseline-v3`、可编辑的 `change-contract.draft.json` 与 `rootloom-review-run-v2`。Baseline v3 用 `intake-sealed` 描述本地 Intake 工作流事实；带历史 Wire Value 的 Baseline v2 继续可读、可 Seal。Intake-only 的 `--reviewable-path FILE` 可把精确文件密封为可审查，并具有独立固定的 64 项上限。声明先通过有界 Git Listing 规范到 Repository 的实际拼写，然后要求目标既有、Link Count 为一、非 Symlink、为常规文件，且 Worktree 变化不会被 Git Status/Diff 隐藏；它既能固定默认已可审查的环境模板或公共证书，也能降级公共 `.pem` 或 `.der` 等歧义材料。Ignored 路径、带 `assume-unchanged` / `skip-worktree` 标志的条目、Glob、大小写折叠歧义/重复、Hardlink、与显式 Sensitive Root 重叠及强秘密都会失败关闭。每次稳定 Capture 都会重复检查可见性、Index State、拼写、类型与 Link Count。声明仍然进入安全领域风险，并被纳入 Policy Hash，同时让本次 Intake 使用 `rootloom-change-baseline-v4`。
 
@@ -112,10 +115,13 @@ Runner 辅助模块保持小型：
 
 ## 独立 Project Memory
 
-只有显式调用 `project-guidance` 才会把可复现事实写入托管 `AGENTS.md` 区块；
-SessionStart Hook 绝不写入。可选历史经验属于单独安装的 `rootloom-memory` 插件。
-它的 `$project-memory` Skill 只选择有界任务/路径匹配，分离过期生命周期状态，
-所有结果都只是线索。
+显式调用 `project-guidance` 可以把可复现事实写入托管 `AGENTS.md` 区块；
+SessionStart Hook 绝不写入。Active Guidance 可以自动请求只读 Validate。没有当前
+用户请求时，持久 Refine 必须由独立且精确的
+`<!-- rootloom:refine-once version=1 -->` Marker 授权，只作用于该文件，并在成功
+写入时消费；自然语言指导本身不能授权持久化。可选历史经验属于单独安装的 `rootloom-memory`
+插件。它的 `$project-memory` Skill 只选择有界任务/路径匹配，
+分离过期生命周期状态，所有结果都只是线索。
 
 可选插件保留 `rootloom-project-memory-v1`、Legacy Entry 可读性、严格 No-follow
 读取、有界 Collection、确定性 ID、显式加锁写入与原子替换。Rootloom Core 不导入
