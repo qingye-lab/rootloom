@@ -16,8 +16,11 @@ The integration changes the website's external dependency and privacy boundary. 
 | --- | --- | --- | --- | --- |
 | The production site has one HTML entry and no SPA router | verified fact | `index.html`, `site/main.js` | 2026-07-17 | hash anchors remain in one rendered document |
 | GitHub Pages serves the registered HTTPS origin without a Content Security Policy header | verified fact | production response headers from `https://liyanqing90.github.io/rootloom/` | 2026-07-17 | HSTS is enabled; CSP changes are not applicable |
-| Runtime v0.3.0 derives page URLs from the current HTTPS location, removes query/hash data, honors GPC/DNT, uses omitted fetch credentials, owns retry/backoff, and listens to History API navigation | verified fact | `https://vibeloft.ai/telemetry/v1.js` | 2026-07-17 | upstream runtime inspected directly; no credential included in this record |
+| The earlier readable runtime v0.3.0 derives page URLs from the current HTTPS location, removes query/hash data, honors GPC/DNT, uses omitted fetch credentials, owns retry/backoff, and listens to History API navigation | verified fact | `https://vibeloft.ai/telemetry/v1.js` | 2026-07-17 | upstream runtime inspected directly; no credential included in this record |
 | The runtime endpoint validator accepts only the VibeLoft AWS API, with an HTTP exception limited to localhost development endpoints | verified fact | official runtime source | 2026-07-17 | Rootloom does not configure an endpoint override |
+| The current published runtime is an obfuscated fixed build with SHA-256 `da10f94646b842bfc3de38757526da4ae5cbcb023ba8e526a7dc884b4c159d1f` | verified fact | `https://vibeloft.ai/telemetry/v1.js` | 2026-07-30 | upstream representation changed, so readable implementation tokens are no longer an honest verification method |
+| In an intercepted Chromium run, the reviewed build attempted only an HTTPS `POST` to the VibeLoft telemetry endpoint with omitted credentials, wrapped `pushState` and `replaceState`, and registered `popstate`; enabling GPC and DNT produced zero request attempts | verified fact | request-blocked browser inspection of the production site | 2026-07-30 | `fetch` was replaced before runtime initialization and every API route was aborted, so no telemetry event left the browser |
+| VibeLoft documents registered HTTPS-origin enforcement, ordinary and SPA navigation coverage, API-only delivery, and no canvas, WebGL, audio, or font fingerprinting | verified fact | [VibeLoft trusted telemetry guide](https://vibeloft.ai/en/articles/trusted-telemetry-for-vibecoding-products/) | 2026-07-30 | primary product documentation, updated 2026-07-16 |
 
 ## Decision
 
@@ -41,10 +44,11 @@ There is currently no CSP in source or in the GitHub Pages response, so no direc
 - Positive: telemetry failure remains isolated from the website because the deferred runtime catches initialization and delivery failures.
 - Negative: the website now depends on a third-party script at runtime; an upstream change can alter collection behavior without a Rootloom commit.
 - Negative: visitors who do not enable GPC or DNT may send page URL, a random device ID, and the documented coarse environment digest to VibeLoft.
-- Operational: repository validation pins the integration location, product identity, credential digest, single occurrence, and absence of local collectors. `make telemetry-check` inspects the current official runtime without emitting an event.
+- Operational: repository validation pins the integration location, product identity, credential digest, single occurrence, and absence of local collectors. Because the official runtime is now obfuscated, `make telemetry-check` downloads it over verified TLS and requires the exact SHA-256 of the zero-egress browser-reviewed build without executing it or emitting an event.
+- Operational: an upstream digest change fails closed. Updating the digest requires a new governed, request-blocked browser review of endpoint, method, credential mode, privacy signals, and navigation hooks; a changed build is never accepted from its header comment alone.
 
 ## Verification and revisit triggers
 
-Run `make validate`, `make test`, `make telemetry-check`, the Pages production workflow, a live browser load, and VibeLoft Deployment Verification. Revisit this decision if VibeLoft changes the script host, endpoint, privacy signals, payload schema, origin enforcement, device identity, or environment digest; if Rootloom adds another HTML entry or a real SPA router; or if a CSP is introduced.
+Run `make validate`, `make test`, `make telemetry-check`, the Pages production workflow, a request-blocked live browser load, and VibeLoft Deployment Verification. Revisit this decision if the pinned runtime digest changes; if VibeLoft changes the script host, endpoint, privacy signals, payload schema, origin enforcement, device identity, or environment digest; if Rootloom adds another HTML entry or a real SPA router; or if a CSP is introduced.
 
 Rollback is a Git revert that removes the script tag and validation contract, followed by the normal Pages deployment. Disable the VibeLoft product credential if the browser write boundary must be revoked immediately.

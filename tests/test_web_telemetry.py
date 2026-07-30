@@ -7,6 +7,8 @@ import unittest
 from html.parser import HTMLParser
 from pathlib import Path
 
+from scripts.verify_vibeloft_runtime import runtime_errors
+
 
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = ROOT / "index.html"
@@ -108,6 +110,46 @@ class WebTelemetryIntegrationTests(unittest.TestCase):
         combined = "\n".join(path.read_text(encoding="utf-8") for path in runtime_sources).casefold()
         self.assertNotIn("supabase", combined)
         self.assertNotIn("https://api.vibeloft.ai/api/v1/telemetry/events", combined)
+
+
+class WebTelemetryRuntimeGateTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.reviewed_source = (
+            b"/** VibeLoft-Telemetry fixed build; only VibeLoft AWS API. */"
+        )
+        self.reviewed_digest = hashlib.sha256(self.reviewed_source).hexdigest()
+
+    def test_exact_reviewed_build_passes(self) -> None:
+        errors, digest = runtime_errors(
+            self.reviewed_source,
+            expected_digest=self.reviewed_digest,
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(digest, self.reviewed_digest)
+
+    def test_changed_build_fails_closed(self) -> None:
+        errors, _ = runtime_errors(
+            self.reviewed_source + b" changed",
+            expected_digest=self.reviewed_digest,
+        )
+        self.assertTrue(
+            any("reviewed official runtime build changed" in error for error in errors)
+        )
+
+    def test_build_declarations_remain_visible(self) -> None:
+        opaque_source = b"opaque runtime"
+        errors, _ = runtime_errors(
+            opaque_source,
+            expected_digest=hashlib.sha256(opaque_source).hexdigest(),
+        )
+        self.assertIn(
+            "missing official build declaration: VibeLoft-Telemetry",
+            errors,
+        )
+        self.assertIn(
+            "missing official build declaration: VibeLoft AWS API",
+            errors,
+        )
 
 
 if __name__ == "__main__":

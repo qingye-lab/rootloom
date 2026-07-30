@@ -1030,6 +1030,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
         ),
         ROOT / ".github" / "workflows" / "release-evidence.yml": (
             '      - "v*"',
+            "make telemetry-check",
             "make core-reset-release-eval",
             "CORE_RESET_RESULTS=evals/core-reset/results-4.1.0.json",
         ),
@@ -1049,11 +1050,11 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "## 6. Do's and Don'ts",
         ),
         ROOT / "scripts" / "verify_vibeloft_runtime.py": (
-            "credentials:\"omit\"",
-            "globalPrivacyControl",
-            "doNotTrack",
-            "pushState",
-            "https://api.vibeloft.ai/api/v1/telemetry/events",
+            "EXPECTED_RUNTIME_SHA256",
+            "da10f94646b842bfc3de38757526da4ae5cbcb023ba8e526a7dc884b4c159d1f",
+            "VibeLoft-Telemetry",
+            "VibeLoft AWS API",
+            "governed zero-egress browser review",
         ),
         ROOT / "docs" / "decisions" / "2026-07-17-vibeloft-web-telemetry.md": (
             "Status: accepted",

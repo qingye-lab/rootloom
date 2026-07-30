@@ -28,6 +28,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Verify reviewed website telemetry runtime
+        run: make telemetry-check
+
       - name: Verify retained Rootloom 4.1 behavior evidence
         run: >-
           make core-reset-release-eval

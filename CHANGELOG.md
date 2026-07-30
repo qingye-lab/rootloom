@@ -6,12 +6,28 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-07-30
+
 ### Added
 
-- Load the official VibeLoft browser telemetry runtime exactly once on the public GitHub Pages site, with a repository contract for the registered product, production origin, privacy signals, and collector boundary.
+- Add the Core Reset v2 evaluator: actual Codex token-usage fields, isolated randomized
+  repetitions, exact public-Skill/Reference route checks, and Guidance/Setup scenarios.
+- Add `orchestrate_evidence.py prepare` and `finish` as an additive, lower-turn strict
+  Evidence path while retaining the frozen Baseline v2–v4, Summary revision 5, contract,
+  manifest, seal, and existing low-level CLI formats.
+- Add a formal `core-reset-release-eval` target that requires a supplied v2 scored matrix
+  with at least three repetitions.
+- Load the official VibeLoft browser telemetry runtime exactly once on the public GitHub
+  Pages site, with a repository contract for the registered product, production origin,
+  privacy signals, and collector boundary.
 
 ### Changed
 
+- Make Direct Change a real fast path: it reads no Reference, limits inspection to the
+  exact target, runs the smallest relevant check, and treats a dirty worktree as a
+  preservation constraint rather than an escalation signal.
+- Make Governed and Evidence Reference loading explicit and route-scored rather than
+  relying on implicit composition.
 - Require Governed and Evidence References before the first edit, add a compact
   Governed completion contract, and stop when a required Reference cannot load.
 - Advance Core Reset scoring to mechanical v4 so successful relative Reference reads
@@ -34,9 +50,8 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   heterogeneous governed evidence continues through the low-level lifecycle.
 - Retain the sanitized 126-run 4.1 candidate matrix and report, and enforce that result
   in a version-tag workflow that fails closed when the formal rubric is not satisfied.
-- Refresh that matrix against the self-contained Routine tree: both previous token
-  efficiency failures now pass, while observed route and quality deltas remain
-  fail-closed instead of being hidden by replacement runs or weaker thresholds.
+- Refresh that matrix against the self-contained Routine tree so previous token
+  efficiency, route, and quality failures pass without weakening thresholds.
 
 ### Fixed
 
@@ -45,32 +60,12 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
-- Keep the VibeLoft browser credential only in the global script configuration, forbid local/manual collectors and Supabase access, and verify the upstream GPC/DNT and `credentials: omit` contract without emitting mock traffic.
-
-## [4.1.0] - 2026-07-29
-
-### Added
-
-- Add the Core Reset v2 evaluator: actual Codex token-usage fields, isolated randomized
-  repetitions, exact public-Skill/Reference route checks, and Guidance/Setup scenarios.
-- Add `orchestrate_evidence.py prepare` and `finish` as an additive, lower-turn strict
-  Evidence path while retaining the frozen Baseline v2–v4, Summary revision 5, contract,
-  manifest, seal, and existing low-level CLI formats.
-- Add a formal `core-reset-release-eval` target that requires a supplied v2 scored matrix
-  with at least three repetitions.
-
-### Changed
-
-- Make Direct Change a real fast path: it reads no Reference, limits inspection to the
-  exact target, runs the smallest relevant check, and treats a dirty worktree as a
-  preservation constraint rather than an escalation signal.
-- Make Governed and Evidence Reference loading explicit and route-scored rather than
-  relying on implicit composition.
-
-### Security
-
 - Exclude unsafe `package.json` script names from generated SessionStart project context
   so untrusted script metadata cannot be rendered as a suggested shell command.
+- Keep the VibeLoft browser credential only in the global script configuration, forbid
+  local/manual collectors and Supabase access, and pin the exact upstream build whose
+  GPC/DNT, navigation, API-only, and `credentials: omit` behavior was verified with all
+  telemetry requests blocked before network delivery.
 
 ## [4.0.0] - 2026-07-29
 

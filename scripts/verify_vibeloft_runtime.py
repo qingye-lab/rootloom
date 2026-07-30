@@ -1,32 +1,49 @@
 #!/usr/bin/env python3
-"""Verify the published VibeLoft browser runtime contract without emitting events."""
+"""Verify the reviewed VibeLoft browser runtime build without emitting events."""
 
 from __future__ import annotations
 
-import sys
+import hashlib
 import shutil
 import subprocess
+import sys
 
 
 SCRIPT_URL = "https://vibeloft.ai/telemetry/v1.js"
-EVENT_ENDPOINT = "https://api.vibeloft.ai/api/v1/telemetry/events"
-REQUIRED_TOKENS = (
-    EVENT_ENDPOINT,
-    'credentials:"omit"',
-    "globalPrivacyControl",
-    "doNotTrack",
-    "pushState",
-    "replaceState",
-    "popstate",
-    "retryDelay",
-    'e.protocol!=="https:"',
+MAX_RUNTIME_BYTES = 1_000_000
+EXPECTED_RUNTIME_SHA256 = "da10f94646b842bfc3de38757526da4ae5cbcb023ba8e526a7dc884b4c159d1f"
+REQUIRED_BUILD_DECLARATIONS = (
+    "VibeLoft-Telemetry",
+    "VibeLoft AWS API",
 )
-FORBIDDEN_TOKENS = (
-    "supabase",
-    "document.cookie",
-    "AudioContext",
-    "canvas",
-)
+
+
+def runtime_errors(
+    source: bytes,
+    *,
+    expected_digest: str = EXPECTED_RUNTIME_SHA256,
+) -> tuple[list[str], str]:
+    digest = hashlib.sha256(source).hexdigest()
+    errors: list[str] = []
+    if len(source) > MAX_RUNTIME_BYTES:
+        errors.append("official runtime exceeds the bounded verification size")
+    try:
+        text = source.decode("utf-8")
+    except UnicodeDecodeError:
+        errors.append("official runtime is not valid UTF-8")
+        text = ""
+    errors.extend(
+        f"missing official build declaration: {declaration}"
+        for declaration in REQUIRED_BUILD_DECLARATIONS
+        if declaration not in text
+    )
+    if digest != expected_digest:
+        errors.append(
+            "reviewed official runtime build changed: "
+            f"expected sha256={expected_digest}, observed sha256={digest}; "
+            "repeat the governed zero-egress browser review before updating the digest"
+        )
+    return errors, digest
 
 
 def main() -> int:
@@ -48,7 +65,7 @@ def main() -> int:
                 "--max-time",
                 "15",
                 "--max-filesize",
-                "1000000",
+                str(MAX_RUNTIME_BYTES),
                 SCRIPT_URL,
             ],
             check=False,
@@ -57,27 +74,17 @@ def main() -> int:
         )
         if completed.returncode != 0:
             raise OSError(completed.stderr.decode("utf-8", errors="replace").strip())
-        source = completed.stdout[:1_000_001].decode("utf-8")
-    except (OSError, subprocess.TimeoutExpired, UnicodeDecodeError) as exc:
+        source = completed.stdout
+    except (OSError, subprocess.TimeoutExpired) as exc:
         print(f"ERROR: unable to read official VibeLoft runtime: {exc}", file=sys.stderr)
         return 1
 
-    errors = [f"missing runtime contract token: {token}" for token in REQUIRED_TOKENS if token not in source]
-    errors.extend(
-        f"forbidden runtime capability present: {token}"
-        for token in FORBIDDEN_TOKENS
-        if token.casefold() in source.casefold()
-    )
-    if source.count(EVENT_ENDPOINT) != 1:
-        errors.append("official runtime must contain exactly one VibeLoft event endpoint")
-    if len(source.encode("utf-8")) > 1_000_000:
-        errors.append("official runtime exceeds the bounded verification size")
-
+    errors, digest = runtime_errors(source)
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
         return 1
-    print("Official VibeLoft runtime contract verification passed.")
+    print(f"Reviewed official VibeLoft runtime build passed (sha256={digest}).")
     return 0
 
 

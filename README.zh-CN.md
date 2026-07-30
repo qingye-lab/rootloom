@@ -271,7 +271,7 @@ codex plugin add rootloom-memory@rootloom
 
 ## 网站遥测
 
-公开的 GitHub Pages 网站只在全局 `index.html` 中加载一次 VibeLoft 官方浏览器运行时。Rootloom 不安装遥测包、不手动发送 Page View、不让浏览器直接访问 Supabase，也不配置其他 Collector。随机第一方设备 ID、粗粒度环境摘要、GPC/DNT、导航覆盖、重试和失败隔离都由官方运行时负责。具体边界与回滚方式见已接受的[网站遥测决策](docs/decisions/2026-07-17-vibeloft-web-telemetry.md)。
+公开的 GitHub Pages 网站只在全局 `index.html` 中加载一次 VibeLoft 官方浏览器运行时。Rootloom 不安装遥测包、不手动发送 Page View、不让浏览器直接访问 Supabase，也不配置其他 Collector。随机第一方设备 ID、粗粒度环境摘要、GPC/DNT、导航覆盖、重试和失败隔离都由官方运行时负责。由于发布运行时已经混淆，发布门禁固定一次“请求全部拦截”的浏览器审核所确认构建的精确 SHA-256；任何上游变化都会失败关闭。具体边界、复审方式与回滚见已接受的[网站遥测决策](docs/decisions/2026-07-17-vibeloft-web-telemetry.md)。
 
 ## 开发
 
