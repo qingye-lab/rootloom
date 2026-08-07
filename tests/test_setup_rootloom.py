@@ -291,6 +291,38 @@ class SetupRootloomTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "another Rootloom setup operation"):
                 setup.apply_plan(self.codex_home, replace_conflicts=False)
 
+    def test_interrupted_apply_is_completed_from_transaction_journal(self) -> None:
+        original_atomic_write = setup.atomic_write
+
+        def interrupt_after_first_target(path: Path, value: bytes, mode: int = 0o600) -> None:
+            original_atomic_write(path, value, mode)
+            if path == self.codex_home / "AGENTS.md":
+                raise RuntimeError("simulated interruption")
+
+        with mock.patch.object(setup, "atomic_write", side_effect=interrupt_after_first_target):
+            with self.assertRaisesRegex(RuntimeError, "simulated interruption"):
+                setup.apply_plan(self.codex_home, replace_conflicts=False)
+
+        self.assertTrue((self.codex_home / setup.TRANSACTION_PATH).is_file())
+        status = setup.status_payload(self.codex_home)
+        self.assertEqual(
+            status["pending_transaction"]["paths"][-1],
+            setup.STATE_PATH,
+        )
+
+        agents = self.codex_home / "AGENTS.md"
+        agents.write_text("# changed after interruption\n", encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "pending setup transaction conflicts with AGENTS.md"):
+            setup.apply_plan(self.codex_home, replace_conflicts=False)
+        self.assertEqual(agents.read_text(encoding="utf-8"), "# changed after interruption\n")
+
+        agents.unlink()
+
+        recovered = setup.apply_plan(self.codex_home, replace_conflicts=False)
+        self.assertEqual(recovered["status"], "unchanged")
+        self.assertFalse((self.codex_home / setup.TRANSACTION_PATH).exists())
+        self.assertEqual(setup.status_payload(self.codex_home)["status"], "installed")
+
     def test_symlinked_target_is_refused(self) -> None:
         outside = Path(self.temporary.name) / "outside"
         outside.mkdir()

@@ -136,11 +136,11 @@ Memory Reader，Analyzer/Finalizer 也不暴露 Memory Flag。接受后的持久
 
 ## Setup 与 Hook 边界
 
-Codex 添加插件后安装即完成：Skills 可用，但全局指导、命令 Rules、Hook 策略与 setup 状态仍不存在。只有用户明确要求时，可选 Personal setup 才管理这些复制的全局资产。其 `install` 负责首次 setup；`upgrade` 保持已安装 capability，只有版本变化时不创建多余资产备份，资产变化时先备份，并安全退役已从新版目录移除且未漂移的目标。`status` 与 `upgrade` 都会校验已安装路径、对照已安装 Hash 并拒绝安装后漂移。兼容命令 `apply` 继续保留。setup 先计划、拒绝冲突、使用 create-exclusive 普通锁串行、逐目标原子写入。
+Codex 添加插件后安装即完成：Skills 可用，但全局指导、命令 Rules、Hook 策略与 setup 状态仍不存在。只有用户明确要求时，可选 Personal setup 才管理这些复制的全局资产。其 `install` 负责首次 setup；`upgrade` 保持已安装 capability，只有版本变化时不创建多余资产备份，资产变化时先备份，并安全退役已从新版目录移除且未漂移的目标。`status` 与 `upgrade` 都会校验已安装路径、对照已安装 Hash 并拒绝安装后漂移。兼容命令 `apply` 继续保留。setup 先计划、拒绝冲突、使用 create-exclusive 普通锁串行，在发布事务日志前暂存完整目标集合和最终状态，并逐目标原子写入。
 
 复制后的全局指导负责语义授权：普通权限跨任务持久，覆盖每个明确目标的非高危步骤；本条命令与所有权限分别是单动作和当前任务的提升。静态命令规则无法携带这些上下文，因此可选 `autonomy` 总会包含 `global-policy`；命令规则只减少重复弹窗，并保留灾难性递归删除的硬拒绝。这是低确认授权模式，不是确定性命令安全系统。详见[分级授权决策](decisions/2026-07-14-tiered-authorization-modes.md)。
 
-该设计不提供跨文件崩溃原子性、敌对同用户保护或恢复日志重放。中断造成的部分 apply 会通过 `status` 暴露，备份内容仍可检查。
+该设计为中断的 apply 提供暂存恢复日志重放，同时保留逐文件原子写入和冲突拒绝。`status` 保持只读并暴露待处理日志；下一个会写入的 setup 或 rollback 操作会恢复它。敌对同用户进程替换锁或目标路径仍不在契约范围内。
 
 唯一生命周期 Hook 是只读 `SessionStart` 项目 Context 检测。它要求托管组件策略包含精确整数 `version: 1`；策略缺失、损坏、类型错误、未来版本或符号链接都会关闭执行。它会跳过 Plan Session，并使用独立的增量 Renderer，把完整 Additional Context 限制在 4 KiB 内；目录地图、Module Candidate 与通用验证规则不会注入，验证命令也只在项目 Guidance 缺失时出现。扫描器继续保持确定性、有界、仅标准库、无网络与仓库内执行。持久指导是单独的显式 Skill 动作。
 

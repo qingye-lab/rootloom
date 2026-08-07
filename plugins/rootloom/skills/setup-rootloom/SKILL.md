@@ -41,9 +41,9 @@ The personal preset manages only:
 - `~/.codex/AGENTS.md`;
 - `~/.codex/rules/rootloom.rules`;
 - `~/.codex/.rootloom/components.json`;
-- `~/.codex/.rootloom/state.json` and a simple backup manifest.
+- `~/.codex/.rootloom/state.json`, a pending transaction journal, and a simple backup manifest.
 
-Setup is serialized by an ordinary local lock, refuses symlinked or user-owned targets, backs up every replaced file before mutation, writes each file atomically, and preserves original content and mode for rollback. It does not claim whole-transaction crash compensation or hostile shared-filesystem locking.
+Setup is serialized by an ordinary local lock, refuses symlinked or user-owned targets, stages the complete target set before publishing a transaction journal, resumes interrupted staged work before the next mutating setup or rollback operation, writes each file atomically, and preserves original content and mode for rollback. Recovery refuses a target changed after interruption and does not claim hostile shared-filesystem locking.
 
 If the plan contains `conflict`, show the exact paths. Use `--replace-conflicts` only after the user authorizes those replacements. A backup does not replace authorization.
 

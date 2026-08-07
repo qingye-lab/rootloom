@@ -28,6 +28,8 @@ MANAGED_TOKEN = "rootloom:managed"
 STATE_DIRNAME = ".rootloom"
 STATE_PATH = f"{STATE_DIRNAME}/state.json"
 COMPONENT_POLICY_PATH = f"{STATE_DIRNAME}/components.json"
+TRANSACTION_PATH = f"{STATE_DIRNAME}/transaction.json"
+TRANSACTION_FORMAT = "rootloom-setup-transaction-v1"
 COMPONENT_DESCRIPTIONS = {
     "global-guidance": "Install the personal engineering working agreement.",
     "project-guidance-hook": "Inject read-only evidence-backed project context at SessionStart.",
@@ -243,6 +245,163 @@ def atomic_write(path: Path, value: bytes, mode: int = 0o600) -> None:
             pass
 
 
+def load_pending_transaction(codex_home: Path) -> dict[str, Any] | None:
+    path = codex_home / TRANSACTION_PATH
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None
+    if (
+        not isinstance(payload, dict)
+        or payload.get("managed_by") != MANAGED_TOKEN
+        or payload.get("format") != TRANSACTION_FORMAT
+    ):
+        raise ValueError("invalid pending setup transaction")
+
+    backup_relative = Path(str(payload.get("backup", "")))
+    if (
+        not backup_relative.parts
+        or backup_relative.is_absolute()
+        or ".." in backup_relative.parts
+    ):
+        raise ValueError("invalid pending setup transaction backup path")
+    backup = (codex_home / STATE_DIRNAME / backup_relative).resolve()
+    backup_root = (codex_home / STATE_DIRNAME / "backups").resolve()
+    if not backup.is_relative_to(backup_root) or not backup.is_dir():
+        raise ValueError("pending setup transaction escaped the backup directory")
+
+    raw_entries = payload.get("entries")
+    if not isinstance(raw_entries, list) or not raw_entries:
+        raise ValueError("invalid pending setup transaction entries")
+    entries: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for raw in raw_entries:
+        if not isinstance(raw, dict):
+            raise ValueError("invalid pending setup transaction entry")
+        relative = raw.get("path")
+        if not isinstance(relative, str) or not relative:
+            raise ValueError("invalid pending setup transaction target")
+        normalized = normalize_repo_path(relative, label="pending setup transaction target")
+        if normalized != relative or normalized in seen:
+            raise ValueError("pending setup transaction targets must be unique normalized paths")
+        seen.add(normalized)
+        operation = raw.get("operation")
+        if operation not in {"write", "remove"}:
+            raise ValueError("invalid pending setup transaction operation")
+        before_hash = raw.get("before_hash")
+        after_hash = raw.get("after_hash")
+        if before_hash is not None and (
+            not isinstance(before_hash, str) or len(before_hash) != 64
+        ):
+            raise ValueError("invalid pending setup transaction before hash")
+        if after_hash is not None and (
+            not isinstance(after_hash, str) or len(after_hash) != 64
+        ):
+            raise ValueError("invalid pending setup transaction after hash")
+        staged = raw.get("staged")
+        if operation == "write":
+            if not isinstance(staged, str) or not staged:
+                raise ValueError("missing staged pending setup transaction file")
+            staged_path = Path(staged)
+            if staged_path.is_absolute() or ".." in staged_path.parts:
+                raise ValueError("invalid staged pending setup transaction file")
+            source = (backup / staged_path).resolve()
+            if not source.is_relative_to(backup) or not source.is_file():
+                raise ValueError("staged pending setup transaction file is unavailable")
+            if not isinstance(after_hash, str):
+                raise ValueError("write transaction entry has no after hash")
+        elif after_hash is not None or staged is not None:
+            raise ValueError("remove transaction entry has unexpected staged data")
+        entries.append(
+            {
+                "path": normalized,
+                "operation": operation,
+                "before_hash": before_hash,
+                "after_hash": after_hash,
+                "staged": staged,
+            }
+        )
+    if sum(entry["path"] == STATE_PATH for entry in entries) != 1:
+        raise ValueError("pending setup transaction must contain one state entry")
+    return {
+        "path": path,
+        "backup": backup,
+        "backup_relative": str(backup_relative),
+        "entries": entries,
+    }
+
+
+def recover_pending_transaction(codex_home: Path) -> bool:
+    pending = load_pending_transaction(codex_home)
+    if pending is None:
+        return False
+
+    backup = pending["backup"]
+    entries = pending["entries"]
+    ordered = [entry for entry in entries if entry["path"] != STATE_PATH]
+    ordered.extend(entry for entry in entries if entry["path"] == STATE_PATH)
+    prepared: list[tuple[dict[str, Any], Path, bytes | None]] = []
+    for entry in ordered:
+        destination = codex_home / entry["path"]
+        if has_symlink_component(destination, codex_home):
+            raise RuntimeError(
+                f"pending setup transaction target became symlinked: {entry['path']}"
+            )
+        current = read_bytes(destination)
+        current_hash = sha256_bytes(current) if current is not None else None
+        after_hash = entry["after_hash"]
+        if current_hash == after_hash:
+            prepared.append((entry, destination, None))
+            continue
+        if current_hash != entry["before_hash"]:
+            raise RuntimeError(
+                "pending setup transaction conflicts with "
+                f"{entry['path']}; restore the expected pre-transaction content first"
+            )
+        if entry["operation"] == "remove":
+            prepared.append((entry, destination, None))
+            continue
+        source = (backup / entry["staged"]).resolve()
+        value = source.read_bytes()
+        if sha256_bytes(value) != after_hash:
+            raise RuntimeError(
+                f"pending setup transaction staged content hash mismatch: {entry['path']}"
+            )
+        prepared.append((entry, destination, value))
+
+    for entry, destination, value in prepared:
+        current = read_bytes(destination)
+        current_hash = sha256_bytes(current) if current is not None else None
+        if current_hash == entry["after_hash"]:
+            continue
+        if entry["operation"] == "remove":
+            destination.unlink(missing_ok=True)
+        else:
+            assert value is not None
+            atomic_write(destination, value)
+
+    for entry, destination, _value in prepared:
+        current = read_bytes(destination)
+        current_hash = sha256_bytes(current) if current is not None else None
+        if current_hash != entry["after_hash"]:
+            raise RuntimeError(
+                f"pending setup transaction did not converge: {entry['path']}"
+            )
+    pending["path"].unlink()
+    return True
+
+
+def pending_transaction_payload(codex_home: Path) -> dict[str, Any] | None:
+    pending = load_pending_transaction(codex_home)
+    if pending is None:
+        return None
+    return {
+        "format": TRANSACTION_FORMAT,
+        "backup": pending["backup_relative"],
+        "paths": [entry["path"] for entry in pending["entries"]],
+    }
+
+
 @contextmanager
 def setup_lock(codex_home: Path) -> Iterator[Path]:
     state_root = codex_home / STATE_DIRNAME
@@ -368,6 +527,7 @@ def apply_plan(
     with setup_lock(codex_home):
         if operation not in {"apply", "install", "upgrade"}:
             raise ValueError(f"unsupported setup operation: {operation}")
+        recover_pending_transaction(codex_home)
         selected = normalize_capabilities(capabilities)
         previous_state = load_state(codex_home)
         current = installed_capabilities(previous_state)
@@ -457,14 +617,6 @@ def apply_plan(
             backup / "manifest.json",
             (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode(),
         )
-        for entry in manifest_entries:
-            destination = codex_home / entry["path"]
-            if has_symlink_component(destination, codex_home):
-                raise RuntimeError(f"setup target became symlinked: {entry['path']}")
-            if entry["path"] in desired:
-                atomic_write(destination, desired[entry["path"]])
-            else:
-                destination.unlink(missing_ok=True)
         state = {
             "managed_by": MANAGED_TOKEN,
             "status": "installed",
@@ -478,10 +630,61 @@ def apply_plan(
                 if action.after_hash is not None
             },
         }
-        atomic_write(
-            codex_home / STATE_PATH,
-            (json.dumps(state, indent=2, sort_keys=True) + "\n").encode(),
+        state_bytes = (json.dumps(state, indent=2, sort_keys=True) + "\n").encode()
+        staged_entries: list[dict[str, Any]] = []
+        for entry in manifest_entries:
+            if entry["path"] in desired:
+                staged_path = Path("staged") / entry["path"]
+                atomic_write(backup / staged_path, desired[entry["path"]])
+                staged_entries.append(
+                    {
+                        "path": entry["path"],
+                        "operation": "write",
+                        "before_hash": entry["before_hash"],
+                        "after_hash": entry["after_hash"],
+                        "staged": str(staged_path),
+                    }
+                )
+            else:
+                staged_entries.append(
+                    {
+                        "path": entry["path"],
+                        "operation": "remove",
+                        "before_hash": entry["before_hash"],
+                        "after_hash": None,
+                        "staged": None,
+                    }
+                )
+        state_path = codex_home / STATE_PATH
+        staged_state_path = Path("staged") / STATE_PATH
+        atomic_write(backup / staged_state_path, state_bytes)
+        staged_entries.append(
+            {
+                "path": STATE_PATH,
+                "operation": "write",
+                "before_hash": (
+                    sha256_bytes(read_bytes(state_path))
+                    if read_bytes(state_path) is not None
+                    else None
+                ),
+                "after_hash": sha256_bytes(state_bytes),
+                "staged": str(staged_state_path),
+            }
         )
+        transaction = {
+            "managed_by": MANAGED_TOKEN,
+            "format": TRANSACTION_FORMAT,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "version": version,
+            "capabilities": list(selected),
+            "backup": str(backup.relative_to(codex_home / STATE_DIRNAME)),
+            "entries": staged_entries,
+        }
+        atomic_write(
+            codex_home / TRANSACTION_PATH,
+            (json.dumps(transaction, indent=2, sort_keys=True) + "\n").encode(),
+        )
+        recover_pending_transaction(codex_home)
         return {
             "status": (
                 "installed"
@@ -501,6 +704,7 @@ def apply_plan(
 
 def rollback(codex_home: Path) -> dict[str, Any]:
     with setup_lock(codex_home):
+        recover_pending_transaction(codex_home)
         state = load_state(codex_home)
         if state.get("status") != "installed":
             raise RuntimeError("no installed Rootloom setup is available to roll back")
@@ -618,6 +822,7 @@ def status_payload(
     capabilities: tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
     state = load_state(codex_home)
+    pending = pending_transaction_payload(codex_home)
     installed = installed_capabilities(state)
     selected = (
         capabilities
@@ -630,7 +835,7 @@ def status_payload(
     drifted: list[str] = []
     if installed is not None:
         actions, drifted = apply_installed_drift(codex_home, state, actions)
-    return {
+    payload = {
         "status": state.get("status", "not-installed"),
         "version": version,
         "installed_version": state.get("version"),
@@ -642,6 +847,9 @@ def status_payload(
         "components": list(components_for_capabilities(selected)),
         "actions": [asdict(item) for item in actions],
     }
+    if pending is not None:
+        payload["pending_transaction"] = pending
+    return payload
 
 
 def catalog_payload() -> dict[str, Any]:

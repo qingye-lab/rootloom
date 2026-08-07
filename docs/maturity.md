@@ -13,7 +13,7 @@ Release `v2.0.0` passed the repository's Linux Python 3.11–3.14, macOS, Window
 - deterministic, network-free project-context scanning with a 4 KiB SessionStart cap, Plan-session skip, and repository writes reserved for explicit seeding;
 - fail-closed Hook enablement from managed local policy with exact integer `version: 1`;
 - explicit install/upgrade/status/rollback behavior for the personal setup targets, with installed-hash drift refusal;
-- ordinary local lock serialization and per-file atomic replacement;
+- ordinary local lock serialization, staged recovery-journal replay, and per-file atomic replacement;
 - drift-refusing backup restoration;
 - all-command preflight parsing followed by no-shell execution, streaming output/time ceilings, and descendant-process cleanup shared by verification and Git capture;
 - out-of-repository, ownership-marked review bundles with bounded status, patch, fingerprints, command count, and aggregate log;

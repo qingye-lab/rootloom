@@ -63,6 +63,7 @@ python3 <setup-skill>/scripts/setup_rootloom.py plan \
 | `~/.codex/rules/rootloom.rules` | 可选低确认授权策略 |
 | `~/.codex/.rootloom/components.json` | Hook 开关 |
 | `~/.codex/.rootloom/state.json` | 已安装选择与目标哈希 |
+| `~/.codex/.rootloom/transaction.json` | 待恢复的已暂存 setup 事务，恢复后删除 |
 | `~/.codex/.rootloom/backups/` | 修改前文件副本与清单 |
 
 Rootloom 不会修改普通模型、推理、沙箱、审批、Provider、MCP、插件或 App 配置。
@@ -76,12 +77,14 @@ Setup：
 - 拒绝符号链接目标和无标记的用户文件冲突；
 - 使用 `--replace-conflicts` 前需要精确授权；
 - 第一个托管目标写入前复制所有被替换文件；
+- 在发布事务日志前暂存完整目标集合和最终 setup 状态；
 - 逐目标原子写入；
+- 下一个会写入的 setup 或 rollback 操作会在 setup 锁下恢复待处理事务；
 - 记录 apply 后哈希以检测漂移；
 - 托管目标不再匹配已安装哈希时拒绝升级，即使传入 `--replace-conflicts` 也不会覆盖；
 - 回滚时恢复原内容和 POSIX mode。
 
-个人契约不承诺跨整个事务的崩溃补偿。如果进程在多个文件替换之间停止，请运行 `status`、检查 `.rootloom/backups/` 并显式处理可见不一致。它也不防御敌对同用户进程并发替换锁或目标路径。
+如果进程在多个文件替换之间停止，`status` 会只读报告待处理事务；下一个会写入的 setup 或 rollback 操作会恢复精确的暂存目标集合和最终状态。若目标在中断后被修改，恢复会拒绝覆盖并保留事务日志，等待显式协调。它仍不防御敌对同用户进程并发替换锁或目标路径。
 
 ## 检查可选 Autonomy Rules
 

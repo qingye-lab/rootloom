@@ -11,7 +11,7 @@ Rootloom Core 是早期、单维护者产品。目标是在不把深度审查成
 - 确定性、无网络的项目 Context 扫描，SessionStart 上限为 4 KiB 且跳过 Plan Session，仓库写入只来自显式播种；
 - 由精确整数 `version: 1` 托管本地策略控制的 fail-closed Hook；
 - 个人 setup 目标的显式 install/upgrade/status/rollback，以及已安装 Hash 漂移拒绝；
-- 普通本地锁串行与逐文件原子替换；
+- 普通本地锁串行、暂存恢复日志重放与逐文件原子替换；
 - 拒绝漂移的备份恢复；
 - 所有命令先完成解析，再以不使用 Shell 的方式执行；验证与 Git Capture 共享流式输出/时间上限及残留子进程清理；
 - 仓库外、带 ownership marker 的 review bundle，以及有界 status、patch、指纹、命令数量与聚合日志；

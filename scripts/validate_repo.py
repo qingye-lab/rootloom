@@ -877,6 +877,11 @@ def validate_personal_contracts(errors: list[str]) -> None:
             'PRESET_ALIASES = {"engineering": "personal"}',
             "simple_lock",
             "rootloom-simple-backup-v1",
+            "TRANSACTION_PATH",
+            "TRANSACTION_FORMAT",
+            "rootloom-setup-transaction-v1",
+            "recover_pending_transaction",
+            "pending_transaction_payload",
             "refusing rollback because",
             'operation="upgrade"',
             "drifted_paths",
@@ -890,6 +895,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "persistent cross-task default",
             "Full covers high-risk steps only in the current task",
             "Rules avoid duplicating that semantic decision",
+            "transaction journal",
+            "resumes interrupted staged work",
         ),
         SKILLS / "setup-rootloom" / "agents" / "openai.yaml": (
             "plan, install, inspect, update, or roll back Rootloom",
@@ -1069,12 +1076,16 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "gh release create v1.0.0",
             "Standard persists across tasks",
             "catastrophic recursive-deletion hard deny",
+            "transaction journal",
+            "resumes the exact staged target set",
         ),
         ROOT / "docs" / "setup.zh-CN.md": (
             "gh pr merge 123 --merge",
             "gh release create v1.0.0",
             "普通权限跨任务持久",
             "灾难性递归删除的硬拒绝",
+            "事务日志",
+            "恢复精确的暂存目标集合",
         ),
         ROOT / "docs" / "architecture.md": (
             "intelligence.py",
@@ -1096,6 +1107,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "skip-worktree",
             "orchestrate_evidence.py",
             "Direct is a bounded fast",
+            "recovery-journal replay",
         ),
         ROOT / "docs" / "architecture.zh-CN.md": (
             "intelligence.py",
@@ -1117,6 +1129,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "skip-worktree",
             "orchestrate_evidence.py",
             "Direct 是有边界的快速路径",
+            "暂存恢复日志重放",
         ),
         ROOT / "docs" / "decisions" / "2026-07-14-tiered-authorization-modes.md": (
             "Status: accepted",

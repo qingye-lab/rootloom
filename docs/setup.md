@@ -64,6 +64,7 @@ Selecting `autonomy` always includes `global-policy`; Rules that suppress duplic
 | `~/.codex/rules/rootloom.rules` | Optional low-confirmation authorization policy |
 | `~/.codex/.rootloom/components.json` | Hook enablement |
 | `~/.codex/.rootloom/state.json` | Installed selection and target hashes |
+| `~/.codex/.rootloom/transaction.json` | Pending staged setup transaction, removed after recovery |
 | `~/.codex/.rootloom/backups/` | Pre-mutation file copies and manifest |
 
 Rootloom does not modify ordinary model, reasoning, sandbox, approval, provider, MCP, plugin, or app configuration.
@@ -77,12 +78,14 @@ Setup:
 - refuses symlinked targets and unmarked user-owned conflicts;
 - requires exact authorization before `--replace-conflicts`;
 - copies every replaced file before the first managed target write;
+- stages the complete target set and final setup state before publishing a transaction journal;
 - writes each target atomically;
+- resumes a pending staged transaction under the setup lock before the next mutating setup or rollback operation;
 - records post-apply hashes for drift detection;
 - refuses upgrade when a managed target no longer matches its installed hash, even when `--replace-conflicts` is present;
 - restores original content and POSIX mode during rollback.
 
-This personal contract does not promise whole-transaction crash compensation. If the process stops between file replacements, run `status`, inspect `.rootloom/backups/`, and reconcile the visible mismatch. It also does not defend against a hostile same-user process replacing lock or target paths concurrently.
+If the process stops between file replacements, `status` reports the pending transaction without writing; the next mutating setup or rollback operation resumes the exact staged target set and final state. Recovery refuses to overwrite a target changed after the interruption and leaves the journal for explicit reconciliation. The contract still does not defend against a hostile same-user process replacing lock or target paths concurrently.
 
 ## Optional Autonomy Rules check
 
