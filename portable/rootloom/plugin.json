@@ -1,0 +1,25 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "rootloom",
+  "version": "4.1.0",
+  "description": "Portable Rootloom Agent Skills for inspectable code changes and evidence-backed review with bounded project guidance.",
+  "author": {
+    "name": "liyanqing",
+    "url": "https://github.com/liyanqing90"
+  },
+  "homepage": "https://github.com/liyanqing90/rootloom#readme",
+  "repository": "https://github.com/liyanqing90/rootloom",
+  "license": "MIT",
+  "keywords": [
+    "rootloom",
+    "agent-plugins",
+    "agent-skills",
+    "code-review",
+    "personal-engineering",
+    "project-guidance",
+    "risk-analysis",
+    "root-cause-analysis",
+    "software-engineering",
+    "verification"
+  ]
+}

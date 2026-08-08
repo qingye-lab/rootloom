@@ -23,6 +23,9 @@ Rootloom Core 是早期、单维护者产品。目标是在不把深度审查成
 - 综合任务、路径、Tracked/非敏感 Untracked Diff 与操作的可解释静态风险下限；
 - 与已执行测试证据分离的风险专属验证建议；
 - 单独安装、有界、过期感知的 Project Memory、加锁显式更新与 Core 不导入的严格 Reader Contract；
+- 独立的 Agent Plugins 1.0.0 预览，具有封闭 Manifest、精确 Change/Review/Project
+  Guidance Allowlist、路径包含关系、相对 Reference 检查、确定性来源一致性、可选只读
+  Host Adapter 模板与一次性 Codex 安装冒烟；
 - 仓库校验、单元测试与离线 Codex 兼容冒烟。
 
 ## 仍属于语义判断的部分
@@ -49,7 +52,24 @@ Skills 负责指导这些判断，当前仓库与运行时证据必须再次验�
 
 ## 兼容性
 
-普通 CI 在 Linux 验证 Python 3.11–3.14，并在 macOS/Windows 验证可移植契约。固定版本 Codex 兼容任务先证明 marketplace/插件安装没有全局策略或审查门禁副作用，再独立覆盖可选个人 setup 往返和命令 Rules。live smoke 因需要登录 Codex 与真实模型回合而保持手动。
+普通 CI 在 Linux 验证 Python 3.11–3.14，并在 macOS/Windows 验证可移植契约。固定
+版本 Codex 兼容任务先证明原生 Marketplace/插件安装没有全局策略或审查门禁副作用，
+再独立覆盖可选个人 Setup 往返和命令 Rules。live smoke 因需要登录 Codex 与真实模型
+回合而保持手动。
+
+Agent Plugins 预览会按照仓库固定的 1.0.0 Working Draft 合同做机械校验：Manifest
+Shape、精确 Skills、路径包含关系、相对资源和原生来源同步。可选的一次性 Codex 冒烟
+还会证明已安装 Codex CLI 中的包安装、精确三 Skill 目录 Surface 与自包含 Helper。
+静态与合成 Adapter 检查证明 Envelope 一致和失败不破坏。这不能证明运行时
+发现、激活、工具可用性、模型行为、安装体验，也不能证明 Cursor、VS Code、GitHub
+Copilot、Kiro 或其他客户端中的功能等价。Codex 仍是完整运行验证的原生环境；跨客户
+端支持声明需要绑定客户端版本的真实冒烟证据。
+
+Cursor、VS Code、GitHub Copilot CLI 与 Kiro 现在都有直接加载同一标准包的文档入口，
+不需要平台 Manifest 或 Skill 分叉；可选模板只适配 Host 生命周期 Envelope。这只建立了有文档依据的结构路径，不等于 Rootloom
+运行冒烟已通过。Copilot Coding Agent 也要等到兼容 Marketplace 入口发布并实际运行后，
+才能形成安装声明。仓库尚未保存这些非 Codex Host 的当前版本通过证据，因此它们的
+冒烟门槛仍明确处于 Pending 状态。
 
 Personal Core 2.0 有意破坏 1.2.19 的 high-assurance Skill、严格 Runner CLI、自定义代理/profile setup、Human Review 格式、protected-deletion approval 与恢复日志契约。迁移前先使用 1.2.19 回滚。
 

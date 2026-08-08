@@ -30,15 +30,19 @@ There are no runtime or test dependencies outside the Python standard library.
 ```text
 .agents/plugins/marketplace.json       Git marketplace catalog
 plugins/rootloom/                      Installable four-entry Core plugin
-  .codex-plugin/plugin.json            Plugin metadata
+  .codex-plugin/plugin.json            Codex-native plugin metadata
   assets/system/                       Installable global guidance and command Rules
   hooks/                               Optional read-only SessionStart project context
   skills/                              Change, Review, Project Guidance, and Setup
   resources/evidence/                  Explicit Analyzer/Baseline/Seal/Finalizer helpers
+portable/rootloom/                     Generated three-Skill Agent Plugins preview
+adapters/rootloom/                     Generated opt-in consumer-repository host templates
 experiments/rootloom-memory/           Separately installable experimental Memory plugin
 evals/core-reset/                      3.4 versus 4.0 structural and behavioral ablation
 tests/                                 Unit and live integration checks
 scripts/validate_repo.py               Repository contract validation
+scripts/sync_portable_plugin.py        Deterministic portable-package synchronization
+scripts/sync_host_adapters.py          Deterministic host-adapter synchronization
 docs/                                  Design and troubleshooting docs
 assets/                                README visuals
 ```
@@ -65,8 +69,10 @@ Changes should preserve these invariants:
 2. Add or update a regression test for behavior changes.
 3. Update both READMEs when installation, public behavior, or user-facing configuration changes.
 4. Update architecture or troubleshooting docs when their contracts change.
-5. Run `make check`.
-6. Review the final diff for secrets, temporary files, generated noise, and unrelated edits.
+5. Regenerate the portable package when Change, Review, or Project Guidance changes;
+   regenerate host adapters when the Project Guidance helper or lock changes.
+6. Run `make check`.
+7. Review the final diff for secrets, temporary files, generated noise, and unrelated edits.
 
 Commit messages should be short and imperative, for example:
 

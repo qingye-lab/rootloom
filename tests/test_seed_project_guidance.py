@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import os
 import subprocess
 import stat
 import tempfile
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
 from unittest import mock
 
@@ -75,6 +77,28 @@ class ProjectGuidanceSeederTests(unittest.TestCase):
         self.assertEqual(result["status"], "skipped")
         self.assertEqual(result["reason"], "untrusted_project")
         self.assertFalse((self.root / "AGENTS.md").exists())
+
+    def test_both_disable_sentinels_skip_context_and_persistence(self) -> None:
+        for relative in (
+            Path(".rootloom/disable-project-guidance"),
+            Path(".codex/disable-project-guidance-seeding"),
+        ):
+            with self.subTest(sentinel=relative.as_posix()):
+                self.root = Path(self.temp_dir.name) / relative.parent.name / "sample-app"
+                self.root.mkdir(parents=True)
+                self.init_repo()
+                sentinel = self.root / relative
+                sentinel.parent.mkdir(parents=True, exist_ok=True)
+                sentinel.write_text("disabled\n", encoding="utf-8")
+
+                context = seeder.temporary_project_context(
+                    self.root, allow_untrusted=True
+                )
+                seeded = seeder.seed(self.root, allow_untrusted=True)
+
+                self.assertEqual(context["reason"], "disabled")
+                self.assertEqual(seeded["reason"], "disabled")
+                self.assertFalse((self.root / "AGENTS.md").exists())
 
     def test_seed_is_evidence_backed_and_idempotent(self) -> None:
         self.init_repo()
@@ -279,6 +303,66 @@ class ProjectGuidanceSeederTests(unittest.TestCase):
         )
         self.assertFalse((self.root / "AGENTS.md").exists())
 
+    def test_all_protocols_wrap_one_identical_advisory_context(self) -> None:
+        content = "# Temporary project facts\n\n- Project: sample-app."
+        expected = seeder._advisory_context(content)
+        self.assertIn("`project-guidance` Skill", expected)
+        self.assertNotIn("$project-guidance", expected)
+        event = {"cwd": str(self.root), "source": "startup"}
+        with mock.patch.object(
+            seeder,
+            "temporary_project_context",
+            return_value={"status": "context-ready", "context": content},
+        ):
+            codex = seeder._hook_output(event, protocol="codex")
+            vscode = seeder._hook_output(event, protocol="vscode")
+            cursor = seeder._hook_output(event, protocol="cursor")
+            copilot = seeder._hook_output(event, protocol="copilot")
+            kiro = seeder._hook_output(event, protocol="kiro")
+
+        self.assertEqual(
+            codex["hookSpecificOutput"]["additionalContext"], expected
+        )
+        self.assertEqual(
+            vscode["hookSpecificOutput"]["additionalContext"], expected
+        )
+        self.assertEqual(cursor["additional_context"], expected)
+        self.assertEqual(copilot["additionalContext"], expected)
+        self.assertEqual(kiro, expected)
+
+    def test_auto_protocol_disambiguates_and_rejects_ambiguous_input(self) -> None:
+        content = "bounded"
+        with mock.patch.object(
+            seeder,
+            "temporary_project_context",
+            return_value={"status": "context-ready", "context": content},
+        ):
+            vscode = seeder._hook_output(
+                {"hook_event_name": "SessionStart", "cwd": str(self.root)},
+                protocol="auto",
+            )
+            copilot = seeder._hook_output(
+                {"sessionId": "copilot-session", "cwd": str(self.root)},
+                protocol="auto",
+            )
+            ambiguous = seeder._hook_output(
+                {
+                    "hook_event_name": "SessionStart",
+                    "sessionId": "both",
+                    "cwd": str(self.root),
+                },
+                protocol="auto",
+            )
+            wrong_event = seeder._hook_output(
+                {"hook_event_name": "sessionStart", "cwd": str(self.root)},
+                protocol="auto",
+            )
+
+        self.assertIn("hookSpecificOutput", vscode)
+        self.assertIn("additionalContext", copilot)
+        self.assertIsNone(ambiguous)
+        self.assertIsNone(wrong_event)
+
         with mock.patch.object(seeder, "temporary_project_context") as renderer:
             output = seeder._hook_output(
                 {
@@ -309,6 +393,65 @@ class ProjectGuidanceSeederTests(unittest.TestCase):
         self.assertIsNotNone(output)
         self.assertNotIn("hookSpecificOutput", output)
         self.assertIn("exceeded 4 KiB", output["systemMessage"])
+
+    def test_non_codex_protocol_errors_never_emit_codex_envelopes(self) -> None:
+        cases = (
+            ("cursor", {"cwd": str(self.root)}),
+            ("copilot", {"cwd": str(self.root)}),
+            ("kiro", {"cwd": str(self.root)}),
+            ("auto", {"cwd": str(self.root), "sessionId": "copilot"}),
+        )
+        for protocol, event in cases:
+            with self.subTest(protocol=protocol):
+                diagnostics = io.StringIO()
+                with (
+                    mock.patch.object(
+                        seeder,
+                        "temporary_project_context",
+                        return_value={
+                            "status": "error",
+                            "reason": "synthetic_context_error",
+                        },
+                    ),
+                    redirect_stderr(diagnostics),
+                ):
+                    output = seeder._hook_output(event, protocol=protocol)
+                self.assertIsNone(output)
+                self.assertIn("synthetic_context_error", diagnostics.getvalue())
+
+        diagnostics = io.StringIO()
+        with (
+            mock.patch.object(
+                seeder,
+                "temporary_project_context",
+                return_value={"status": "error", "reason": "vscode_error"},
+            ),
+            redirect_stderr(diagnostics),
+        ):
+            vscode = seeder._hook_output(
+                {"cwd": str(self.root)}, protocol="vscode"
+            )
+        self.assertIn("systemMessage", vscode)
+        self.assertEqual(diagnostics.getvalue(), "")
+
+    def test_non_codex_protocol_complete_context_overflow_is_stderr_only(self) -> None:
+        body = "x" * (seeder.MAX_SESSION_CONTEXT_BYTES - 100)
+        for protocol in ("cursor", "copilot", "kiro"):
+            with self.subTest(protocol=protocol):
+                diagnostics = io.StringIO()
+                with (
+                    mock.patch.object(
+                        seeder,
+                        "temporary_project_context",
+                        return_value={"status": "context-ready", "context": body},
+                    ),
+                    redirect_stderr(diagnostics),
+                ):
+                    output = seeder._hook_output(
+                        {"cwd": str(self.root)}, protocol=protocol
+                    )
+                self.assertIsNone(output)
+                self.assertIn("exceeded 4 KiB", diagnostics.getvalue())
 
     def test_temporary_context_uses_a_compact_renderer(self) -> None:
         self.init_repo()
@@ -364,6 +507,8 @@ class ProjectGuidanceSeederTests(unittest.TestCase):
         self.assertNotIn("Repository map", context)
         self.assertNotIn("Independent module candidates", context)
         self.assertNotIn("Verification contract", context)
+        self.assertIn("`project-guidance` Skill", context)
+        self.assertNotIn("$project-guidance", context)
 
     def test_temporary_context_omits_commands_when_guidance_exists(self) -> None:
         self.init_repo()

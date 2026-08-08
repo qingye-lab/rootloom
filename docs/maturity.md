@@ -26,6 +26,9 @@ Release `v2.0.0` passed the repository's Linux Python 3.11–3.14, macOS, Window
 - risk-specific verification recommendations kept separate from executed test evidence;
 - separately installed, bounded, stale-aware Project Memory with locked explicit updates
   and a strict reader contract that Core does not import;
+- an isolated Agent Plugins 1.0.0 preview with a closed manifest, exact Change/Review/
+  Project Guidance allowlist, path containment, relative-Reference checks, deterministic
+  source parity, opt-in read-only host-adapter templates, and a disposable Codex installation smoke;
 - repository validation, unit tests, and an offline Codex compatibility smoke.
 
 ## What remains semantic
@@ -53,7 +56,29 @@ active product line.
 
 ## Compatibility
 
-Normal CI validates Python 3.11–3.14 on Linux and portable contracts on macOS/Windows. The pinned Codex compatibility job proves marketplace/plugin installation has no global-policy or review-gate side effects, then separately exercises the optional personal setup round trip and command Rules. A separate live smoke is manual because it requires a logged-in Codex session and a real model turn.
+Normal CI validates Python 3.11–3.14 on Linux and portable contracts on macOS/Windows.
+The pinned Codex compatibility job proves native marketplace/plugin installation has no
+global-policy or review-gate side effects, then separately exercises the optional
+personal setup round trip and command Rules. A separate live smoke is manual because it
+requires a logged-in Codex session and a real model turn.
+
+The Agent Plugins preview is mechanically validated against the repository's pinned
+1.0.0 Working Draft contract: manifest shape, exact Skills, containment, relative
+resources, and native-source synchronization. An optional disposable-Codex smoke also
+proves package installation and the exact three-directory Skill surface plus
+self-contained helper in the installed Codex CLI. Static and synthetic adapter checks
+prove envelope equality and non-destructive failure behavior. This does not prove runtime discovery, activation, tool availability, model
+behavior, installation UX, or feature parity in Cursor, VS Code, GitHub Copilot, Kiro,
+or another client. Codex remains the fully exercised native runtime; cross-client
+support claims require client-version-specific smoke evidence.
+
+Cursor, VS Code, GitHub Copilot CLI, and Kiro now document direct loaders for the same
+standard package; no platform manifest or Skill fork is required. Optional templates
+adapt only the host lifecycle envelope. That establishes a documented structural path,
+not a Rootloom runtime pass. Copilot coding-agent use also
+remains unavailable as an install claim until a compatible marketplace entry is
+published and exercised. No passed current-version runtime evidence for these non-Codex
+hosts is checked in, so their smoke gates remain explicitly pending.
 
 Personal Core 2.0 intentionally breaks the 1.2.19 high-assurance Skill, strict Runner CLI, custom-agent/profile setup, Human Review formats, protected-deletion approval, and recovery-journal contracts. Migrate by rolling back with 1.2.19 first.
 

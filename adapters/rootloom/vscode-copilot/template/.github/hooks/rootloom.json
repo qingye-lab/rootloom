@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "command": "python3 -B \".rootloom/rootloom-adapter/seed_project_guidance.py\" hook --protocol auto --allow-untrusted",
+        "timeout": 10
+      }
+    ]
+  }
+}

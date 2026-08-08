@@ -30,15 +30,19 @@ make check
 ```text
 .agents/plugins/marketplace.json       Git Marketplace 目录
 plugins/rootloom/                      可安装的四入口 Core 插件
-  .codex-plugin/plugin.json            插件元数据
+  .codex-plugin/plugin.json            Codex 原生插件元数据
   assets/system/                       可安装的全局指导与命令 Rules
   hooks/                               可选的只读 SessionStart 项目 Context
   skills/                              Change、Review、Project Guidance 与 Setup
   resources/evidence/                  显式 Analyzer/Baseline/Seal/Finalizer Helper
+portable/rootloom/                     生成的三 Skill Agent Plugins 预览
+adapters/rootloom/                     生成的可选消费者仓库 Host 模板
 experiments/rootloom-memory/           单独安装的实验性 Memory 插件
 evals/core-reset/                      3.4 与 4.0 的结构/行为 Ablation
 tests/                                 单元与真实集成检查
 scripts/validate_repo.py               仓库契约校验
+scripts/sync_portable_plugin.py        确定性可移植包同步
+scripts/sync_host_adapters.py          确定性 Host Adapter 同步
 docs/                                  设计和排障文档
 assets/                                README 配图
 ```
@@ -65,8 +69,10 @@ assets/                                README 配图
 2. 行为变化应新增或更新回归测试。
 3. 安装方式、公共行为或用户配置变化时同步更新中英文 README。
 4. 架构或排障契约变化时更新相应文档。
-5. 运行 `make check`。
-6. 检查最终 Diff 中是否包含秘密、临时文件、生成噪声或无关修改。
+5. Change、Review 或 Project Guidance 变化后重新生成可移植包；Project Guidance Helper
+   或锁变化后重新生成 Host Adapter。
+6. 运行 `make check`。
+7. 检查最终 Diff 中是否包含秘密、临时文件、生成噪声或无关修改。
 
 提交信息应简短并使用祈使语气，例如：
 

@@ -23,6 +23,12 @@ HOOKS = PLUGIN / "hooks" / "hooks.json"
 SKILLS = PLUGIN / "skills"
 EVIDENCE = PLUGIN / "resources" / "evidence"
 SYSTEM = PLUGIN / "assets" / "system"
+PORTABLE_PLUGIN = ROOT / "portable" / "rootloom"
+PORTABLE_MANIFEST = PORTABLE_PLUGIN / "plugin.json"
+PORTABLE_SKILLS = PORTABLE_PLUGIN / "skills"
+PORTABLE_SYNC = ROOT / "scripts" / "sync_portable_plugin.py"
+HOST_ADAPTERS = ROOT / "adapters" / "rootloom"
+HOST_ADAPTER_SYNC = ROOT / "scripts" / "sync_host_adapters.py"
 MEMORY_PLUGIN = ROOT / "experiments" / "rootloom-memory"
 MEMORY_MANIFEST = MEMORY_PLUGIN / ".codex-plugin" / "plugin.json"
 MEMORY_SKILLS = MEMORY_PLUGIN / "skills"
@@ -33,6 +39,34 @@ EXPECTED_SKILLS = {
     "setup-rootloom",
 }
 EXPECTED_MEMORY_SKILLS = {"project-memory"}
+EXPECTED_PORTABLE_SKILLS = {
+    "operating-code-review",
+    "operating-coding-change",
+    "project-guidance",
+}
+AGENT_PLUGINS_SCHEMA = (
+    "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+)
+AGENT_PLUGIN_FIELDS = {
+    "$schema",
+    "name",
+    "version",
+    "description",
+    "author",
+    "homepage",
+    "repository",
+    "license",
+    "keywords",
+    "extensions",
+}
+AGENT_SKILL_FIELDS = {
+    "name",
+    "description",
+}
+AGENT_PLUGIN_NAME = re.compile(
+    r"^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"
+)
+AGENT_SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SEMVER = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
     r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
@@ -231,13 +265,311 @@ def validate_manifest(errors: list[str]) -> None:
             errors.append(f"plugin interface {field} does not resolve to a file")
 
 
-def frontmatter_name(path: Path) -> str | None:
+def validate_agent_plugin_manifest_payload(
+    payload: dict[str, Any],
+    codex_payload: dict[str, Any],
+    errors: list[str],
+) -> None:
+    unknown = set(payload) - AGENT_PLUGIN_FIELDS
+    if unknown:
+        errors.append(
+            "portable plugin manifest has unknown fields: "
+            + ", ".join(sorted(unknown))
+        )
+    if payload.get("$schema") != AGENT_PLUGINS_SCHEMA:
+        errors.append("portable plugin manifest must target Agent Plugins 1.0.0")
+
+    name = payload.get("name")
+    if (
+        not isinstance(name, str)
+        or not 1 <= len(name) <= 64
+        or AGENT_PLUGIN_NAME.fullmatch(name) is None
+    ):
+        errors.append("portable plugin name violates Agent Plugins constraints")
+
+    for field in ("version", "description", "homepage", "repository", "license"):
+        if not isinstance(payload.get(field), str):
+            errors.append(f"portable plugin manifest field {field} must be a string")
+    version = payload.get("version")
+    if isinstance(version, str) and SEMVER.fullmatch(version) is None:
+        errors.append("portable plugin version must be strict semver")
+
+    author = payload.get("author")
+    if not isinstance(author, dict):
+        errors.append("portable plugin author must be an object")
+    else:
+        unknown_author = set(author) - {"name", "email", "url"}
+        if unknown_author:
+            errors.append(
+                "portable plugin author has unknown fields: "
+                + ", ".join(sorted(unknown_author))
+            )
+        if any(not isinstance(value, str) for value in author.values()):
+            errors.append("portable plugin author values must be strings")
+
+    keywords = payload.get("keywords")
+    if not isinstance(keywords, list) or any(
+        not isinstance(value, str) for value in keywords
+    ):
+        errors.append("portable plugin keywords must be an array of strings")
+
+    extensions = payload.get("extensions")
+    if extensions is not None and (
+        not isinstance(extensions, dict)
+        or any(not isinstance(value, dict) for value in extensions.values())
+    ):
+        errors.append("portable plugin extensions must map namespaces to objects")
+
+    for field in ("name", "version", "author", "homepage", "repository", "license"):
+        if payload.get(field) != codex_payload.get(field):
+            errors.append(f"portable and Codex manifests differ for shared field: {field}")
+
+
+def validate_native_manifest_isolation(
+    errors: list[str], plugin_root: Path = PLUGIN
+) -> None:
+    portable_manifest = plugin_root / "plugin.json"
+    if portable_manifest.exists() or portable_manifest.is_symlink():
+        errors.append(
+            "Codex-native plugin root must not contain plugin.json; "
+            "it would suppress native Hook loading"
+        )
+
+
+def validate_portable_plugin(errors: list[str]) -> None:
+    validate_native_manifest_isolation(errors)
+    payload = load_json(PORTABLE_MANIFEST, errors)
+    codex_payload = load_json(MANIFEST, errors)
+    validate_agent_plugin_manifest_payload(payload, codex_payload, errors)
+
+    if not PORTABLE_PLUGIN.is_dir():
+        errors.append("missing portable Agent Plugins package")
+        return
+    root_entries = {path.name for path in PORTABLE_PLUGIN.iterdir()}
+    if root_entries != {"LICENSE", "plugin.json", "skills"}:
+        errors.append(
+            "portable package root must contain only LICENSE, plugin.json, and skills"
+        )
+
+    actual_skills = {
+        path.parent.name for path in PORTABLE_SKILLS.glob("*/SKILL.md")
+    }
+    if actual_skills != EXPECTED_PORTABLE_SKILLS:
+        errors.append(
+            "portable skill catalog mismatch: expected "
+            + ", ".join(sorted(EXPECTED_PORTABLE_SKILLS))
+            + "; found "
+            + ", ".join(sorted(actual_skills))
+        )
+    if (PORTABLE_SKILLS / "setup-rootloom").exists():
+        errors.append("portable package must not expose Codex setup")
+    if any(PORTABLE_SKILLS.glob("*/agents")):
+        errors.append("portable package must not include Codex agents metadata")
+
+    resolved_root = PORTABLE_PLUGIN.resolve()
+    for path in PORTABLE_PLUGIN.rglob("*"):
+        if path.is_symlink():
+            errors.append(
+                f"portable package must not contain symlinks: {path.relative_to(ROOT)}"
+            )
+            continue
+        if not path.resolve().is_relative_to(resolved_root):
+            errors.append(
+                f"portable package path escapes its root: {path.relative_to(ROOT)}"
+            )
+
+    try:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(PORTABLE_SYNC),
+                "--output",
+                str(PORTABLE_PLUGIN),
+            ],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        errors.append(f"portable package synchronization check failed: {exc}")
+    else:
+        if completed.returncode != 0:
+            detail = (completed.stdout + completed.stderr).strip()
+            errors.append(f"portable package is not synchronized: {detail}")
+
+    portable_guidance = PORTABLE_SKILLS / "project-guidance" / "scripts"
+    native_guidance = SKILLS / "project-guidance" / "scripts"
+    for name, source in (
+        ("seed_project_guidance.py", native_guidance / "seed_project_guidance.py"),
+        ("rootloom_lock.py", PLUGIN / "lib" / "rootloom_lock.py"),
+    ):
+        target = portable_guidance / name
+        if not target.is_file() or target.is_symlink():
+            errors.append(f"portable Project Guidance helper is missing or symlinked: {name}")
+        elif target.read_bytes() != source.read_bytes():
+            errors.append(f"portable Project Guidance helper differs from native source: {name}")
+
+
+def validate_host_adapters(errors: list[str]) -> None:
+    if not HOST_ADAPTERS.is_dir():
+        errors.append("missing Rootloom host adapter templates")
+        return
+    try:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(HOST_ADAPTER_SYNC),
+                "--output",
+                str(HOST_ADAPTERS),
+            ],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        errors.append(f"host adapter synchronization check failed: {exc}")
+    else:
+        if completed.returncode != 0:
+            detail = (completed.stdout + completed.stderr).strip()
+            errors.append(f"host adapters are not synchronized: {detail}")
+
+    shared_hooks = load_json(
+        HOST_ADAPTERS
+        / "vscode-copilot"
+        / "template"
+        / ".github"
+        / "hooks"
+        / "rootloom.json",
+        errors,
+    )
+    if set(shared_hooks) != {"version", "hooks"}:
+        errors.append(
+            "shared VS Code/Copilot hook config must contain only version and hooks"
+        )
+    if type(shared_hooks.get("version")) is not int or shared_hooks.get("version") != 1:
+        errors.append("shared VS Code/Copilot hook config version must be integer 1")
+    shared_hook_map = shared_hooks.get("hooks")
+    if not isinstance(shared_hook_map, dict) or set(shared_hook_map) != {"sessionStart"}:
+        errors.append(
+            "shared VS Code/Copilot hook config must contain only sessionStart"
+        )
+
+    capability = load_json(HOST_ADAPTERS / "capabilities.json", errors)
+    if capability.get("format") != "rootloom-host-capabilities-v1":
+        errors.append("host adapter capability contract format differs")
+    baseline = capability.get("baseline")
+    baseline_skills = baseline.get("skills") if isinstance(baseline, dict) else None
+    if (
+        not isinstance(baseline_skills, list)
+        or any(not isinstance(item, str) for item in baseline_skills)
+        or set(baseline_skills) != EXPECTED_PORTABLE_SKILLS
+    ):
+        errors.append("host adapter capability contract must expose the portable three-Skill baseline")
+    context = baseline.get("session_context", {}) if isinstance(baseline, dict) else {}
+    if not isinstance(context, dict) or context.get("access") != "read-only" or context.get("maximum_bytes") != 4096:
+        errors.append("host adapter capability contract must bound read-only session context to 4 KiB")
+    hosts = capability.get("hosts")
+    if not isinstance(hosts, dict):
+        errors.append("host adapter capability contract lacks host mappings")
+    else:
+        for host in ("cursor", "vscode", "github-copilot", "kiro"):
+            mapping = hosts.get(host)
+            if not isinstance(mapping, dict) or mapping.get("runtime_status") != "pending":
+                errors.append(f"host adapter runtime status must remain pending: {host}")
+
+
+def canonical_yaml_string(value: str) -> bool:
+    if (
+        not value
+        or value != value.strip()
+        or not value[0].isascii()
+        or not value[0].isalpha()
+        or any(character < " " or character > "~" for character in value)
+        or ":" in value
+        or "#" in value
+    ):
+        return False
+    lowered = value.casefold()
+    if lowered in {
+        "null",
+        "true",
+        "false",
+        "yes",
+        "no",
+        "on",
+        "off",
+        ".nan",
+        ".inf",
+        "+.inf",
+        "-.inf",
+        "~",
+    }:
+        return False
+    return re.fullmatch(
+        r"[-+]?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][-+]?\d+)?", value
+    ) is None
+
+
+def frontmatter_fields(path: Path) -> dict[str, str] | None:
     text = path.read_text(encoding="utf-8")
     match = re.match(r"---\n(?P<body>.*?)\n---\n", text, re.DOTALL)
     if not match:
         return None
-    name = re.search(r"^name:\s*([^\n]+)$", match.group("body"), re.MULTILINE)
-    return name.group(1).strip() if name else None
+    body = match.group("body")
+    if any(character != "\n" and not " " <= character <= "~" for character in body):
+        return None
+    fields: dict[str, str] = {}
+    for raw_line in body.split("\n"):
+        if not raw_line.strip():
+            continue
+        line_match = re.fullmatch(
+            r"(?P<key>[a-z][a-z0-9-]*): (?P<value>[\x20-\x7e]+)", raw_line
+        )
+        if line_match is None:
+            return None
+        key = line_match.group("key")
+        value = line_match.group("value")
+        if key in fields or not canonical_yaml_string(value):
+            return None
+        fields[key] = value
+    return fields
+
+
+def frontmatter_name(path: Path) -> str | None:
+    fields = frontmatter_fields(path)
+    return fields.get("name") if fields else None
+
+
+def validate_agent_skill(path: Path, errors: list[str]) -> None:
+    fields = frontmatter_fields(path)
+    relative = path.relative_to(ROOT)
+    if fields is None:
+        errors.append(f"Skill has invalid YAML frontmatter envelope: {relative}")
+        return
+    unknown = set(fields) - AGENT_SKILL_FIELDS
+    if unknown:
+        errors.append(
+            f"Skill has unsupported frontmatter fields: {relative}: "
+            + ", ".join(sorted(unknown))
+        )
+    name = fields.get("name", "")
+    if (
+        name != path.parent.name
+        or len(name) > 64
+        or AGENT_SKILL_NAME.fullmatch(name) is None
+    ):
+        errors.append(f"Skill frontmatter name violates Agent Skills: {relative}")
+    description = fields.get("description", "")
+    if not description or len(description) > 1024:
+        errors.append(f"Skill description violates Agent Skills: {relative}")
+    text = path.read_text(encoding="utf-8")
+    match = re.match(r"---\n.*?\n---\n(?P<body>.*)", text, re.DOTALL)
+    if match is None or not match.group("body").strip():
+        errors.append(f"Skill body must not be empty: {relative}")
 
 
 def validate_skills(errors: list[str]) -> None:
@@ -251,8 +583,7 @@ def validate_skills(errors: list[str]) -> None:
         )
     for name in sorted(actual):
         path = SKILLS / name / "SKILL.md"
-        if frontmatter_name(path) != name:
-            errors.append(f"Skill frontmatter name mismatch: {path.relative_to(ROOT)}")
+        validate_agent_skill(path, errors)
         agent = SKILLS / name / "agents" / "openai.yaml"
         if not agent.is_file():
             errors.append(f"Skill is missing agents/openai.yaml: {name}")
@@ -266,10 +597,13 @@ def validate_skills(errors: list[str]) -> None:
         )
     for name in sorted(memory_actual):
         path = MEMORY_SKILLS / name / "SKILL.md"
-        if frontmatter_name(path) != name:
-            errors.append(f"Memory Skill frontmatter name mismatch: {path.relative_to(ROOT)}")
+        validate_agent_skill(path, errors)
         if not (MEMORY_SKILLS / name / "agents" / "openai.yaml").is_file():
             errors.append(f"Memory Skill is missing agents/openai.yaml: {name}")
+    for name in sorted(EXPECTED_PORTABLE_SKILLS):
+        path = PORTABLE_SKILLS / name / "SKILL.md"
+        if path.is_file():
+            validate_agent_skill(path, errors)
     change_lines = len(
         (SKILLS / "operating-coding-change" / "SKILL.md")
         .read_text(encoding="utf-8")
@@ -605,7 +939,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "_render_session_context",
             'permission_mode == "plan"',
             "creating or updating AGENTS.md",
-            "guidance only when the user explicitly invokes",
+            "guidance only when the user explicitly asks to use",
+            "`project-guidance` Skill",
         ),
         SKILLS / "operating-coding-change" / "SKILL.md": (
             "This Skill owns every",
@@ -636,6 +971,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "heterogeneous governed evidence",
             "suggestions are plans",
             "--strict",
+            "report Evidence Mode as unavailable",
         ),
         SKILLS / "operating-coding-change" / "references" / "evidence-contract.md": (
             "Baseline v2–v4",
@@ -652,6 +988,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Rollback / Compensation",
             "Verification",
             "Residual Risk",
+            "A Skills-only package may omit that template",
         ),
         SKILLS / "project-guidance" / "SKILL.md": (
             "seed",
@@ -922,6 +1259,18 @@ def validate_personal_contracts(errors: list[str]) -> None:
             'pattern = ["gh", "release", "create"]',
             'pattern = ["gh", "release", "delete"]',
         ),
+        PORTABLE_SYNC: (
+            "PORTABLE_SKILLS",
+            "plugin.schema.json",
+            "unexpected portable file",
+            "refusing to overwrite output with unexpected files",
+        ),
+        HOST_ADAPTER_SYNC: (
+            "rootloom-host-capabilities-v1",
+            "static-and-synthetic-only",
+            "unexpected host adapter file",
+            "refusing to overwrite output with unexpected files",
+        ),
         ROOT / "README.md": (
             "Rootloom 4 Core",
             "An inspectable personal engineering workflow for Codex.",
@@ -959,6 +1308,9 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "not a content-aware secret scanner",
             "Website telemetry",
             "official VibeLoft browser runtime",
+            "portable/rootloom/",
+            "Agent Plugins 1.0.0",
+            "duplicate-Skill precedence",
         ),
         ROOT / "README.zh-CN.md": (
             "Rootloom 4 Core",
@@ -997,6 +1349,9 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "不是内容感知型 Secret Scanner",
             "网站遥测",
             "VibeLoft 官方浏览器运行时",
+            "portable/rootloom/",
+            "Agent Plugins 1.0.0",
+            "同名 Skill 的优先级",
         ),
         ROOT / "index.html": (
             "Make code changes you can explain.",
@@ -1010,6 +1365,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Completion should say what happened.",
             "https://vibeloft.ai/telemetry/v1.js",
             'data-vl-product-id="b34aed90-7b26-4ca0-b420-e31177be66e1"',
+            "Agent Plugins preview",
+            "portable/rootloom",
         ),
         ROOT / "site" / "styles.css": (
             "--canvas:",
@@ -1026,6 +1383,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "让每一次代码修改",
             "data-workflow-image",
             "data-copy",
+            "docAgentPlugins",
+            "portable/rootloom",
         ),
         ROOT / ".github" / "workflows" / "pages.yml": (
             "actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b",
@@ -1078,6 +1437,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "catastrophic recursive-deletion hard deny",
             "transaction journal",
             "resumes the exact staged target set",
+            "portable/rootloom/",
+            "Agent Plugins portable preview",
         ),
         ROOT / "docs" / "setup.zh-CN.md": (
             "gh pr merge 123 --merge",
@@ -1086,6 +1447,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "灾难性递归删除的硬拒绝",
             "事务日志",
             "恢复精确的暂存目标集合",
+            "portable/rootloom/",
+            "Agent Plugins 可移植预览",
         ),
         ROOT / "docs" / "architecture.md": (
             "intelligence.py",
@@ -1108,6 +1471,9 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "orchestrate_evidence.py",
             "Direct is a bounded fast",
             "recovery-journal replay",
+            "portable/rootloom/",
+            "sync_portable_plugin.py",
+            "fails closed for Evidence Mode",
         ),
         ROOT / "docs" / "architecture.zh-CN.md": (
             "intelligence.py",
@@ -1130,6 +1496,43 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "orchestrate_evidence.py",
             "Direct 是有边界的快速路径",
             "暂存恢复日志重放",
+            "portable/rootloom/",
+            "sync_portable_plugin.py",
+            "Evidence Mode 会失败关闭",
+        ),
+        ROOT / "docs" / "agent-plugins.md": (
+            "Agent Plugins 1.0.0 is currently a Working Draft",
+            "portable/rootloom/",
+            "One package, host-specific loaders",
+            "chat.pluginLocations",
+            "copilot --plugin-dir",
+            "Import power from a folder",
+            "Rootloom has no current cloud install channel",
+            "Change, Review",
+            "Evidence Mode",
+            "duplicate-Skill precedence",
+            "python3 scripts/sync_portable_plugin.py --write",
+            "canonical, single-line Agent Skills",
+            "~/.cursor/plugins/local/rootloom",
+            "codex plugin remove rootloom@rootloom",
+            "Plugin removal alone",
+        ),
+        ROOT / "docs" / "agent-plugins.zh-CN.md": (
+            "Agent Plugins 1.0.0 当前仍是 Working Draft",
+            "portable/rootloom/",
+            "一份通用包，不同加载入口",
+            "chat.pluginLocations",
+            "copilot --plugin-dir",
+            "Import power from a folder",
+            "Rootloom 当前没有 Cloud 安装渠道",
+            "Change、Review",
+            "Evidence Mode",
+            "同名 Skill 的优先级",
+            "python3 scripts/sync_portable_plugin.py --write",
+            "规范单行子集",
+            "~/.cursor/plugins/local/rootloom",
+            "codex plugin remove rootloom@rootloom",
+            "只删除",
         ),
         ROOT / "docs" / "decisions" / "2026-07-14-tiered-authorization-modes.md": (
             "Status: accepted",
@@ -1187,6 +1590,40 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Baseline v2–v4",
             "package-script",
         ),
+        ROOT / "docs" / "decisions" / "2026-08-08-agent-plugins-portable-preview.md": (
+            "Status: accepted",
+            "portable/rootloom/",
+            "Agent Plugins 1.0.0 preview",
+            "Use that one package unchanged across Cursor, VS Code, GitHub Copilot, Kiro",
+            "does not load plugin Hooks",
+            "fails closed when explicit Evidence Mode is requested",
+        ),
+        ROOT / "docs" / "decisions" / "2026-08-08-agent-plugins-portable-preview.zh-CN.md": (
+            "Status: accepted",
+            "portable/rootloom/",
+            "Agent Plugins 1.0.0 预览",
+            "Cursor、VS Code、GitHub Copilot、Kiro",
+            "不加载插件 Hook",
+            "Evidence Mode",
+        ),
+        ROOT / "docs" / "decisions" / "2026-08-08-unified-host-capability-baseline.md": (
+            "Status: accepted",
+            "Supersedes:",
+            "exactly three standard Skills",
+            "adapters/rootloom/",
+            "static and synthetic checks",
+            "runtime smokes",
+            "permission enforcement remains host-owned",
+        ),
+        ROOT / "docs" / "decisions" / "2026-08-08-unified-host-capability-baseline.zh-CN.md": (
+            "Status: accepted",
+            "Supersedes:",
+            "精确暴露三个标准 Skills",
+            "adapters/rootloom/",
+            "静态与合成检查",
+            "运行冒烟",
+            "权限执行仍由 Host 拥有",
+        ),
         ROOT / "docs" / "migration-4.1.md": (
             "orchestrate_evidence.py",
             "core-reset-release-eval",
@@ -1219,6 +1656,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Major:",
             "evidence_complete",
             "Published tags and Releases are immutable",
+            "portable/rootloom/",
+            "sync_portable_plugin.py",
         ),
         ROOT / "CONTRIBUTING.zh-CN.md": (
             "公共契约版本规则",
@@ -1227,6 +1666,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Major：",
             "evidence_complete",
             "Tag 与 Release 保持不可变",
+            "portable/rootloom/",
+            "sync_portable_plugin.py",
         ),
         ROOT / "docs" / "diagram" / "architecture-en.svg": (
             "Authorization Modes",
@@ -1270,6 +1711,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
         "validate:",
         "test:",
         "compatibility-smoke:",
+        "portable-compatibility-smoke:",
         "telemetry-check:",
         "core-reset-eval:",
     ):
@@ -1477,6 +1919,8 @@ def main() -> int:
     errors: list[str] = []
     validate_marketplace(errors)
     validate_manifest(errors)
+    validate_portable_plugin(errors)
+    validate_host_adapters(errors)
     validate_memory_manifest(errors)
     validate_skills(errors)
     validate_core_reset_eval(errors)

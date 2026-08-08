@@ -6,6 +6,33 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Add an isolated Agent Plugins 1.0.0 portable preview with Change, Review, and
+  self-contained Project Guidance, a
+  deterministic source synchronizer, offline manifest/containment/parity checks, and a
+  disposable Codex installation smoke.
+- Document the exact portable capability matrix, client-owned installation boundary,
+  native/portable coexistence rule, and additive rollback in English and Chinese.
+- Document zero-fork loading of the same Agent Plugins package in Cursor, VS Code,
+  GitHub Copilot CLI, and Kiro, including host lifecycle and runtime smoke gates.
+- Add deterministic, opt-in consumer-repository SessionStart templates for Cursor,
+  VS Code/GitHub Copilot, and Kiro, with one byte-identical bounded read-only renderer,
+  a machine-readable capability contract, and explicit pending live-runtime status.
+
+### Changed
+
+- Make Skills-only Change fail closed when plugin-wide Evidence helpers are unavailable,
+  and provide durable-decision headings when the native template is absent.
+- Keep checked-in Skill frontmatter in a deterministic two-field scalar subset and
+  reject native-manifest or source-symlink changes that would break package isolation.
+- Make the shared Change Skill refer to the host instruction chain without assuming
+  Codex, while retaining Codex as the native adapter for non-portable capabilities.
+- Require Hook config version 1 for the shared VS Code/Copilot adapter, validate the
+  complete repository-to-source symlink chain, and keep non-Codex diagnostics out of
+  agent context. Keep shared Project Guidance invocation wording host-neutral and reject
+  unapproved Skill-local files before portable packaging.
+
 ## [4.1.0] - 2026-07-30
 
 ### Added

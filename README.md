@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  A local OpenAI Codex plugin for finding the right place to change,<br>
-  keeping the patch in scope, and showing what was actually verified.
+  A native OpenAI Codex plugin for finding the right place to change,<br>
+  plus an Agent Plugins preview for portable Change, Review, and Project Guidance.
 </p>
 
 <p align="center">
@@ -30,7 +30,13 @@
 
 ## What is Rootloom?
 
-Rootloom is a local plugin for OpenAI Codex. It is not another coding agent and it does not replace your editor, tests, or CI. It exposes four Skills for changing code, reviewing changes, maintaining repository guidance, and managing optional setup. Governed and machine-evidence work are modes of Change, not extra public workflows.
+Rootloom is a local engineering workflow with a full native OpenAI Codex plugin and a
+separate Agent Plugins portable preview. The native plugin exposes four Skills for
+changing code, reviewing changes, maintaining repository guidance, and managing optional
+setup. The portable preview exposes Change, Review, and Project Guidance without
+Codex-only Hooks or Setup.
+Rootloom is not another coding agent and it does not replace your editor, tests, or CI.
+Governed and machine-evidence work remain modes of Change, not extra public workflows.
 
 You still describe the task in plain language. Rootloom changes how Codex approaches it:
 
@@ -100,6 +106,38 @@ Risk         What remains unverified or uncertain?
 ```
 
 That is Rootloom's everyday path. You do not need an evidence bundle, global setup, or every Skill in the plugin to use it.
+
+## Agent Plugins portable preview
+
+`portable/rootloom/` is a separate Agent Plugins 1.0.0 package containing exactly
+`operating-coding-change`, `operating-code-review`, and `project-guidance`. Compatible clients discover those
+Skills from the package's root `plugin.json` and fixed `skills/` directory. Installation,
+updates, permissions, and client UX remain client-owned parts of the Agent Plugins
+Working Draft, so use the target client's own flow and select `portable/rootloom/` as
+the plugin root.
+
+Cursor, VS Code, GitHub Copilot CLI, and Kiro use this same package without platform
+manifests or duplicated Skills; only their loader configuration differs. Copilot cloud
+still needs a published, resolvable marketplace entry, which Rootloom does not yet
+provide. Codex keeps its native package because its managed Hook, Setup, and interface
+surface are intentionally larger than Agent Plugins v1.
+
+The preview includes Review, Project Guidance, and Direct, Scoped, and Governed Change.
+Persistent guidance still requires exact user intent. The package deliberately omits
+Setup, Hooks, Rules, Memory, MCP, OpenAI UI metadata, and the plugin-wide Evidence helpers.
+An explicit Evidence request therefore fails closed
+instead of fabricating an evidence bundle. Do not install the native and portable
+packages into the same client because duplicate-Skill precedence is not standardized.
+
+Repository checks prove package shape, containment, Agent Skills metadata, relative
+References, and synchronization with the native source. A disposable Codex CLI smoke
+also proves that Codex can install an isolated package whose Skill surface contains exactly
+those three directories and a self-contained helper. Static and synthetic tests also
+exercise opt-in host adapter envelopes, but do not prove runtime discovery, activation, or
+identical behavior in Cursor, VS Code, GitHub Copilot, Kiro, or every other compatible
+client. See
+[Agent Plugins portable preview](docs/agent-plugins.md) for exact Cursor, VS Code,
+Copilot, and Kiro loading instructions, runtime smoke gates, migration, and rollback.
 
 ## Choose the workflow that matches the task
 
@@ -230,11 +268,12 @@ Setup is plan-first, backup-backed, conflict-refusing, and reversible within its
 
 Rootloom is deliberately narrow:
 
-- **It is** a single-agent engineering workflow for OpenAI Codex.
+- **It is** a single-agent engineering workflow with a full native OpenAI Codex plugin.
+- **It is** an Agent Plugins 1.0.0 portable preview for Change, Review, and Project Guidance.
 - **It is** local, inspectable, and Python-standard-library-only at runtime.
 - **It is not** a specification framework, test runner, linter, secret scanner, CI system, or replacement for human review.
 - **It is not** a sandbox for untrusted verification commands.
-- **It does not** currently ship integrations for Claude Code, Cursor, or other coding agents.
+- **It does not** promise equivalent Hooks, Setup, permissions, Evidence, or model behavior across coding-agent clients.
 
 Specification tools such as [GitHub Spec Kit](https://github.com/github/spec-kit) and [OpenSpec](https://github.com/Fission-AI/OpenSpec) help define work before implementation. Tests, linters, scanners, and CI execute their own checks. Rootloom sits at the execution and review boundary: why this change, why here, what ran, and what evidence supports completion.
 

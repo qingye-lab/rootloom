@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Rootloom session context",
+      "description": "Inject bounded read-only Rootloom project facts.",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "command",
+        "command": "python3 -B \".rootloom/rootloom-adapter/seed_project_guidance.py\" hook --protocol kiro --allow-untrusted"
+      },
+      "timeout": 10
+    }
+  ]
+}

@@ -6,11 +6,21 @@ brand
 
 ## Users
 
-Rootloom is for individual developers who use OpenAI Codex to change real repositories and want a clearer answer to four questions: why this code should change, why this boundary owns the behavior, what verification actually ran, and what remains uncertain. The public site serves developers who are deciding whether the plugin is useful before they install it.
+Rootloom is for individual developers who use OpenAI Codex or an Agent Plugins-compatible
+client to change real repositories and want a clearer answer to four questions: why this
+code should change, why this boundary owns the behavior, what verification actually ran,
+and what remains uncertain. The public site distinguishes the full native Codex plugin
+from the bounded Agent Plugins preview before installation.
 
 ## Product Purpose
 
-Rootloom gives Codex a small, inspectable engineering workflow for scoped implementation, root-cause review, project guidance, and evidence-honest verification. The site should let a new visitor understand the problem, see the daily workflow, choose the right Skill, and reach a working installation command without learning the optional evidence machinery first.
+Rootloom gives coding agents a small, inspectable engineering workflow for scoped
+implementation, root-cause review, project guidance, and evidence-honest verification.
+Codex owns the complete native experience; the portable preview owns Change, Review,
+and Project Guidance, while host lifecycle envelopes remain optional adapters. The site
+should let a new visitor understand the problem, see the daily workflow,
+choose the right package and Skill, and reach accurate installation guidance without
+learning the optional evidence machinery first.
 
 ## Brand Personality
 

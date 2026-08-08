@@ -20,6 +20,19 @@ Rootloom Memory
 └── Separate experimental plugin
 ```
 
+Distribution is intentionally split by runtime boundary:
+
+```text
+Codex-native package         plugins/rootloom/   Change / Review / Guidance / Setup / Hook
+Agent Plugins preview       portable/rootloom/  Change / Review / Project Guidance
+```
+
+The portable package is not added to the Codex marketplace. A root Agent Plugins
+manifest in the native package would change Codex format selection and suppress the
+existing Hook, so the two installation roots remain isolated. The native Skill tree is
+the single editable source; `scripts/sync_portable_plugin.py` produces an exact,
+allowlisted mirror for the portable package.
+
 The complete pre-split implementation is retained as the **Archived Assurance Edition**
 on `codex/enterprise-assurance`. It is recoverable source, not an actively maintained
 product line. See the [Rootloom 4 Core Reset decision](decisions/2026-07-29-rootloom-4-core-reset.md)
@@ -35,6 +48,8 @@ and the [4.1 efficiency-loop decision](decisions/2026-07-29-rootloom-4.1-efficie
 | Deterministic Evidence helpers and two-step orchestration | `plugins/rootloom/resources/evidence/` |
 | Governed change and durable decision records | `plugins/rootloom/skills/operating-coding-change/references/governed-change.md` |
 | Review-only workflow | `plugins/rootloom/skills/operating-code-review/` |
+| Agent Plugins portable package | `portable/rootloom/` |
+| Portable package synchronization | `scripts/sync_portable_plugin.py` |
 | Separate project/failure memory plugin | `experiments/rootloom-memory/` |
 | Deterministic project facts | `plugins/rootloom/skills/project-guidance/scripts/seed_project_guidance.py` |
 | Semantic guidance refinement | `plugins/rootloom/skills/project-guidance/references/semantic-refinement.md` |
@@ -157,4 +172,30 @@ The only lifecycle Hook is read-only `SessionStart` project-context detection. I
 
 ## Dependency and portability boundary
 
-Runtime helpers use Python 3.11+ standard library only. Normal tests cover Linux, macOS, and Windows-compatible contracts. The optional live smoke needs an installed, logged-in Codex CLI and runs only against a disposable `CODEX_HOME`.
+Runtime helpers use Python 3.11+ standard library only. Normal tests cover Linux,
+macOS, and Windows-compatible contracts. The optional live smoke needs an installed,
+logged-in Codex CLI and runs only against a disposable `CODEX_HOME`.
+
+The Agent Plugins 1.0.0 preview standardizes only its root manifest and Agent Skills
+discovery. Review and Project Guidance are self-contained. Portable Change supports
+Direct, Scoped, and Governed reasoning with in-Skill References. It fails closed for Evidence Mode
+because the preview omits the plugin-wide Evidence subsystem. Persistent
+guidance still requires exact user intent. SessionStart, Setup, Rules, OpenAI interface
+metadata, Memory, and MCP are not Agent Plugins v1 components. Package validation is offline and
+deterministic; equivalent runtime behavior in every compatible client remains
+unverified. See [Agent Plugins portable preview](agent-plugins.md).
+
+The portable architecture is universal-first: Cursor, VS Code, GitHub Copilot, and Kiro
+consume the same `portable/rootloom/` package. Their install settings remain outside the
+package. Deterministic, opt-in templates under `adapters/rootloom/` provide only the
+host-specific SessionStart event and output envelope; they vendor the same renderer and
+lock byte-for-byte. A host-specific extension or adapter is permitted only for behavior
+the Agent Plugins specification cannot represent; it must remain additive and must not
+fork the shared Skill source. Codex remains the one
+intentional native adapter because its four-Skill package, Hook, Setup, and interface
+contract exceed the portable-v1 surface.
+
+The adapter capability contract records static/synthetic status only. Live Cursor,
+VS Code, GitHub Copilot, and Kiro runtime smokes remain pending. Setup stays Codex-native,
+Evidence runtime stays unavailable in the portable package, and permission enforcement
+stays host-owned.

@@ -1,6 +1,6 @@
 ---
 name: Rootloom
-description: A tactile, evidence-first product site for an inspectable Codex engineering workflow.
+description: A tactile, evidence-first product site for a Codex-native engineering workflow with a bounded Agent Plugins preview.
 colors:
   canvas: "oklch(100% 0 0)"
   surface: "oklch(97.5% 0.004 285)"

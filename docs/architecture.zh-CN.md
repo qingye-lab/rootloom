@@ -20,6 +20,17 @@ Rootloom Memory
 └── 独立实验插件
 ```
 
+分发按照运行时边界明确拆分：
+
+```text
+Codex 原生包              plugins/rootloom/   Change / Review / Guidance / Setup / Hook
+Agent Plugins 预览        portable/rootloom/  Change / Review / Project Guidance
+```
+
+可移植包不会加入 Codex Marketplace。在原生包中放入根 Agent Plugins Manifest 会改变
+Codex 的格式选择并关闭既有 Hook，因此两个安装根保持隔离。原生 Skill Tree 是唯一编辑
+来源；`scripts/sync_portable_plugin.py` 为可移植包生成精确、受 Allowlist 约束的镜像。
+
 拆分前的完整实现作为 **Archived Assurance Edition（已归档保障版）** 保留在
 `codex/enterprise-assurance`。它是可恢复源码，不是持续维护的产品线。
 详见 [Rootloom 4 Core Reset 决策](decisions/2026-07-29-rootloom-4-core-reset.md)
@@ -35,6 +46,8 @@ Rootloom Memory
 | 确定性 Evidence Helper 与两步编排 | `plugins/rootloom/resources/evidence/` |
 | Governed Change 与持久决策记录 | `plugins/rootloom/skills/operating-coding-change/references/governed-change.md` |
 | 仅审查工作流 | `plugins/rootloom/skills/operating-code-review/` |
+| Agent Plugins 可移植包 | `portable/rootloom/` |
+| 可移植包同步 | `scripts/sync_portable_plugin.py` |
 | 独立项目/失败记忆插件 | `experiments/rootloom-memory/` |
 | 确定性项目事实 | `plugins/rootloom/skills/project-guidance/scripts/seed_project_guidance.py` |
 | 语义指导精炼 | `plugins/rootloom/skills/project-guidance/references/semantic-refinement.md` |
@@ -146,4 +159,24 @@ Codex 添加插件后安装即完成：Skills 可用，但全局指导、命令 
 
 ## 依赖与可移植性
 
-运行时辅助工具只使用 Python 3.11+ 标准库。普通测试覆盖 Linux、macOS 与 Windows 兼容契约。可选 live smoke 需要已经安装并登录的 Codex CLI，只使用可丢弃 `CODEX_HOME`。
+运行时辅助工具只使用 Python 3.11+ 标准库。普通测试覆盖 Linux、macOS 与 Windows
+兼容契约。可选 live smoke 需要已经安装并登录的 Codex CLI，只使用可丢弃
+`CODEX_HOME`。
+
+Agent Plugins 1.0.0 预览只标准化根 Manifest 与 Agent Skills 发现。Review 与 Project
+Guidance 完整自包含；Portable Change 通过 Skill 内 References 支持 Direct、Scoped 与
+Governed 推理，但预览不包含插件级 Evidence 子系统，因此 Evidence Mode 会失败关闭。
+持久 Guidance 仍需精确用户意图。SessionStart、Setup、Rules、OpenAI 界面元数据、
+Memory 与 MCP 不是 Agent Plugins v1 组件。包校验保持离线、确定性；所有兼容客户端中的等价
+运行行为仍未得到验证。参见 [Agent Plugins 可移植预览](agent-plugins.zh-CN.md)。
+
+可移植架构坚持通用优先：Cursor、VS Code、GitHub Copilot 与 Kiro 共同消费同一份
+`portable/rootloom/` 包。各客户端的安装设置留在包外。`adapters/rootloom/` 下确定性、
+可选的模板只提供 Host 专用 SessionStart Event 与输出 Envelope，并逐字节复制同一 Renderer
+和锁。只有 Agent Plugins 规范确实无法表达某项行为时，才允许增加平台 Extension 或 Adapter；它必须是
+增量层，且不能分叉共享 Skill Source。Codex 是唯一有意保留的原生 Adapter，因为它的
+四 Skill 包、Hook、Setup 与界面合同超出了 Portable v1 Surface。
+
+Adapter 能力合同只记录静态/合成状态；Cursor、VS Code、GitHub Copilot 与 Kiro 的真实
+运行冒烟仍待完成。Setup 保持 Codex 原生，Evidence Runtime 在可移植包中仍不可用，
+权限执行仍由 Host 拥有。

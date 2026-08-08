@@ -4,6 +4,12 @@
 不会安装全局策略、启用 Hook、运行 Evidence Resource 或安装 Rootloom Memory。
 应用全局 Core 资产是独立且可选的操作。
 
+本文只适用于 `plugins/rootloom/` 的 Codex 原生包。位于 `portable/rootloom/` 的独立
+Agent Plugins 预览包含 Change、Review 与 Project Guidance，没有 Setup 或 Hook 配置；参见
+[Agent Plugins 可移植预览](agent-plugins.zh-CN.md)。可选消费者仓库 SessionStart 模板
+单独位于 `adapters/rootloom/`，不会安装或管理 Host 权限。该包的安装与移除使用目标客户端
+自己的生命周期，绝不管理 `~/.codex`。
+
 ## 安装
 
 ```bash

@@ -9,11 +9,14 @@ The violet woven-root mark is the canonical symbol. It should communicate one co
 
 ## Messaging
 
-- Primary line: **Make Codex show its work.**
-- Discovery description: **A local OpenAI Codex plugin for scoped code changes, root-cause review, explicit project guidance, and evidence-honest verification.**
+- Primary line: **Make coding agents show their work.**
+- Discovery description: **A native OpenAI Codex engineering plugin with an Agent Plugins preview for scoped Change, evidence-backed Review, and Project Guidance.**
 - Concrete promise: distinguish suggested checks, commands that actually ran, final repository state, and operator semantic judgment.
 
-Use `evidence-honest`, `inspectable`, and `scoped` for the public product. Do not describe Rootloom as proving correctness, security, or a “verified change.” Case studies must name the observed decision and link executable evidence.
+Use `evidence-honest`, `inspectable`, and `scoped` for the public product. Portable
+copy must say `preview` and separate package discovery from client runtime parity. Do
+not describe Rootloom as proving correctness, security, or a “verified change.” Case
+studies must name the observed decision and link executable evidence.
 
 ## Assets
 

@@ -4,6 +4,14 @@ Installing the plugin exposes the four Core Skills and the reviewed `SessionStar
 definition. It does not install global policy, enable the Hook, run Evidence resources,
 or install Rootloom Memory. Applying global Core assets is a separate optional operation.
 
+This document covers the native Codex package at `plugins/rootloom/`. The separate Agent
+Plugins package at `portable/rootloom/` contains Change, Review, and Project Guidance
+and has no Setup or Hook configuration; see [Agent Plugins portable preview](agent-plugins.md).
+Optional consumer-repository SessionStart templates live separately under
+`adapters/rootloom/`; they do not install or manage host permissions. Installing or
+removing that package uses the target client's own lifecycle and never manages
+`~/.codex`.
+
 ## Install
 
 ```bash

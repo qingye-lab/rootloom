@@ -1,0 +1,57 @@
+{
+  "format": "rootloom-host-capabilities-v1",
+  "baseline": {
+    "skills": [
+      "operating-coding-change",
+      "operating-code-review",
+      "project-guidance"
+    ],
+    "session_context": {
+      "access": "read-only",
+      "maximum_bytes": 4096,
+      "renderer": "plugins/rootloom/skills/project-guidance/scripts/seed_project_guidance.py",
+      "persistence": "never"
+    }
+  },
+  "hosts": {
+    "codex": {
+      "runtime_status": "native-existing",
+      "event": "SessionStart",
+      "protocol": "codex",
+      "config": "plugins/rootloom/hooks/hooks.json"
+    },
+    "cursor": {
+      "runtime_status": "pending",
+      "verification": "static-and-synthetic-only",
+      "event": "sessionStart",
+      "protocol": "cursor",
+      "config": "cursor/template/.cursor/hooks.json"
+    },
+    "vscode": {
+      "runtime_status": "pending",
+      "verification": "static-and-synthetic-only",
+      "event": "sessionStart-translated-to-SessionStart",
+      "protocol": "auto-to-vscode",
+      "config": "vscode-copilot/template/.github/hooks/rootloom.json"
+    },
+    "github-copilot": {
+      "runtime_status": "pending",
+      "verification": "static-and-synthetic-only",
+      "event": "sessionStart",
+      "protocol": "auto-to-copilot",
+      "config": "vscode-copilot/template/.github/hooks/rootloom.json"
+    },
+    "kiro": {
+      "runtime_status": "pending",
+      "verification": "static-and-synthetic-only",
+      "event": "SessionStart",
+      "protocol": "kiro-plain-stdout",
+      "config": "kiro/template/.kiro/hooks/rootloom-session-context.json"
+    }
+  },
+  "non_unified": {
+    "setup": "codex-native-only",
+    "evidence_runtime": "unavailable-in-portable-package",
+    "permission_enforcement": "host-owned"
+  }
+}

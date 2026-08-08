@@ -15,3 +15,7 @@ build/
 .idea/
 .vscode/
 tmp/
+.gstack/
+outputs/
+.architecture/reviews/*
+!.architecture/reviews/.gitkeep

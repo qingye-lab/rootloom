@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  一个本地 OpenAI Codex 插件：找到真正该改的位置、<br>
-  控制修改范围，并说清楚到底验证了什么。
+  一个 OpenAI Codex 原生插件：找到真正该改的位置；<br>
+  另提供可移植 Change、Review 与 Project Guidance 的 Agent Plugins 预览。
 </p>
 
 <p align="center">
@@ -30,7 +30,11 @@
 
 ## Rootloom 是什么？
 
-Rootloom 是一个运行在本地的 OpenAI Codex 插件。它不是另一个 Coding Agent，也不会取代编辑器、测试或 CI。它只暴露四个 Skills：修改、审查、项目指导和设置。高风险治理与机器证据是 Change 的内部模式，不再是额外公共入口。
+Rootloom 是一个本地工程工作流，包含完整的 OpenAI Codex 原生插件，以及独立的
+Agent Plugins 可移植预览。原生插件暴露四个 Skills：修改、审查、项目指导和设置；
+可移植预览暴露 Change、Review 与 Project Guidance，不包含 Codex-only Hook 或 Setup。它不是另一个
+Coding Agent，也不会取代编辑器、测试或 CI。高风险治理与机器证据仍然是 Change 的
+内部模式，不是额外公共入口。
 
 你仍然用自然语言描述任务。Rootloom 改变的是 Codex 处理任务的顺序：
 
@@ -100,6 +104,33 @@ Worker 在取消后仍能重连，最终会出现两个活跃 Session。
 ```
 
 这就是 Rootloom 的日常用法。你不需要先生成证据包，不需要安装全局配置，也不必把插件里的每个 Skill 都跑一遍。
+
+## Agent Plugins 可移植预览
+
+`portable/rootloom/` 是一个独立的 Agent Plugins 1.0.0 包，只包含
+`operating-coding-change`、`operating-code-review` 与 `project-guidance`。兼容客户端会从包根目录的
+`plugin.json` 和固定 `skills/` 目录发现这三个 Skills。Agent Plugins Working Draft
+把安装、更新、权限和客户端交互交给各个客户端，因此请使用目标客户端自己的流程，并
+把 `portable/rootloom/` 选作插件根目录。
+
+Cursor、VS Code、GitHub Copilot CLI 与 Kiro 原样使用同一份包，不增加平台 Manifest，
+也不复制 Skills；区别只在加载配置。Copilot Cloud 仍需要已经发布且可解析的 Marketplace
+入口，Rootloom 当前尚未提供。Codex 保留原生包，是因为它的托管 Hook、Setup 与界面
+Surface 有意大于 Agent Plugins v1。
+
+预览包含 Review、Project Guidance，以及 Direct、Scoped、Governed Change；持久 Guidance
+仍要求精确用户意图。它有意不包含 Setup、Hook、Rules、Memory、MCP、OpenAI UI 元数据和插件级
+Evidence Helper。明确请求 Evidence 时会失败关闭，不会伪造 Evidence Bundle。同一
+客户端不要同时安装原生包与可移植包，因为规范没有定义同名 Skill 的优先级。
+
+仓库检查能够证明包结构、路径包含关系、Agent Skills 元数据、相对 References 以及与
+原生来源同步；一次性的 Codex CLI 冒烟还会证明 Codex 能够安装这个独立包，且安装产物
+精确包含三个 Skill 目录与自包含 Helper。静态与合成测试还覆盖可选 Host Adapter Envelope，
+但这些检查不能证明运行时发现、激活，也不能证明 Cursor、VS Code、
+GitHub Copilot、Kiro 或所有兼容客户端中的运行行为完全一致。精确能力矩阵、迁移和
+回滚边界参见
+[Agent Plugins 可移植预览](docs/agent-plugins.zh-CN.md)，其中包含 Cursor、VS Code、
+Copilot 与 Kiro 的精确加载步骤、运行冒烟门槛、迁移和回滚边界。
 
 ## 按任务选择工作流
 
@@ -222,11 +253,12 @@ Setup 会先展示计划、拒绝冲突、建立备份，并在文档化边界�
 
 Rootloom 有意保持克制：
 
-- **它是**面向 OpenAI Codex 的单代理工程工作流；
+- **它是**包含完整 OpenAI Codex 原生插件的单代理工程工作流；
+- **它是**面向 Change、Review 与 Project Guidance 的 Agent Plugins 1.0.0 可移植预览；
 - **它是**本地、可检查的，运行时只依赖 Python 标准库；
 - **它不是**需求规格框架、测试 Runner、Linter、Secret Scanner、CI 或人工审查的替代品；
 - **它不是**用于执行不可信验证命令的沙箱；
-- **它目前不提供** Claude Code、Cursor 或其他 Coding Agent 的集成。
+- **它不承诺**不同 Coding Agent 客户端具有等价的 Hook、Setup、权限、Evidence 或模型行为。
 
 [GitHub Spec Kit](https://github.com/github/spec-kit)、[OpenSpec](https://github.com/Fission-AI/OpenSpec) 一类工具帮助你在实现前定义工作；测试、Lint、安全扫描和 CI 各自执行检查。Rootloom 关注的是执行与审查的交界处：为什么这样改、为什么改这里、实际运行了什么，以及完成声明有哪些证据。
 
