@@ -6,6 +6,8 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-08-08
+
 ### Added
 
 - Add an isolated Agent Plugins 1.0.0 portable preview with Change, Review, and
@@ -32,6 +34,20 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   complete repository-to-source symlink chain, and keep non-Codex diagnostics out of
   agent context. Keep shared Project Guidance invocation wording host-neutral and reject
   unapproved Skill-local files before portable packaging.
+- Keep Direct shell work batched, recognize equivalent migration no-op wording in Core
+  Reset scoring, and compare elapsed time only across task-successful variant pairs.
+
+### Fixed
+
+- Recover interrupted optional Setup apply and rollback operations from a bounded staged
+  transaction journal, while refusing post-interruption target drift and preserving the
+  existing backup and rollback chain.
+
+### Security
+
+- Re-review and pin the refreshed official VibeLoft browser runtime after a zero-egress
+  Chromium inspection confirmed the existing endpoint, credential, privacy, and
+  navigation boundaries.
 
 ## [4.1.0] - 2026-07-30
 
@@ -782,7 +798,8 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A deterministic high-assurance `codex exec` runner with one writer, exact scope gates, structured outputs, real verification, independent review, and a bounded repair cycle.
 - Bilingual documentation, architecture and capability visuals, tests, CI, security policy, contribution guidance, and release governance.
 
-[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v4.1.0...HEAD
+[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v4.2.0...HEAD
+[4.2.0]: https://github.com/liyanqing90/rootloom/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/liyanqing90/rootloom/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/liyanqing90/rootloom/compare/v3.4.0...v4.0.0
 [3.4.0]: https://github.com/liyanqing90/rootloom/compare/v3.3.0...v3.4.0

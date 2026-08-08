@@ -451,6 +451,12 @@ def behavioral_gate_v2(
             / float(indexed[("rootloom-3.4", scenario, repetition)][field])
             for scenario in sorted(scenario_ids)
             for repetition in range(1, repetitions + 1)
+            if indexed[("rootloom-3.4", scenario, repetition)].get("task_success")
+            == 1
+            and indexed[("rootloom-4.1", scenario, repetition)].get(
+                "task_success"
+            )
+            == 1
             if float(indexed[("rootloom-3.4", scenario, repetition)][field]) > 0
         ]
 
@@ -510,6 +516,24 @@ def behavioral_gate_v2(
             "elapsed_seconds",
             groups["guidance"] | groups["setup"],
         )
+        for label, ratios in (
+            ("routine", routine_elapsed),
+            ("Evidence", evidence_elapsed),
+            ("Governed", governed_elapsed),
+            ("Guidance/Setup", guidance_setup_elapsed),
+        ):
+            if not ratios:
+                errors.append(
+                    f"{label} elapsed comparison has no task-successful variant pairs"
+                )
+        if errors:
+            return {
+                "passed": False,
+                "errors": errors,
+                "run_count": len(indexed),
+                "repetitions": repetitions,
+                "comparisons": comparisons,
+            }
         routine_uncached_input_ratio = mean_ratio(
             values(new, "uncached_input_tokens", routine),
             values(old, "uncached_input_tokens", routine),
@@ -642,7 +666,7 @@ def main() -> int:
     else:
         report["behavioral"] = {
             "passed": None,
-            "status": "not-run; required before formal 4.1 release",
+            "status": "not-run; required before a formal release",
         }
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if report["structural"]["passed"] and report["behavioral"]["passed"] is not False else 1

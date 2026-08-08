@@ -41,5 +41,8 @@ jobs:
       - name: Run repository contracts with latest Codex
         run: make check
 
-      - name: Run offline plugin compatibility smoke
+      - name: Run offline native plugin compatibility smoke
         run: make compatibility-smoke
+
+      - name: Run offline portable plugin compatibility smoke
+        run: make portable-compatibility-smoke

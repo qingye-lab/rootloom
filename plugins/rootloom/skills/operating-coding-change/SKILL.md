@@ -58,8 +58,8 @@ outputs and errors, existing architecture and dependencies, and native tests. Ke
 focused; reject speculative abstraction, unrelated cleanup, silent fallbacks, generated
 churn, dependency refreshes, and weakened tests, types, security, observability, or errors.
 
-Batch independent reads and final diff/status inspection when practical. For Direct and
-Scoped work, avoid separate narration or commands that cannot change the next decision.
+Batch target, focused caller/test, and exact-scope status reads in one shell turn; after editing,
+batch the focused check, diff check, final diff, and status unless a failure needs diagnosis.
 
 ## 4. Verify and challenge
 

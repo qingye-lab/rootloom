@@ -851,6 +851,51 @@ def validate_core_reset_eval(errors: list[str]) -> None:
         if marker not in retained_report:
             errors.append(f"retained 4.1 report is missing {marker!r}")
 
+    release_result = load_json(
+        ROOT / "evals" / "core-reset" / "results-4.2.0.json",
+        errors,
+    )
+    release_runs = release_result.get("runs")
+    release_candidate = release_result.get("candidate")
+    if (
+        release_result.get("format") != "rootloom-core-reset-results-v2"
+        or release_result.get("suite") != "rootloom-core-reset-eval-v2"
+        or release_result.get("scoring") != "rootloom-core-reset-mechanical-v4"
+        or release_result.get("repetitions") != 3
+        or not isinstance(release_runs, list)
+        or len(release_runs) != 126
+        or not isinstance(release_candidate, dict)
+        or release_candidate.get("root") != "plugins/rootloom"
+        or release_candidate.get("tree_sha256")
+        != "c2b229f04df7e94f7eae27fb9b7911698501df46a1168ce611926eb68dde0147"
+    ):
+        errors.append("retained 4.2 behavioral result contract differs")
+    elif len(
+        {
+            (
+                run.get("variant"),
+                run.get("scenario"),
+                run.get("repetition"),
+            )
+            for run in release_runs
+            if isinstance(run, dict)
+        }
+    ) != 126:
+        errors.append("retained 4.2 behavioral result cells must be unique")
+    release_report = (
+        ROOT / "evals" / "core-reset" / "reports" / "4.2.0.md"
+    ).read_text(encoding="utf-8")
+    for marker in (
+        "formal behavioral gate accepted",
+        "14 scenarios × 3 variants × 3 repetitions = 126",
+        "42/42 tasks",
+        "successful-pair elapsed",
+        "Direct command count",
+        "c2b229f04df7e94f7eae27fb9b7911698501df46a1168ce611926eb68dde0147",
+    ):
+        if marker not in release_report:
+            errors.append(f"retained 4.2 report is missing {marker!r}")
+
 
 def validate_hooks(errors: list[str]) -> None:
     payload = load_json(HOOKS, errors)
@@ -949,7 +994,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "`governed`",
             "`evidence`",
             "Use this Skill's verification and challenge steps; load no Reference.",
-            "Batch independent reads",
+            "Batch target, focused caller/test",
             "Use one post-check challenge pass",
             "Before the first edit in Governed or Evidence mode",
             "stop instead of proceeding",
@@ -1398,7 +1443,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             '      - "v*"',
             "make telemetry-check",
             "make core-reset-release-eval",
-            "CORE_RESET_RESULTS=evals/core-reset/results-4.1.0.json",
+            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.0.json",
         ),
         ROOT / "PRODUCT.md": (
             "## Register",
@@ -1417,7 +1462,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
         ),
         ROOT / "scripts" / "verify_vibeloft_runtime.py": (
             "EXPECTED_RUNTIME_SHA256",
-            "da10f94646b842bfc3de38757526da4ae5cbcb023ba8e526a7dc884b4c159d1f",
+            "0901374715934a0234cda527cd95fd4d3c66c989fddd672d06c9df3f43d05bf5",
             "VibeLoft-Telemetry",
             "VibeLoft AWS API",
             "governed zero-egress browser review",
@@ -1705,6 +1750,21 @@ def validate_personal_contracts(errors: list[str]) -> None:
     for forbidden in ("macos-strict-runner", "high-assurance-coding-change"):
         if forbidden in ci:
             errors.append(f"CI retains Assurance-only surface: {forbidden}")
+    for required in (
+        "@openai/codex@0.147.0",
+        "make compatibility-smoke",
+        "make portable-compatibility-smoke",
+    ):
+        if required not in ci:
+            errors.append(f"CI is missing release compatibility gate: {required}")
+    compatibility = (
+        ROOT / ".github" / "workflows" / "codex-compatibility.yml"
+    ).read_text(encoding="utf-8")
+    for required in ("make compatibility-smoke", "make portable-compatibility-smoke"):
+        if required not in compatibility:
+            errors.append(
+                f"scheduled Codex compatibility is missing release gate: {required}"
+            )
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
     for target in (
         "check:",

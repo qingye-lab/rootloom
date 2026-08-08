@@ -54,8 +54,8 @@ Skills 负责指导这些判断，当前仓库与运行时证据必须再次验�
 
 普通 CI 在 Linux 验证 Python 3.11–3.14，并在 macOS/Windows 验证可移植契约。固定
 版本 Codex 兼容任务先证明原生 Marketplace/插件安装没有全局策略或审查门禁副作用，
-再独立覆盖可选个人 Setup 往返和命令 Rules。live smoke 因需要登录 Codex 与真实模型
-回合而保持手动。
+再独立覆盖可选个人 Setup 往返与命令 Rules，并安装隔离的可移植包、验证其精确三
+Skill Surface。live smoke 因需要登录 Codex 与真实模型回合而保持手动。
 
 Agent Plugins 预览会按照仓库固定的 1.0.0 Working Draft 合同做机械校验：Manifest
 Shape、精确 Skills、路径包含关系、相对资源和原生来源同步。可选的一次性 Codex 冒烟
@@ -104,3 +104,8 @@ Rootloom 4.1 保持这些冻结 Format 和四个公共 Skill 的边界。其 v2 
 附加的易用性封装，不新增 Assurance State，也不构成机器证明；语义审查 Flag 仍是操作方
 断言。SessionStart 会省略不安全的 package-script 名称，而不会渲染来自不可信元数据的
 类命令文本。
+
+Rootloom 4.2 保留一份绑定发布 Core Tree 的 126 Cell 结果。当前候选完成 42/42 个任务、
+精确路由 42/42，且没有 Scope Escape 或虚假 Test-pass 声明；结构尺寸、Token、Direct
+命令数与成功配对耗时的正式比较均通过。这是记录的 Codex/Model 合同下的 Fixture 证据，
+不保证所有 IDE 或 Model 的行为完全相同。

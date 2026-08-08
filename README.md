@@ -236,10 +236,12 @@ Evidence load their detailed contracts before the first edit and stop when a req
 Reference cannot be loaded.
 Run `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
 to enforce that formal gate.
-The retained [4.1.0 candidate report](evals/core-reset/reports/4.1.0.md) records all
-126 cells. Scoring v4 corrects the three prior false negatives, the final Project
-Guidance contract prevents verification pollution, and the complete formal gate now
-passes. The version-tag workflow runs that retained result.
+Elapsed ratios compare only pairs where both variants complete the task successfully;
+task-success regression remains independently forbidden.
+The retained [4.2.0 candidate report](evals/core-reset/reports/4.2.0.md) records all
+126 cells, including an interleaved 3.4/4.2 matrix and a final route-scoped Change
+rerun. Every outcome, exact-route, quality, token, command-count, and successful-pair
+elapsed gate passes. The version-tag workflow runs that retained result.
 
 Repository state is accepted only after **two consecutive bounded captures** agree. Each capture lifecycle is bounded by `--max-capture-seconds`. A **material metadata change**, including a **newly discovered ignored addition**, activates metadata-only quarantine before ordinary content capture. Classification uses `is_sensitive_material_path`; Rootloom is not a content-aware secret scanner.
 

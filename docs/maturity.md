@@ -58,9 +58,10 @@ active product line.
 
 Normal CI validates Python 3.11–3.14 on Linux and portable contracts on macOS/Windows.
 The pinned Codex compatibility job proves native marketplace/plugin installation has no
-global-policy or review-gate side effects, then separately exercises the optional
-personal setup round trip and command Rules. A separate live smoke is manual because it
-requires a logged-in Codex session and a real model turn.
+global-policy or review-gate side effects, exercises the optional personal setup round
+trip and command Rules, and installs the isolated portable package with its exact
+three-Skill surface. A separate live smoke is manual because it requires a logged-in
+Codex session and a real model turn.
 
 The Agent Plugins preview is mechanically validated against the repository's pinned
 1.0.0 Working Draft contract: manifest shape, exact Skills, containment, relative
@@ -114,3 +115,9 @@ three-repetition candidate result bound to the final Core tree. The `prepare`/`f
 Evidence orchestration is an additive ergonomic wrapper, not a new assurance state or
 machine proof; its semantic-review flag remains an operator assertion. SessionStart
 omits unsafe package-script names rather than rendering untrusted command-like text.
+
+Rootloom 4.2 retains a 126-cell result bound to the released Core tree. The current
+candidate completes 42/42 tasks and routes 42/42 exactly, with no scope escape or false
+passing-test claim. Its formal comparisons pass for structural size, token use, Direct
+commands, and successful-pair elapsed time. This is fixture evidence under the recorded
+Codex/model contract, not a guarantee of identical behavior across every IDE or model.

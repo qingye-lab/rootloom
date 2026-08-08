@@ -4,7 +4,8 @@ Compare the same fourteen scenarios with:
 
 1. no Rootloom;
 2. Rootloom 3.4 from immutable tag `v3.4.0`;
-3. the candidate Rootloom 4.1 tree.
+3. the candidate Rootloom 4.x tree (retaining `rootloom-4.1` as the stable
+   internal variant identifier).
 
 The suite covers Direct, Scoped, Governed, Review, Evidence, Project Guidance, and
 Setup. Direct and Scoped are expected to activate the Change Skill with no Reference;
@@ -27,7 +28,7 @@ make core-reset-eval
 This checks that Core exposes exactly four Skills and that the ordinary Change Skill is
 at least 30% smaller than the frozen 3.4 byte baseline. Bytes are a repository-owned
 context proxy, not a tokenizer estimate. The structural gate deliberately does not
-claim a 4.1 behavioral result.
+claim a behavioral release result.
 
 ## Candidate matrix
 
@@ -82,6 +83,11 @@ It requires:
   command-count regression;
 - lower manual Skill-selection burden when the 3.4 baseline is nonzero.
 
+Elapsed ratios include only repetition pairs where both variants complete the task
+successfully; task-success regression remains a separate hard gate. This prevents a
+fast failed baseline exit from being treated as an efficiency win over a successful
+candidate.
+
 The report includes a deterministic bootstrap interval for routine elapsed ratios. It
 is a stability aid, not an inference that the suite represents all repositories.
 
@@ -102,3 +108,13 @@ rows that did not activate it retained their existing event evidence.
 The report is authoritative about the outcome: both previous efficiency failures are
 corrected, scoring v4 resolves the three prior false negatives, Project Guidance
 prevents verification pollution, and the complete formal behavioral gate passes.
+
+## Retained 4.2.0 candidate evidence
+
+The repository also retains the sanitized
+[`results-4.2.0.json`](results-4.2.0.json) matrix and its
+[`4.2.0 report`](reports/4.2.0.md). It reuses 42 immutable No Rootloom rows, combines
+them with an interleaved 3.4/4.2 matrix, and replaces every Change-Skill row after the
+final Direct batching refinement. The final result binds the 4.2 Core digest and passes
+all structural, outcome, route, quality, token, command-count, and successful-pair
+elapsed gates.

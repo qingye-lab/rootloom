@@ -214,7 +214,7 @@ class CoreResetEvalTests(unittest.TestCase):
         self.assertIn('      - "v*"', workflow)
         self.assertIn("make core-reset-release-eval", workflow)
         self.assertIn(
-            "CORE_RESET_RESULTS=evals/core-reset/results-4.1.0.json",
+            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.0.json",
             workflow,
         )
 
@@ -238,6 +238,43 @@ class CoreResetEvalTests(unittest.TestCase):
         self.assertFalse(result["passed"])
         self.assertIn(
             "behavioral results have 1 repetitions; required >= 3",
+            result["errors"],
+        )
+
+    def test_elapsed_comparisons_use_only_successful_variant_pairs(self) -> None:
+        payload = self.valid_payload()
+        runs = payload["runs"]
+        self.assertIsInstance(runs, list)
+        for run in runs:
+            if (
+                run["variant"] == "rootloom-3.4"
+                and run["mode_group"] in {"guidance", "setup"}
+                and run["repetition"] == 1
+            ):
+                run["task_success"] = 0
+                run["elapsed_seconds"] = 1.0
+
+        result = self.evaluate(payload, minimum_repetitions=3)
+
+        self.assertTrue(result["passed"], result["errors"])
+        self.assertEqual(
+            result["comparisons"]["guidance_setup_elapsed_geomean_ratio"],
+            0.8,
+        )
+
+    def test_elapsed_comparison_requires_a_successful_variant_pair(self) -> None:
+        payload = self.valid_payload()
+        runs = payload["runs"]
+        self.assertIsInstance(runs, list)
+        for run in runs:
+            if run["mode_group"] == "evidence":
+                run["task_success"] = 0
+
+        result = self.evaluate(payload, minimum_repetitions=3)
+
+        self.assertFalse(result["passed"])
+        self.assertIn(
+            "Evidence elapsed comparison has no task-successful variant pairs",
             result["errors"],
         )
 
@@ -413,7 +450,8 @@ class CoreResetEvalTests(unittest.TestCase):
             "Use this Skill's verification and challenge steps; load no Reference.",
             skill,
         )
-        self.assertIn("Batch independent reads", skill)
+        self.assertIn("Batch target, focused caller/test", skill)
+        self.assertIn("batch the focused check, diff check", skill)
         self.assertIn("Use one post-check challenge pass", skill)
         for scenario in self.scenarios:
             if scenario["mode_group"] in {"direct", "scoped"}:
@@ -652,6 +690,67 @@ class CoreResetEvalTests(unittest.TestCase):
             ),
         )
 
+    def test_activated_context_resolves_reference_directory_loop_basenames(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            skill = (
+                Path(directory)
+                / "plugins"
+                / "cache"
+                / "rootloom"
+                / "rootloom"
+                / "4.2.0"
+                / "skills"
+                / "operating-coding-change"
+                / "SKILL.md"
+            )
+            names = (
+                "evidence-mode.md",
+                "evidence-contract.md",
+                "verification-contract.md",
+            )
+            skill.parent.mkdir(parents=True)
+            skill.write_text("skill", encoding="utf-8")
+            for name in names:
+                reference = skill.parent / "references" / name
+                reference.parent.mkdir(parents=True, exist_ok=True)
+                reference.write_text(name, encoding="utf-8")
+
+            context_bytes, skills, references = self.scorer.activated_context(
+                [
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "command_execution",
+                            "command": f"cat '{skill}'",
+                            "exit_code": 0,
+                        },
+                    },
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "command_execution",
+                            "command": (
+                                f"for f in {' '.join(names)}; do "
+                                f"sed -n '1,240p' '{skill.parent}/references/'"
+                                '"$f"; done'
+                            ),
+                            "exit_code": 0,
+                        },
+                    },
+                ]
+            )
+
+        self.assertEqual(context_bytes, len("skill" + "".join(names)))
+        self.assertEqual(skills, ["operating-coding-change"])
+        self.assertEqual(
+            references,
+            sorted(
+                f"operating-coding-change/references/{name}" for name in names
+            ),
+        )
+
     def test_activated_context_resolves_codex_home_variable(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             codex_home = Path(directory)
@@ -825,6 +924,32 @@ class CoreResetEvalTests(unittest.TestCase):
                 self.scorer.governed_score(
                     "data-migration",
                     no_op_migration,
+                    1,
+                    Path(directory),
+                ),
+                1.0,
+            )
+            byte_no_op_migration = (
+                "Writers emit v2 and readers accept v1 and v2. Existing v2 files "
+                "are a byte-for-byte no-op. Rollback restores v1."
+            )
+            self.assertEqual(
+                self.scorer.governed_score(
+                    "data-migration",
+                    byte_no_op_migration,
+                    1,
+                    Path(directory),
+                ),
+                1.0,
+            )
+            no_rewrite_migration = (
+                "Writers emit v2 and readers accept v1 and v2. Migration does not "
+                "rewrite v2 files. Rollback restores v1."
+            )
+            self.assertEqual(
+                self.scorer.governed_score(
+                    "data-migration",
+                    no_rewrite_migration,
                     1,
                     Path(directory),
                 ),

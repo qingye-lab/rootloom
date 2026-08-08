@@ -41,6 +41,9 @@ QUOTED_PLUGIN_SKILL_DIRECTORY = re.compile(
     r"[^\"']+/skills/[^/\"']+/)[\"']"
 )
 RELATIVE_REFERENCE = re.compile(r"\breferences/[A-Za-z0-9._/-]+\.md\b")
+REFERENCE_BASENAME = re.compile(
+    r"(?<![A-Za-z0-9._/-])([A-Za-z0-9._-]+\.md)\b"
+)
 MANAGED_GUIDANCE_START = re.compile(
     r"^<!-- rootloom:managed-start version=1(?: [^<>\r\n]*)? -->$",
     re.MULTILINE,
@@ -127,6 +130,7 @@ def activated_context(
         matches = set(PLUGIN_MARKDOWN.findall(command))
         matches.update(QUOTED_PLUGIN_MARKDOWN.findall(command))
         relative_references = set(RELATIVE_REFERENCE.findall(command))
+        reference_basenames = set(REFERENCE_BASENAME.findall(command))
         candidate_directories = set(observed_skill_directories)
         directory_matches = set(PLUGIN_SKILL_DIRECTORY.findall(command))
         directory_matches.update(QUOTED_PLUGIN_SKILL_DIRECTORY.findall(command))
@@ -142,6 +146,12 @@ def activated_context(
                 candidate = directory / reference_match
                 if candidate.is_file():
                     record_markdown(candidate)
+            reference_directory = directory / "references"
+            if reference_directory.as_posix() in command:
+                for basename in reference_basenames:
+                    candidate = reference_directory / basename
+                    if candidate.is_file():
+                        record_markdown(candidate)
     context_bytes = sum(path.stat().st_size for path in markdown_paths)
     return context_bytes, sorted(skills), sorted(references)
 
@@ -495,6 +505,8 @@ def governed_score(scenario_id: str, final_text: str, success: int, repo: Path) 
                 "retry safe",
                 "unchanged on rerun",
                 "byte-for-byte unchanged",
+                "byte-for-byte no-op",
+                "does not rewrite v2",
                 "repeated migration",
                 "exact no-op",
             )
