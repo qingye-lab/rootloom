@@ -29,6 +29,7 @@
 
 - Derive checks from changed behavior: prove the primary path, the owning invariant, and an adjacent negative or alternate path when relevant.
 - Use the strongest practical proportional evidence: reproduction, focused tests, type checks, lint, build, runtime inspection, or rendered UI review.
+- Default to impact-scoped checks. Run a full suite or matrix only for unbounded impact, shared test infrastructure, or an explicit repository or release contract; each platform/runtime lane must prove a distinct risk.
 - Never report a check as passed unless it ran and was observed; classify failures as introduced, pre-existing, environmental, or unverified.
 - If required verification cannot run, state the exact gap, blocker, and residual risk.
 

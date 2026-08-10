@@ -20,7 +20,7 @@ English: [CONTRIBUTING.md](CONTRIBUTING.md)
 ```bash
 git clone https://github.com/liyanqing90/rootloom.git
 cd rootloom
-make check
+make validate
 ```
 
 运行时和测试都不依赖 Python 标准库之外的包。
@@ -71,7 +71,8 @@ assets/                                README 配图
 4. 架构或排障契约变化时更新相应文档。
 5. Change、Review 或 Project Guidance 变化后重新生成可移植包；Project Guidance Helper
    或锁变化后重新生成 Host Adapter。
-6. 运行 `make check`。
+6. 运行 `make check-changed BASE=origin/main`；只有在影响无法界定、共享测试选择
+   基础设施发生变化，或明确发布门禁要求全量套件时，才运行 `make check`。
 7. 检查最终 Diff 中是否包含秘密、临时文件、生成噪声或无关修改。
 
 提交信息应简短并使用祈使语气，例如：
@@ -83,6 +84,18 @@ Handle Cargo workspace module boundaries
 ## 测试原则
 
 优先使用真实临时 Git 仓库和行为断言。避免网络请求、任意 sleep、依赖偶然空白的快照，以及能够用小型文件系统样例替代的 Mock。
+
+默认使用影响范围内的精准验证。`make check-changed BASE=<ref>` 始终执行仓库校验，并把
+已提交、已暂存及未暂存的受跟踪变更映射到对应组件测试；默认排除无关未跟踪文件。只有
+全部未跟踪文件都属于当前任务时才使用 `INCLUDE_UNTRACKED=1`，新增文件也可直接选择明确
+的组件 Target。未知可执行路径，或测试选择器、校验器、Makefile、CI Workflow 自身变化
+时，失败关闭到全量套件。组件 Target 包括 `make test-setup`、`test-guidance`、
+`test-packaging`、`test-change`、`test-evidence`、`test-memory`、`test-web`。
+
+CI 对 Pull Request 运行精准测试，在 `main` 保留一次规范性全量套件，在最新支持的
+Python 上只重跑受影响模块，并仅在 macOS/Windows 运行相关可移植契约。完整 Python
+版本矩阵每周定时运行，也可手动触发。除非新增平台或运行时能证明一种独立风险，
+否则不要重复运行相同测试。
 
 手动真实冒烟测试要求本机 Codex 已登录。它会把当前 checkout 安装进可丢弃的 `CODEX_HOME`，不会修改用户主配置：
 

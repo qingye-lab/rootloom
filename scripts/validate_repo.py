@@ -29,6 +29,7 @@ PORTABLE_SKILLS = PORTABLE_PLUGIN / "skills"
 PORTABLE_SYNC = ROOT / "scripts" / "sync_portable_plugin.py"
 HOST_ADAPTERS = ROOT / "adapters" / "rootloom"
 HOST_ADAPTER_SYNC = ROOT / "scripts" / "sync_host_adapters.py"
+IMPACT_TESTS = ROOT / "scripts" / "impact_tests.py"
 MEMORY_PLUGIN = ROOT / "experiments" / "rootloom-memory"
 MEMORY_MANIFEST = MEMORY_PLUGIN / ".codex-plugin" / "plugin.json"
 MEMORY_SKILLS = MEMORY_PLUGIN / "skills"
@@ -874,7 +875,7 @@ def validate_core_reset_eval(errors: list[str]) -> None:
             errors.append(f"retained 4.1 report is missing {marker!r}")
 
     release_result = load_json(
-        ROOT / "evals" / "core-reset" / "results-4.2.2.json",
+        ROOT / "evals" / "core-reset" / "results-4.3.0.json",
         errors,
     )
     release_runs = release_result.get("runs")
@@ -889,9 +890,9 @@ def validate_core_reset_eval(errors: list[str]) -> None:
         or not isinstance(release_candidate, dict)
         or release_candidate.get("root") != "plugins/rootloom"
         or release_candidate.get("tree_sha256")
-        != "25aac94f39c646ca69621f5f15dfbbd5eba584a6ea6eb2cd27a35d7aa41ccc81"
+        != "6714b0f887f47da0595c243edcba6d21f36ce1a2305cf66c6199c3225b1c1593"
     ):
-        errors.append("retained 4.2.2 behavioral result contract differs")
+        errors.append("retained 4.3.0 behavioral result contract differs")
     elif len(
         {
             (
@@ -903,9 +904,9 @@ def validate_core_reset_eval(errors: list[str]) -> None:
             if isinstance(run, dict)
         }
     ) != 135:
-        errors.append("retained 4.2.2 behavioral result cells must be unique")
+        errors.append("retained 4.3.0 behavioral result cells must be unique")
     release_report = (
-        ROOT / "evals" / "core-reset" / "reports" / "4.2.2.md"
+        ROOT / "evals" / "core-reset" / "reports" / "4.3.0.md"
     ).read_text(encoding="utf-8")
     for marker in (
         "formal behavioral gate accepted",
@@ -914,10 +915,10 @@ def validate_core_reset_eval(errors: list[str]) -> None:
         "regenerable-versioned-artifact",
         "successful-pair elapsed",
         "Direct command count",
-        "25aac94f39c646ca69621f5f15dfbbd5eba584a6ea6eb2cd27a35d7aa41ccc81",
+        "6714b0f887f47da0595c243edcba6d21f36ce1a2305cf66c6199c3225b1c1593",
     ):
         if marker not in release_report:
-            errors.append(f"retained 4.2 report is missing {marker!r}")
+            errors.append(f"retained 4.3 report is missing {marker!r}")
 
 
 def validate_hooks(errors: list[str]) -> None:
@@ -1019,6 +1020,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Use this Skill's verification and challenge steps; load no Reference.",
             "Batch target, focused caller/test",
             "Use one post-check challenge pass",
+            "Default to impact-scoped checks",
+            "Use a full suite or matrix only",
             "Before the first edit in Governed or Evidence mode",
             "stop instead of proceeding",
             "local callable/signature shape, file count, version number, serialized artifact",
@@ -1029,6 +1032,13 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "ROOT_CAUSE_ALIGNMENT",
             "Cause",
             "Verification",
+        ),
+        SKILLS / "operating-coding-change" / "references" / "verification-contract.md": (
+            "Impact-scoped verification is the default",
+            "each lane proves a distinct",
+            "full suite or matrix only",
+            "unclassified executable path must fail closed",
+            "documentation-only change may stop",
         ),
         SKILLS / "operating-coding-change" / "references" / "evidence-mode.md": (
             "resources/evidence/analyze_change.py",
@@ -1322,12 +1332,25 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Preserve unrelated user changes",
             "Tier 0 Direct",
             "proportional evidence",
+            "Default to impact-scoped checks",
+            "full suite or matrix only",
             "Use `operating-coding-change`",
             "Project Memory is a separate optional plugin",
             "Single action",
             "Standard",
             "Full",
             "Never infer Full",
+        ),
+        IMPACT_TESTS: (
+            "GROUP_MODULES",
+            "select_groups",
+            "FULL_FALLBACK_PATHS",
+            "shared test infrastructure",
+            "unclassified changed path",
+            "canonical_full",
+            "full_matrix",
+            "include_untracked",
+            'choices=("primary", "python", "portable")',
         ),
         SYSTEM / "rules" / "rootloom.rules": (
             "never grants task authority",
@@ -1390,6 +1413,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Agent Plugins 1.0.0",
             "duplicate-Skill precedence",
             "Runtime compatibility requires evidence of a real post-cutover consumer",
+            "make check-changed BASE=origin/main",
         ),
         ROOT / "README.zh-CN.md": (
             "Rootloom 4 Core",
@@ -1431,6 +1455,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "portable/rootloom/",
             "Agent Plugins 1.0.0",
             "同名 Skill 的优先级",
+            "make check-changed BASE=origin/main",
         ),
         ROOT / "index.html": (
             "Make code changes you can explain.",
@@ -1477,7 +1502,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             '      - "v*"',
             "make telemetry-check",
             "make core-reset-release-eval",
-            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.2.json",
+            "CORE_RESET_RESULTS=evals/core-reset/results-4.3.0.json",
         ),
         ROOT / "PRODUCT.md": (
             "## Register",
@@ -1528,6 +1553,20 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "恢复精确的暂存目标集合",
             "portable/rootloom/",
             "Agent Plugins 可移植预览",
+        ),
+        ROOT / "docs" / "maturity.md": (
+            "Pull-request CI derives focused component tests",
+            "fails closed to the full suite",
+            "one canonical full Python 3.11",
+            "full supported",
+            "path-gated pinned Codex compatibility",
+        ),
+        ROOT / "docs" / "maturity.zh-CN.md": (
+            "Pull Request CI 按变更路径选择组件测试",
+            "失败关闭到全量套件",
+            "一次规范性的 Python 3.11 全量",
+            "完整支持 Python 矩阵",
+            "按路径触发的固定版本 Codex 兼容任务",
         ),
         ROOT / "docs" / "architecture.md": (
             "intelligence.py",
@@ -1719,6 +1758,22 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "真实旧消费者",
             "不新增 Evidence 格式",
         ),
+        ROOT / "docs" / "decisions" / "2026-08-10-impact-scoped-verification.md": (
+            "Status: accepted",
+            "Impact-scoped verification is the default",
+            "scripts/impact_tests.py",
+            "fail closed to the full suite",
+            "one canonical full suite",
+            "No wire format",
+        ),
+        ROOT / "docs" / "decisions" / "2026-08-10-impact-scoped-verification.zh-CN.md": (
+            "状态：accepted",
+            "默认使用影响范围内的精准验证",
+            "scripts/impact_tests.py",
+            "失败关闭到全量套件",
+            "一次规范性全量套件",
+            "不改变",
+        ),
         ROOT / "docs" / "migration-4.1.md": (
             "orchestrate_evidence.py",
             "core-reset-release-eval",
@@ -1753,6 +1808,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Published tags and Releases are immutable",
             "portable/rootloom/",
             "sync_portable_plugin.py",
+            "make check-changed BASE=origin/main",
+            "Impact-scoped verification is the default",
         ),
         ROOT / "CONTRIBUTING.zh-CN.md": (
             "公共契约版本规则",
@@ -1763,6 +1820,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Tag 与 Release 保持不可变",
             "portable/rootloom/",
             "sync_portable_plugin.py",
+            "make check-changed BASE=origin/main",
+            "默认使用影响范围内的精准验证",
         ),
         ROOT / "docs" / "diagram" / "architecture-en.svg": (
             "Authorization Modes",
@@ -1804,22 +1863,44 @@ def validate_personal_contracts(errors: list[str]) -> None:
         "@openai/codex@0.147.0",
         "make compatibility-smoke",
         "make portable-compatibility-smoke",
+        "Select impact scope",
+        "scripts/impact_tests.py select",
+        "scripts/impact_tests.py run",
+        "needs.scope.outputs.python-edge",
+        "needs.scope.outputs.full-matrix",
+        "fetch-depth: 0",
+        'cron: "43 2 * * 0"',
     ):
         if required not in ci:
             errors.append(f"CI is missing release compatibility gate: {required}")
     compatibility = (
         ROOT / ".github" / "workflows" / "codex-compatibility.yml"
     ).read_text(encoding="utf-8")
-    for required in ("make compatibility-smoke", "make portable-compatibility-smoke"):
+    for required in (
+        "make validate",
+        "make compatibility-smoke",
+        "make portable-compatibility-smoke",
+    ):
         if required not in compatibility:
             errors.append(
                 f"scheduled Codex compatibility is missing release gate: {required}"
             )
+    if "make check" in compatibility:
+        errors.append("scheduled Codex compatibility must not repeat the full unit suite")
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
     for target in (
         "check:",
+        "check-changed:",
+        "--include-untracked",
         "validate:",
         "test:",
+        "test-setup:",
+        "test-guidance:",
+        "test-packaging:",
+        "test-change:",
+        "test-evidence:",
+        "test-memory:",
+        "test-web:",
         "compatibility-smoke:",
         "portable-compatibility-smoke:",
         "telemetry-check:",

@@ -41,6 +41,15 @@ GOVERNED_CHANGE_PATH = (
     / "references"
     / "governed-change.md"
 )
+VERIFICATION_CONTRACT_PATH = (
+    ROOT
+    / "plugins"
+    / "rootloom"
+    / "skills"
+    / "operating-coding-change"
+    / "references"
+    / "verification-contract.md"
+)
 GLOBAL_GUIDANCE_PATH = (
     ROOT / "plugins" / "rootloom" / "assets" / "system" / "AGENTS.md"
 )
@@ -190,6 +199,18 @@ class CoreResetEvalTests(unittest.TestCase):
         )
         self.assertNotIn("major dependencies, uncertain root cause", skill)
 
+    def test_verification_defaults_to_impact_scope_and_bounds_full_regression(self) -> None:
+        skill = CHANGE_SKILL_PATH.read_text(encoding="utf-8")
+        verification = VERIFICATION_CONTRACT_PATH.read_text(encoding="utf-8")
+        global_guidance = GLOBAL_GUIDANCE_PATH.read_text(encoding="utf-8")
+
+        for text in (skill, verification, global_guidance):
+            self.assertIn("impact-scoped", text.casefold())
+            self.assertIn("full suite or matrix", text)
+        self.assertIn("each lane proves a distinct", verification)
+        self.assertIn("unclassified executable path must fail closed", verification)
+        self.assertIn("explicit repository or release contract", global_guidance)
+
     def test_regenerable_versioned_artifact_is_scoped_and_current_only(self) -> None:
         scenario = next(
             item
@@ -319,7 +340,7 @@ class CoreResetEvalTests(unittest.TestCase):
         self.assertIn('      - "v*"', workflow)
         self.assertIn("make core-reset-release-eval", workflow)
         self.assertIn(
-            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.2.json",
+            "CORE_RESET_RESULTS=evals/core-reset/results-4.3.0.json",
             workflow,
         )
 

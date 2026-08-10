@@ -69,9 +69,9 @@ batch the focused check, diff check, final diff, and status unless a failure nee
 ## 4. Verify and challenge
 
 Before choosing commands, map the primary path, owning invariant, and one adjacent negative
-or alternate path. Run focused evidence first, then affected tests and type/lint,
-build/package, runtime, rendered UI, or broader checks in proportion to impact. Prefer
-fail-before/pass-after evidence for defects and classify failures. Never claim unrun checks.
+or alternate path. Default to impact-scoped checks, then affected type/lint, build/package,
+runtime, or rendered UI evidence. Use a full suite or matrix only for unbounded impact,
+shared test infrastructure, or an explicit repository/release gate; never claim unrun checks.
 
 Use one post-check challenge pass: test the strongest counterexample, inspect one
 analogous caller or sibling, review the final diff and worktree, and remove mechanisms

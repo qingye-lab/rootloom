@@ -56,8 +56,14 @@ active product line.
 
 ## Compatibility
 
-Normal CI validates Python 3.11–3.14 on Linux and portable contracts on macOS/Windows.
-The pinned Codex compatibility job proves native marketplace/plugin installation has no
+Pull-request CI derives focused component tests from changed paths, always runs the
+repository validator, and fails closed to the full suite for unknown executable paths
+or shared test-selection infrastructure. `main` keeps one canonical full Python 3.11
+run; affected modules are repeated on Python 3.14, while macOS/Windows run only affected
+portable contracts. A weekly or manually dispatched workflow runs the full supported
+Python matrix and complete portable-contract subset.
+
+The path-gated pinned Codex compatibility job proves native marketplace/plugin installation has no
 global-policy or review-gate side effects, exercises the optional personal setup round
 trip and command Rules, and installs the isolated portable package with its exact
 three-Skill surface. A separate live smoke is manual because it requires a logged-in
@@ -116,10 +122,10 @@ Evidence orchestration is an additive ergonomic wrapper, not a new assurance sta
 machine proof; its semantic-review flag remains an operator assertion. SessionStart
 omits unsafe package-script names rather than rendering untrusted command-like text.
 
-Rootloom 4.2.2 retains a 135-cell result bound to the released Core tree. It reuses 129
-unaffected 4.2.1 cells and reruns the six Setup cells touched by marker-bounded global
-guidance installation. The candidate completes 45/45 tasks and routes 45/45 exactly,
-with no scope escape or false passing-test claim. Its formal comparisons pass for
-structural size, token use, Direct commands, and successful-pair elapsed time. This is
-fixture evidence under the recorded Codex/model contract, not a guarantee of identical
-behavior across every IDE or model.
+Rootloom 4.3.0 retains a 135-cell result bound to the released Core tree. It reuses 99
+unaffected 4.2.2 cells and reruns the 36 candidate cells that activate Change or Setup.
+The candidate completes 45/45 tasks and routes 45/45 exactly, with no scope escape or
+false passing-test claim. Its formal comparisons pass for structural size, token use,
+Direct commands, and successful-pair elapsed time. This is fixture evidence under the
+recorded Codex/model contract, not a guarantee of identical behavior across every IDE
+or model.

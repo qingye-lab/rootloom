@@ -20,7 +20,7 @@ Requirements: Git, Python 3.11+, and `make`.
 ```bash
 git clone https://github.com/liyanqing90/rootloom.git
 cd rootloom
-make check
+make validate
 ```
 
 There are no runtime or test dependencies outside the Python standard library.
@@ -71,7 +71,9 @@ Changes should preserve these invariants:
 4. Update architecture or troubleshooting docs when their contracts change.
 5. Regenerate the portable package when Change, Review, or Project Guidance changes;
    regenerate host adapters when the Project Guidance helper or lock changes.
-6. Run `make check`.
+6. Run `make check-changed BASE=origin/main`; use `make check` only when impact cannot
+   be bounded, shared test-selection infrastructure changed, or an explicit release
+   gate requires the full suite.
 7. Review the final diff for secrets, temporary files, generated noise, and unrelated edits.
 
 Commit messages should be short and imperative, for example:
@@ -83,6 +85,21 @@ Handle Cargo workspace module boundaries
 ## Testing guidance
 
 Prefer real temporary Git repositories and behavioral assertions. Avoid network calls, arbitrary sleeps, fixture snapshots tied to incidental whitespace, and mocks when a small filesystem fixture can prove behavior directly.
+
+Impact-scoped verification is the default. `make check-changed BASE=<ref>` always runs
+repository validation and maps committed, staged, and unstaged tracked changes to their
+component tests. It excludes unrelated untracked files by default; use
+`INCLUDE_UNTRACKED=1` only when every untracked file belongs to the task, or select an
+explicit component target for new files. Unknown executable paths and changes to the
+selector, validator, Makefile, or CI workflow fail closed to the full suite. Component
+targets are `make test-setup`, `test-guidance`, `test-packaging`, `test-change`,
+`test-evidence`, `test-memory`, and `test-web`.
+
+CI runs focused pull-request checks, one canonical full suite on `main`, affected tests
+on the newest supported Python, and only relevant portable contracts on macOS/Windows.
+The full supported-Python matrix is scheduled weekly and available through manual
+workflow dispatch. Do not add another platform or runtime lane unless it proves a
+distinct risk.
 
 The manual live smoke test requires a logged-in local Codex session. It installs the current checkout into a disposable `CODEX_HOME` and does not mutate the user's main Codex configuration:
 

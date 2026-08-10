@@ -25,7 +25,16 @@ Run the smallest relevant evidence first:
 3. applicable typecheck and lint;
 4. build, package, or generated-artifact checks;
 5. browser or runtime inspection for user-facing behavior;
-6. the broader suite when a shared contract or common owner changed.
+6. a broader suite only when a shared contract or common owner makes the impact
+   materially unbounded.
+
+Impact-scoped verification is the default. Select checks from the changed owner, its
+known consumers, and the adjacent path in the behavior map. Do not repeat unaffected
+tests across operating systems, runtimes, or versions unless each lane proves a distinct
+risk. Use a full suite or matrix only when impact cannot be bounded, shared test-selection
+or build infrastructure changed, or an explicit repository or release contract requires
+it. An unclassified executable path must fail closed to that broader check. A
+documentation-only change may stop after applicable structural or documentation validation.
 
 Classify every failure as introduced, pre-existing, environmental, or unverified. If a
 required check cannot run, name the exact missing evidence, blocker, and residual risk.

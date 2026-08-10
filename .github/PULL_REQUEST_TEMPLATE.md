@@ -17,10 +17,10 @@
 ## Verification
 
 ```text
-make check
+make check-changed BASE=origin/main
 ```
 
-<!-- Add other commands and observed outcomes. -->
+<!-- Replace with exact commands run. Use make check only when a full-suite trigger applies. -->
 
 ## Remaining risk
 
