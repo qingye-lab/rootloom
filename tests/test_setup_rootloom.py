@@ -88,7 +88,7 @@ class SetupRootloomTests(unittest.TestCase):
 
     def test_install_merges_user_owned_agents_and_rollback_restores_mode(self) -> None:
         agents = self.codex_home / "AGENTS.md"
-        agents.write_text("# Mine\n", encoding="utf-8")
+        agents.write_bytes(b"# Mine\n")
         if os.name != "nt":
             agents.chmod(0o644)
 
@@ -103,7 +103,7 @@ class SetupRootloomTests(unittest.TestCase):
         self.assertEqual(agents.read_bytes(), expected)
 
         setup.rollback(self.codex_home)
-        self.assertEqual(agents.read_text(encoding="utf-8"), "# Mine\n")
+        self.assertEqual(agents.read_bytes(), b"# Mine\n")
         if os.name != "nt":
             self.assertEqual(stat.S_IMODE(agents.stat().st_mode), 0o644)
 
