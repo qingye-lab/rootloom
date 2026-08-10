@@ -1,6 +1,6 @@
 # Rootloom Core Reset v2 evaluation
 
-Compare the same fourteen scenarios with:
+Compare the same fifteen scenarios with:
 
 1. no Rootloom;
 2. Rootloom 3.4 from immutable tag `v3.4.0`;
@@ -52,11 +52,12 @@ python3 evals/core-reset/score_matrix.py \
 `uncached_input_tokens`, output/reasoning tokens, command/message counts, route
 overreach/underreach, and task outcomes from the actual event stream and resulting
 fixtures. It does not accept model self-reports for Guidance, Setup, or route success.
-The current `rootloom-core-reset-mechanical-v4` scoring contract recognizes legal
+The current `rootloom-core-reset-mechanical-v5` scoring contract recognizes legal
 managed-guidance marker attributes, cached plugin paths expressed as absolute,
 `$CODEX_HOME`-relative, or runtime-home-relative paths (including quoted paths with
 spaces), later relative Reference commands associated with a previously loaded Skill
-directory, and bounded semantically equivalent completion signals. The formal gate
+directory, bounded semantically equivalent completion signals, and generated Python
+bytecode caches as verification residue rather than source-scope changes. The formal gate
 rejects results with an older or missing scoring contract.
 
 ## Formal behavioral gate
@@ -66,7 +67,7 @@ make core-reset-release-eval \
   CORE_RESET_RESULTS=/absolute/path/outside-repository/rootloom-4.1-results.json
 ```
 
-The formal gate requires all 14 × 3 × 3 cells, a current candidate tree digest, and at
+The formal gate requires all 15 × 3 × 3 cells, a current candidate tree digest, and at
 least three repetitions. It fails closed for missing usage records, invalid token totals,
 duplicate cells, or an incomplete route.
 
@@ -118,3 +119,13 @@ them with an interleaved 3.4/4.2 matrix, and replaces every Change-Skill row aft
 final Direct batching refinement. The final result binds the 4.2 Core digest and passes
 all structural, outcome, route, quality, token, command-count, and successful-pair
 elapsed gates.
+
+## Retained 4.2.1 candidate evidence
+
+The repository retains the sanitized
+[`results-4.2.1.json`](results-4.2.1.json) matrix and its
+[`4.2.1 report`](reports/4.2.1.md). The 15-scenario suite adds a regenerable versioned
+artifact whose current runtime must reject old and future formats, route Scoped, and
+load no compatibility Reference. Existing public API and data-migration scenarios keep
+their Governed routes so the correction does not remove compatibility where real
+consumers or irreplaceable stored state exist.

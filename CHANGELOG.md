@@ -6,6 +6,21 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.2.1] - 2026-08-10
+
+### Fixed
+
+- Require post-cutover consumer evidence before runtime compatibility is introduced.
+  Regenerable internal versioned artifacts now remain Scoped, use only the current
+  contract, restore the complete old release for rollback, and use the matching old
+  runtime for historical replay.
+- Add a Core Reset regression that rejects legacy readers, adapters, dual paths, flags,
+  and migrations for a regenerable plan record while preserving Governed coverage for
+  real public APIs and irreplaceable stored data.
+- Keep generated `__pycache__/*.pyc` verification residue visible in Core Reset evidence
+  without misclassifying it as a source-scope escape; scoring contract v5 continues to
+  reject every real path outside the declared implementation scope.
+
 ## [4.2.0] - 2026-08-08
 
 ### Added
@@ -798,7 +813,8 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A deterministic high-assurance `codex exec` runner with one writer, exact scope gates, structured outputs, real verification, independent review, and a bounded repair cycle.
 - Bilingual documentation, architecture and capability visuals, tests, CI, security policy, contribution guidance, and release governance.
 
-[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v4.2.0...HEAD
+[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v4.2.1...HEAD
+[4.2.1]: https://github.com/liyanqing90/rootloom/compare/v4.2.0...v4.2.1
 [4.2.0]: https://github.com/liyanqing90/rootloom/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/liyanqing90/rootloom/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/liyanqing90/rootloom/compare/v3.4.0...v4.0.0

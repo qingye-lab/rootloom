@@ -72,17 +72,22 @@ The result is advisory. Semantic judgment remains in Skills and the model and ma
 
 `operating-coding-change` owns the implementation workflow. Direct is a bounded fast
 path: no Reference, only the exact target and smallest relevant check. A dirty
-worktree remains a preservation constraint rather than a mode escalation. File count
-or a local callable/signature shape also does not establish a public contract;
-Governed routing requires shared/external consumers, compatibility obligations, or
-another governed risk signal. Initial cause uncertainty stays Scoped while bounded
+worktree remains a preservation constraint rather than a mode escalation. File count,
+a local callable/signature shape, a version number, or a serialized artifact also does
+not establish a public contract. Schema and format work first establishes whether the
+artifact is authoritative or irreplaceable and whether the new runtime must encounter
+old instances. Regenerable internal artifacts remain Scoped and use only the current
+contract; rollback restores the complete old release and historical replay uses the
+matching old runtime. Governed routing requires shared/external consumers, real
+post-cutover compatibility obligations, or another governed risk signal. Initial cause uncertainty stays Scoped while bounded
 diagnosis establishes one local owner; only material uncertainty that remains afterward
 escalates. Direct and Scoped are self-contained in the Change Skill and load no
 Reference; Scoped retains proportional repository evidence, behavior-mapped
 verification, and one post-check challenge without an extra model/tool round. Governed
 mode loads compatibility, rollout, rollback, and detailed verification instructions
 before the first edit, stopping if a required Reference cannot load. Its completion
-contract reports compatibility, migration/coexistence, rollback/compensation,
+contract reports artifact authority and consumer evidence, compatibility,
+migration/coexistence, rollback/replay,
 verification, and residual risk. Explicit Evidence Mode adds deterministic capture.
 Installing Rootloom never starts the analyzer or finalizer.
 

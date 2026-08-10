@@ -3,7 +3,7 @@
   "suite": "rootloom-core-reset-eval-v2",
   "model": "record exact model",
   "reasoning": "record exact reasoning level",
-  "scoring": "rootloom-core-reset-mechanical-v4",
+  "scoring": "rootloom-core-reset-mechanical-v5",
   "repetitions": 3,
   "random_seed": 20260729,
   "candidate": {

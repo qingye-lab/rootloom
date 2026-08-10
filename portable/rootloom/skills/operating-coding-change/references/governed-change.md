@@ -30,7 +30,20 @@ residual risk, and its removal or follow-up condition.
 
 ## Compatibility
 
-For APIs, schemas, config, CLI, events, or persisted formats:
+First classify an artifact as regenerable internal state, irreplaceable persisted state,
+or an established external contract. A version number, serialized file, retained release,
+rollback requirement, or historical replay requirement does not establish a runtime
+compatibility obligation.
+
+Rollback, historical replay, and runtime compatibility are independent. Regenerable
+internal artifacts use only the current contract: regenerate them for the new runtime,
+restore the complete old release for rollback, and use the matching old runtime for
+historical replay. Do not add an old-format reader, adapter, dual path, flag, or migration
+unless repository evidence identifies an old consumer or stored instance that the new
+runtime must support after cutover.
+
+Only when that post-cutover consumer evidence exists, for APIs, schemas, config, CLI,
+events, or persisted formats:
 
 1. state old and new contracts;
 2. inventory known producers and consumers;
@@ -40,11 +53,12 @@ For APIs, schemas, config, CLI, events, or persisted formats:
 6. define the gate for removing the old path;
 7. document migration and rollback or compensating recovery.
 
-Pre-release status is not automatic permission to break consumers.
+Pre-release status is not automatic permission to break established consumers, but
+retaining an old release does not itself create such a consumer.
 
 ## Data, dependencies, and rollout
 
-For data changes evaluate backup/recovery, transactions, locks, timeouts, retries,
+For authoritative or irreplaceable data changes evaluate backup/recovery, transactions, locks, timeouts, retries,
 idempotency, partial failure, volume, rolling deployment, forward migration, and
 rollback or compensation. Prefer expand → migrate/backfill → verify → contract.
 
@@ -77,9 +91,10 @@ risk statement. For governed defect repair require `ROOT_CAUSE_ALIGNMENT: PASS`.
 Report governed completion compactly:
 
 ```text
-Compatibility           Old/new contract and affected consumers
+Contract / Consumer     Artifact authority and post-cutover consumer evidence
+Compatibility           Old/new contract or NOT_APPLICABLE
 Migration / Coexistence  Transition window or NOT_APPLICABLE
-Rollback / Compensation  Recovery path and irreversible point
+Rollback / Replay        Complete-release recovery and historical-runtime path
 Verification             Executed checks and behavior proved
 Residual Risk            Remaining gaps or NONE_OBSERVED
 ```

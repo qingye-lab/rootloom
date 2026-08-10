@@ -24,7 +24,7 @@ EXPECTED_SKILLS = {
 }
 V1_VARIANTS = {"no-rootloom", "rootloom-3.4", "rootloom-4.0"}
 V2_VARIANTS = {"no-rootloom", "rootloom-3.4", "rootloom-4.1"}
-V2_SCORING = "rootloom-core-reset-mechanical-v4"
+V2_SCORING = "rootloom-core-reset-mechanical-v5"
 TIER_0_1_SCENARIOS = {
     "single-file-mechanical",
     "ordinary-defect",

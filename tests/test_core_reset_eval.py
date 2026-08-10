@@ -32,6 +32,18 @@ EVIDENCE_MODE_PATH = (
     / "references"
     / "evidence-mode.md"
 )
+GOVERNED_CHANGE_PATH = (
+    ROOT
+    / "plugins"
+    / "rootloom"
+    / "skills"
+    / "operating-coding-change"
+    / "references"
+    / "governed-change.md"
+)
+GLOBAL_GUIDANCE_PATH = (
+    ROOT / "plugins" / "rootloom" / "assets" / "system" / "AGENTS.md"
+)
 RELEASE_EVIDENCE_WORKFLOW_PATH = (
     ROOT / ".github" / "workflows" / "release-evidence.yml"
 )
@@ -115,7 +127,7 @@ class CoreResetEvalTests(unittest.TestCase):
             "suite": "rootloom-core-reset-eval-v2",
             "model": "fixture",
             "reasoning": "fixture",
-            "scoring": "rootloom-core-reset-mechanical-v4",
+            "scoring": "rootloom-core-reset-mechanical-v5",
             "repetitions": repetitions,
             "random_seed": 20260729,
             "candidate": {
@@ -153,7 +165,7 @@ class CoreResetEvalTests(unittest.TestCase):
         self.assertIn("Load no Reference.", skill)
         self.assertIn("skip broader inventory", skill)
         self.assertIn(
-            "local callable/signature shape, file count, or dirty worktree alone",
+            "local callable/signature shape, file count, version number, serialized artifact",
             skill,
         )
 
@@ -177,6 +189,99 @@ class CoreResetEvalTests(unittest.TestCase):
             skill,
         )
         self.assertNotIn("major dependencies, uncertain root cause", skill)
+
+    def test_regenerable_versioned_artifact_is_scoped_and_current_only(self) -> None:
+        scenario = next(
+            item
+            for item in self.scenarios
+            if item["id"] == "regenerable-versioned-artifact"
+        )
+        self.assertEqual(scenario["mode_group"], "scoped")
+        self.assertEqual(scenario["expected_route"]["references"], [])
+
+        skill = CHANGE_SKILL_PATH.read_text(encoding="utf-8")
+        governed = GOVERNED_CHANGE_PATH.read_text(encoding="utf-8")
+        global_guidance = GLOBAL_GUIDANCE_PATH.read_text(encoding="utf-8")
+        self.assertIn("version number, serialized artifact", skill)
+        self.assertIn("Regenerable internal artifacts remain", skill)
+        self.assertIn(
+            "Rollback, historical replay, and runtime compatibility are independent",
+            governed,
+        )
+        self.assertIn("Do not add an old-format reader", governed)
+        self.assertIn("regenerable internal artifacts use the current contract", global_guidance)
+
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            package = repo / "loom_eval"
+            package.mkdir()
+            (package / "__init__.py").write_text("", encoding="utf-8")
+            implementation = package / "plan_record.py"
+            implementation.write_text(
+                "import json\n"
+                "SCHEMA_VERSION = 2\n"
+                "def save_plan(path, entries):\n"
+                "    path.write_text(json.dumps({'schema_version': 2, 'entries': list(entries)}, sort_keys=True))\n"
+                "def load_plan(path):\n"
+                "    payload = json.loads(path.read_text())\n"
+                "    if payload.get('schema_version') != 2:\n"
+                "        raise ValueError('unsupported plan schema')\n"
+                "    return list(payload['entries'])\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                self.scorer.task_success(
+                    "regenerable-versioned-artifact",
+                    repo,
+                    "",
+                    0,
+                    {},
+                    [],
+                ),
+                1,
+            )
+            implementation.write_text(
+                implementation.read_text(encoding="utf-8")
+                + "\n# legacy adapter retained for compatibility\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                self.scorer.task_success(
+                    "regenerable-versioned-artifact",
+                    repo,
+                    "",
+                    0,
+                    {},
+                    [],
+                ),
+                0,
+            )
+            implementation.write_text(
+                implementation.read_text(encoding="utf-8")
+                .replace("# legacy adapter retained for compatibility", "# feature flag")
+                .replace("adapter", "current"),
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                self.scorer.task_success(
+                    "regenerable-versioned-artifact",
+                    repo,
+                    "",
+                    0,
+                    {},
+                    [],
+                ),
+                0,
+            )
+
+    def test_generated_python_cache_is_not_a_scope_escape(self) -> None:
+        self.assertTrue(
+            self.scorer.is_generated_python_cache(
+                "loom_eval/__pycache__/store.cpython-313.pyc"
+            )
+        )
+        self.assertFalse(self.scorer.is_generated_python_cache("loom_eval/store.py"))
+        self.assertFalse(self.scorer.is_generated_python_cache("outside/file.pyc"))
 
     def test_guidance_persistence_requires_intent_or_exact_one_time_marker(self) -> None:
         skill = GUIDANCE_SKILL_PATH.read_text(encoding="utf-8")
@@ -214,7 +319,7 @@ class CoreResetEvalTests(unittest.TestCase):
         self.assertIn('      - "v*"', workflow)
         self.assertIn("make core-reset-release-eval", workflow)
         self.assertIn(
-            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.0.json",
+            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.1.json",
             workflow,
         )
 
@@ -224,7 +329,7 @@ class CoreResetEvalTests(unittest.TestCase):
             minimum_repetitions=3,
         )
         self.assertTrue(result["passed"], result["errors"])
-        self.assertEqual(result["run_count"], 126)
+        self.assertEqual(result["run_count"], 135)
 
     def test_release_gate_requires_three_repetitions(self) -> None:
         payload = self.valid_payload()

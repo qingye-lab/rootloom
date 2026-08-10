@@ -69,14 +69,17 @@ Codex 的格式选择并关闭既有 Hook，因此两个安装根保持隔离。
 
 `operating-coding-change` 拥有实现工作流。Direct 是有边界的快速路径：不加载
 Reference，只检查精确目标并运行最小相关检查。脏工作树仍是保护约束，不会单独触发
-模式升级；文件数量或局部 Callable/Signature 形态也不能证明公共契约存在。只有共享/
-外部消费者、兼容义务或其他 Governed 风险信号成立时才进入 Governed。初始根因未知时
+模式升级；文件数量、局部 Callable/Signature 形态、版本号或序列化产物也不能证明公共
+契约存在。Schema 与格式工作会先判断产物是否权威或不可替代，以及新运行时是否必须遇到
+旧实例。可再生内部产物保持 Scoped 并只接受当前合同；回滚恢复完整旧版本，历史回放使用
+匹配的旧运行时。只有共享/外部消费者、真实的切换后兼容义务或其他 Governed 风险信号
+成立时才进入 Governed。初始根因未知时
 先在 Scoped 中做有限诊断；只有诊断后仍存在材料级不确定性才升级。Direct 与 Scoped
 都由 Change Skill 自包含且不加载 Reference；Scoped 仍要求成比例的仓库证据、按行为
 映射的验证以及一次检查后挑战，但不再增加一次模型/工具往返。Governed 加载兼容、
 Rollout、Rollback 与详细验证规则，并且必须在首次编辑前完成；必需 Reference 无法
-加载时停止。其完成合同明确报告 Compatibility、Migration/Coexistence、
-Rollback/Compensation、Verification 与 Residual Risk。显式 Evidence Mode 才增加
+加载时停止。其完成合同明确报告产物权威性与消费者证据、Compatibility、
+Migration/Coexistence、Rollback/Replay、Verification 与 Residual Risk。显式 Evidence Mode 才增加
 确定性采集。安装 Rootloom 永远不会启动 Analyzer 或 Finalizer。
 
 缺陷的 `ROOT_CAUSE_ALIGNMENT: PASS` 必须包含触发方式、所属边界、被违反的不变量、有证据的根因以及对最强替代假设的否定。功能或机械任务使用 `NOT_APPLICABLE` 并明确目标不变量。

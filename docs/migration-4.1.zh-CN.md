@@ -65,11 +65,12 @@ Command、迁移、Mixed-version、安全边界或 Build + Runtime 证明的默�
 历史 v1 矩阵和 4.0 结果仍是历史证据。新候选使用 v2 套件，包含 Guidance 与 Setup
 场景、实际完成回合 Token 字段、精确路由评分、确定性随机化和每次运行独立的 Codex
 Home。
-当前 `rootloom-core-reset-mechanical-v4` Scorer 能识别合法的托管 Marker 属性、
+当前 `rootloom-core-reset-mechanical-v5` Scorer 能识别合法的托管 Marker 属性、
 绝对或 Codex-home 相对的缓存 Skill 路径（包括带空格的引号路径）、关联到此前已加载
 Skill 目录的后续相对 Reference 命令，以及 `false-connected`、`repeat-safe`、
 `byte-for-byte unchanged`、`repeated migration` 等有界等价质量表述。它也会解析
-有界 Shell Loop 中的 Reference 列表；正式门禁会拒绝缺少或使用旧 Scoring
+有界 Shell Loop 中的 Reference 列表，并在计算源码作用域逃逸时忽略验证生成的
+Python 字节码缓存；正式门禁会拒绝缺少或使用旧 Scoring
 Identifier 的结果。
 
 使用 `make core-reset-eval` 执行当前结构门禁；它有意不声称行为验收。正式候选需要一份

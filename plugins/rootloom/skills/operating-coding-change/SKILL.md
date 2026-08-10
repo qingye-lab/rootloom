@@ -32,11 +32,16 @@ gap, residual risk, and removal condition. Never call symptom suppression a fix.
   challenge work unless target evidence is ambiguous.
 - `scoped`: ordinary defects, feature slices, tests, refactors, or bounded multi-file
   work. Use this Skill's verification and challenge steps; load no Reference.
-- `governed`: established shared/external public APIs, schemas, persisted contracts,
-  migrations, security, infrastructure, deployment/release, destructive effects, major
+- `governed`: established shared/external public APIs or schemas, irreplaceable
+  persisted contracts, migrations, security, infrastructure, deployment/release,
+  destructive effects, major
   dependencies, material root-cause uncertainty remaining after bounded diagnosis,
   failed repairs, or substantial blast radius. A
-  local callable/signature shape, file count, or dirty worktree alone is not public-contract evidence. Read
+  local callable/signature shape, file count, version number, serialized artifact, or
+  dirty worktree alone is not public-contract evidence. Before routing schema or format
+  work, establish whether the artifact is authoritative or irreplaceable and whether the
+  new runtime must encounter old instances. Regenerable internal artifacts remain
+  `scoped` unless another governed signal applies. Read
   [references/governed-change.md](references/governed-change.md) and
   [references/verification-contract.md](references/verification-contract.md).
 - `evidence`: only when explicitly requested, repository-required, or needed for a

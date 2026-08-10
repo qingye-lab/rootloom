@@ -609,8 +609,8 @@ def validate_skills(errors: list[str]) -> None:
         .read_text(encoding="utf-8")
         .splitlines()
     )
-    if not 60 <= change_lines <= 85:
-        errors.append("operating-coding-change must remain approximately 60-85 lines")
+    if not 60 <= change_lines <= 90:
+        errors.append("operating-coding-change must remain approximately 60-90 lines")
     if any(EVIDENCE.rglob("SKILL.md")):
         errors.append("Evidence resources must not expose a discoverable Skill")
     forbidden = (
@@ -652,9 +652,9 @@ def validate_core_reset_eval(errors: list[str]) -> None:
         or not required_metrics.issubset(set(metrics))
     ):
         errors.append("Core Reset evaluation lacks v2 token or routing metrics")
-    if not isinstance(scenarios, list) or len(scenarios) != 14:
-        errors.append("Core Reset evaluation must contain exactly fourteen scenarios")
-    elif len({item.get("id") for item in scenarios if isinstance(item, dict)}) != 14:
+    if not isinstance(scenarios, list) or len(scenarios) != 15:
+        errors.append("Core Reset evaluation must contain exactly fifteen scenarios")
+    elif len({item.get("id") for item in scenarios if isinstance(item, dict)}) != 15:
         errors.append("Core Reset evaluation scenario IDs must be unique")
     else:
         mode_skills = {
@@ -707,6 +707,26 @@ def validate_core_reset_eval(errors: list[str]) -> None:
                 )
         if {item.get("mode_group") for item in scenarios} != set(mode_skills):
             errors.append("Core Reset evaluation must cover every public mode group")
+        regenerable = next(
+            (
+                item
+                for item in scenarios
+                if item.get("id") == "regenerable-versioned-artifact"
+            ),
+            None,
+        )
+        if (
+            not isinstance(regenerable, dict)
+            or regenerable.get("mode_group") != "scoped"
+            or regenerable.get("expected_route")
+            != {"skill": "operating-coding-change", "references": []}
+            or "must reject v1" not in str(regenerable.get("prompt", ""))
+            or "historical replay uses its matching old runtime"
+            not in str(regenerable.get("prompt", ""))
+        ):
+            errors.append(
+                "regenerable versioned artifact must remain current-only Scoped work"
+            )
     historical_suite = load_json(
         ROOT / "evals" / "core-reset" / "scenarios-v1.json",
         errors,
@@ -727,7 +747,7 @@ def validate_core_reset_eval(errors: list[str]) -> None:
         "--minimum-repetitions",
         "uncached_input_tokens",
         "bootstrap_ratio_interval",
-        "rootloom-core-reset-mechanical-v4",
+        "rootloom-core-reset-mechanical-v5",
         "rootloom-3.4",
         "rootloom-4.1",
     ):
@@ -761,12 +781,14 @@ def validate_core_reset_eval(errors: list[str]) -> None:
                 "QUOTED_PLUGIN_MARKDOWN",
                 "QUOTED_PLUGIN_SKILL_DIRECTORY",
                 "MANAGED_GUIDANCE_START",
-                "rootloom-core-reset-mechanical-v4",
+                "rootloom-core-reset-mechanical-v5",
+                "is_generated_python_cache",
                 "observed_skill_directories",
                 "repeat-safe",
                 "byte-for-byte unchanged",
                 "repeated migration",
                 "false-connected",
+                "future schema accepted",
             ),
         ),
     ):
@@ -799,7 +821,7 @@ def validate_core_reset_eval(errors: list[str]) -> None:
     if (
         example.get("format") != "rootloom-core-reset-results-v2"
         or example.get("suite") != "rootloom-core-reset-eval-v2"
-        or example.get("scoring") != "rootloom-core-reset-mechanical-v4"
+        or example.get("scoring") != "rootloom-core-reset-mechanical-v5"
         or example.get("repetitions") != 3
     ):
         errors.append("Core Reset v2 result example differs")
@@ -852,7 +874,7 @@ def validate_core_reset_eval(errors: list[str]) -> None:
             errors.append(f"retained 4.1 report is missing {marker!r}")
 
     release_result = load_json(
-        ROOT / "evals" / "core-reset" / "results-4.2.0.json",
+        ROOT / "evals" / "core-reset" / "results-4.2.1.json",
         errors,
     )
     release_runs = release_result.get("runs")
@@ -860,16 +882,16 @@ def validate_core_reset_eval(errors: list[str]) -> None:
     if (
         release_result.get("format") != "rootloom-core-reset-results-v2"
         or release_result.get("suite") != "rootloom-core-reset-eval-v2"
-        or release_result.get("scoring") != "rootloom-core-reset-mechanical-v4"
+        or release_result.get("scoring") != "rootloom-core-reset-mechanical-v5"
         or release_result.get("repetitions") != 3
         or not isinstance(release_runs, list)
-        or len(release_runs) != 126
+        or len(release_runs) != 135
         or not isinstance(release_candidate, dict)
         or release_candidate.get("root") != "plugins/rootloom"
         or release_candidate.get("tree_sha256")
-        != "c2b229f04df7e94f7eae27fb9b7911698501df46a1168ce611926eb68dde0147"
+        != "fd40efafbda17206c271f0401631b4dd35278e5586084a8344db1e8987f148cc"
     ):
-        errors.append("retained 4.2 behavioral result contract differs")
+        errors.append("retained 4.2.1 behavioral result contract differs")
     elif len(
         {
             (
@@ -880,18 +902,19 @@ def validate_core_reset_eval(errors: list[str]) -> None:
             for run in release_runs
             if isinstance(run, dict)
         }
-    ) != 126:
-        errors.append("retained 4.2 behavioral result cells must be unique")
+    ) != 135:
+        errors.append("retained 4.2.1 behavioral result cells must be unique")
     release_report = (
-        ROOT / "evals" / "core-reset" / "reports" / "4.2.0.md"
+        ROOT / "evals" / "core-reset" / "reports" / "4.2.1.md"
     ).read_text(encoding="utf-8")
     for marker in (
         "formal behavioral gate accepted",
-        "14 scenarios × 3 variants × 3 repetitions = 126",
-        "42/42 tasks",
+        "15 scenarios × 3 variants × 3 repetitions = 135",
+        "45/45 tasks",
+        "regenerable-versioned-artifact",
         "successful-pair elapsed",
         "Direct command count",
-        "c2b229f04df7e94f7eae27fb9b7911698501df46a1168ce611926eb68dde0147",
+        "fd40efafbda17206c271f0401631b4dd35278e5586084a8344db1e8987f148cc",
     ):
         if marker not in release_report:
             errors.append(f"retained 4.2 report is missing {marker!r}")
@@ -998,7 +1021,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Use one post-check challenge pass",
             "Before the first edit in Governed or Evidence mode",
             "stop instead of proceeding",
-            "local callable/signature shape, file count, or dirty worktree alone",
+            "local callable/signature shape, file count, version number, serialized artifact",
+            "Regenerable internal artifacts remain",
             "material root-cause uncertainty remaining after bounded",
             "Initial cause uncertainty routes through bounded diagnosis",
             "symptom → trigger/state → owning boundary",
@@ -1030,10 +1054,12 @@ def validate_personal_contracts(errors: list[str]) -> None:
         SKILLS / "operating-coding-change" / "references" / "governed-change.md": (
             "Compatibility",
             "Migration / Coexistence",
-            "Rollback / Compensation",
+            "Rollback / Replay",
             "Verification",
             "Residual Risk",
             "A Skills-only package may omit that template",
+            "Rollback, historical replay, and runtime compatibility are independent",
+            "Do not add an old-format reader",
         ),
         SKILLS / "project-guidance" / "SKILL.md": (
             "seed",
@@ -1058,6 +1084,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "After exact Single action authorization",
             "pre-launch platform refusal is a platform blocker",
             "not missing user authorization",
+            "regenerable internal artifacts use the current contract",
         ),
         EVIDENCE / "analyze_change.py": (
             "analyze_change",
@@ -1356,6 +1383,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "portable/rootloom/",
             "Agent Plugins 1.0.0",
             "duplicate-Skill precedence",
+            "Runtime compatibility requires evidence of a real post-cutover consumer",
         ),
         ROOT / "README.zh-CN.md": (
             "Rootloom 4 Core",
@@ -1443,7 +1471,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             '      - "v*"',
             "make telemetry-check",
             "make core-reset-release-eval",
-            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.0.json",
+            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.1.json",
         ),
         ROOT / "PRODUCT.md": (
             "## Register",
@@ -1668,6 +1696,22 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "静态与合成检查",
             "运行冒烟",
             "权限执行仍由 Host 拥有",
+        ),
+        ROOT / "docs" / "decisions" / "2026-08-10-regenerable-contract-compatibility-boundary.md": (
+            "Status: accepted",
+            "Regenerable internal artifacts remain Scoped",
+            "rollback restores the complete old release",
+            "historical replay uses the matching old runtime",
+            "real post-cutover consumer",
+            "adds no Evidence format",
+        ),
+        ROOT / "docs" / "decisions" / "2026-08-10-regenerable-contract-compatibility-boundary.zh-CN.md": (
+            "状态：accepted",
+            "可再生内部产物默认保持 Scoped",
+            "回滚恢复完整旧版本",
+            "历史回放使用匹配的旧运行时",
+            "真实旧消费者",
+            "不新增 Evidence 格式",
         ),
         ROOT / "docs" / "migration-4.1.md": (
             "orchestrate_evidence.py",

@@ -7,7 +7,7 @@
 - Preserve unrelated user changes. Never reset, clean, stash, bulk-restore, or overwrite work merely to simplify the task.
 - Diagnose the observable path and repair the invariant at its owning boundary instead of masking a symptom.
 - Prefer the smallest coherent change using the repository's architecture, utilities, dependencies, and test style; avoid speculative abstraction and unrelated cleanup.
-- Preserve public and persisted contracts unless an incompatible change is explicit and its migration and rollback consequences are addressed.
+- Preserve established external contracts and irreplaceable persisted state. Do not infer compatibility duties from version numbers, retained releases, rollback, or replay; regenerable internal artifacts use the current contract unless a real mixed-version consumer is identified.
 
 ## Risk
 

@@ -143,6 +143,9 @@ Copilot 与 Kiro 的精确加载步骤、运行冒烟门槛、迁移和回滚边
 
 Rootloom Core 始终只展示这四个入口。Change 只有在风险和证据模式需要时，
 才按需加载治理、外部动作、验证或 Evidence Reference。
+版本号与序列化产物本身不会触发兼容：可再生内部记录保持 Scoped 且只接受当前版本；
+回滚恢复完整旧版本，历史回放使用匹配的旧运行时。只有存在真实的切换后消费者证据时，
+才启用运行时兼容。
 当仓库指导要求检查时，Project Guidance 可以自动执行只读 Validate；持久化 Seed、
 Refresh 或 Refine 则需要用户明确意图。仓库只能通过独立且精确的
 `<!-- rootloom:refine-once version=1 -->` Marker 授权对该文件进行一次 Refine；
@@ -224,9 +227,9 @@ Direct 与 Scoped 是自包含的 Routine 路由，不加载 Reference；Governe
 使用 `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
 执行该正式门禁。
 耗时比率只比较两个版本都成功完成任务的配对；任务成功率回退仍由独立硬门禁禁止。
-仓库保留的 [4.2.0 候选报告](evals/core-reset/reports/4.2.0.md)记录了全部 126 个 Cell，
-包括交错执行的 3.4/4.2 矩阵与最终按路由重跑的 Change 单元。结果、精确路由、质量、
-Token、命令数与成功配对耗时门禁全部通过；版本 Tag Workflow 会运行这份保留结果。
+仓库保留的 [4.2.1 候选报告](evals/core-reset/reports/4.2.1.md)记录了全部 135 个 Cell，
+其中包含 Current-only 的可再生产物回归。结果、精确路由、质量、Token、命令数与成功
+配对耗时门禁全部通过；版本 Tag Workflow 会运行这份保留结果。
 
 仓库状态只有在**连续两次有界采集**一致后才会被接受；每个采集生命周期受 `--max-capture-seconds` 约束。任何**材料元数据变化**——包括**新发现的 Ignored 新增**——都会在普通内容采集前启用仅元数据隔离。分类使用 `is_sensitive_material_path`；Rootloom 不是内容感知型 Secret Scanner。
 

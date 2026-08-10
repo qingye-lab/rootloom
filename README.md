@@ -150,6 +150,10 @@ Copilot, and Kiro loading instructions, runtime smoke gates, migration, and roll
 
 Rootloom Core always presents these four entries. Change loads detailed governed,
 external-action, verification, or Evidence References only when the task requires them.
+Version numbers and serialized artifacts do not trigger compatibility by themselves:
+regenerable internal records stay Scoped and current-only, while rollback restores the
+complete old release and historical replay uses its matching runtime.
+Runtime compatibility requires evidence of a real post-cutover consumer.
 Project Guidance may validate when active repository guidance requests inspection, but
 persistent seed, refresh, or refinement requires explicit user intent. A repository may
 authorize one refinement of one file only with the exact standalone
@@ -238,10 +242,10 @@ Run `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.j
 to enforce that formal gate.
 Elapsed ratios compare only pairs where both variants complete the task successfully;
 task-success regression remains independently forbidden.
-The retained [4.2.0 candidate report](evals/core-reset/reports/4.2.0.md) records all
-126 cells, including an interleaved 3.4/4.2 matrix and a final route-scoped Change
-rerun. Every outcome, exact-route, quality, token, command-count, and successful-pair
-elapsed gate passes. The version-tag workflow runs that retained result.
+The retained [4.2.1 candidate report](evals/core-reset/reports/4.2.1.md) records all
+135 cells, including the current-only regenerable-artifact regression. Every outcome,
+exact-route, quality, token, command-count, and successful-pair elapsed gate passes.
+The version-tag workflow runs that retained result.
 
 Repository state is accepted only after **two consecutive bounded captures** agree. Each capture lifecycle is bounded by `--max-capture-seconds`. A **material metadata change**, including a **newly discovered ignored addition**, activates metadata-only quarantine before ordinary content capture. Classification uses `is_sensitive_material_path`; Rootloom is not a content-aware secret scanner.
 

@@ -73,12 +73,13 @@ an unreviewed bundle pass.
 The historical v1 matrix and its 4.0 result remain historical. New candidates use the
 v2 suite, including Guidance and Setup scenarios, actual completion-token fields,
 exact route scoring, deterministic randomization, and per-run Codex-home isolation.
-Its current `rootloom-core-reset-mechanical-v4` scorer recognizes legal managed marker
+Its current `rootloom-core-reset-mechanical-v5` scorer recognizes legal managed marker
 attributes, absolute or Codex-home-relative cached Skill paths (including quoted paths
 with spaces), later relative Reference commands associated with the previously loaded
 Skill directory, and bounded equivalent quality wording such as `false-connected`,
 `repeat-safe`, `byte-for-byte unchanged`, and `repeated migration`. It also resolves a
-bounded shell-loop Reference list. The formal gate rejects an older or missing scoring
+bounded shell-loop Reference list and ignores generated Python bytecode caches when
+measuring source-scope escape. The formal gate rejects an older or missing scoring
 identifier.
 
 Use `make core-reset-eval` for the current structural gate. It intentionally does not
