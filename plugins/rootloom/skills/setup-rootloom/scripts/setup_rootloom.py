@@ -25,6 +25,9 @@ from rootloom_paths import normalize_repo_path, validate_nonsensitive_managed_ta
 
 
 MANAGED_TOKEN = "rootloom:managed"
+AGENTS_PATH = "AGENTS.md"
+MANAGED_START_PREFIX = b"<!-- rootloom:managed-start"
+MANAGED_END = b"<!-- rootloom:managed-end -->"
 STATE_DIRNAME = ".rootloom"
 STATE_PATH = f"{STATE_DIRNAME}/state.json"
 COMPONENT_POLICY_PATH = f"{STATE_DIRNAME}/components.json"
@@ -162,6 +165,70 @@ def desired_bytes(target: Target, capabilities: tuple[str, ...]) -> bytes:
     return target.source.read_bytes()
 
 
+def managed_span(value: bytes) -> tuple[int, int] | None:
+    start = value.find(MANAGED_START_PREFIX)
+    end = value.find(MANAGED_END)
+    if start == -1 and end == -1:
+        return None
+    if (
+        start == -1
+        or end == -1
+        or end < start
+        or value.count(MANAGED_START_PREFIX) != 1
+        or value.count(MANAGED_END) != 1
+    ):
+        raise ValueError("malformed Rootloom managed block")
+    opening_end = value.find(b"-->", start + len(MANAGED_START_PREFIX))
+    opening_line_end = value.find(b"\n", start)
+    if opening_end == -1 or (
+        opening_line_end != -1 and opening_end > opening_line_end
+    ):
+        raise ValueError("malformed Rootloom managed block")
+    return start, end + len(MANAGED_END)
+
+
+def merge_agents_bytes(current: bytes, template: bytes) -> bytes:
+    template_span = managed_span(template)
+    if (
+        template_span is None
+        or template[: template_span[0]].strip()
+        or template[template_span[1] :].strip()
+    ):
+        raise ValueError("global guidance asset must contain only one managed block")
+    current_span = managed_span(current)
+    if current_span is None:
+        separator = b"" if template.endswith(b"\n\n") else b"\n"
+        return template + separator + current
+    block = template[template_span[0] : template_span[1]]
+    return current[: current_span[0]] + block + current[current_span[1] :]
+
+
+def installed_target_hash(relative_path: str, value: bytes | None) -> str | None:
+    if value is None:
+        return None
+    if relative_path == AGENTS_PATH:
+        try:
+            span = managed_span(value)
+        except ValueError:
+            return None
+        if span is not None:
+            end = span[1]
+            if value[end : end + 2] == b"\r\n":
+                end += 2
+            elif value[end : end + 1] in {b"\n", b"\r"}:
+                end += 1
+            return sha256_bytes(value[span[0] : end])
+    return sha256_bytes(value)
+
+
+def installed_hash_matches(relative_path: str, value: bytes | None, expected: str) -> bool:
+    if value is None:
+        return False
+    return expected == sha256_bytes(value) or expected == installed_target_hash(
+        relative_path, value
+    )
+
+
 def has_symlink_component(path: Path, root: Path) -> bool:
     root = root.resolve()
     try:
@@ -196,21 +263,34 @@ def build_plan(
     root = plugin_root()
     selected = normalize_capabilities(capabilities)
     targets = target_catalog(root, selected)
-    desired = {target.relative_path: desired_bytes(target, selected) for target in targets}
+    desired: dict[str, bytes] = {}
     actions: list[Action] = []
     for target in targets:
         destination = codex_home / target.relative_path
-        after = desired[target.relative_path]
+        template = desired_bytes(target, selected)
+        before = read_bytes(destination)
+        merge_error: str | None = None
+        if target.relative_path == AGENTS_PATH and before is not None:
+            try:
+                after = merge_agents_bytes(before, template)
+            except ValueError as exc:
+                after = template
+                merge_error = str(exc)
+        else:
+            after = template
+        desired[target.relative_path] = after
         if has_symlink_component(destination, codex_home):
             action = "conflict"
             reason = "target or parent is symlinked"
-            before = read_bytes(destination)
         else:
-            before = read_bytes(destination)
             if before is None:
                 action, reason = "create", "managed target is absent"
+            elif merge_error is not None:
+                action, reason = "conflict", merge_error
             elif before == after:
                 action, reason = "unchanged", "content already matches"
+            elif target.relative_path == AGENTS_PATH:
+                action, reason = "update", "merge Rootloom managed block"
             elif is_managed(destination, before):
                 action, reason = "update", "managed content differs"
             else:
@@ -475,7 +555,7 @@ def apply_installed_drift(
         destination = codex_home / action.path
         current = None if has_symlink_component(destination, codex_home) else read_bytes(destination)
         current_hash = sha256_bytes(current) if current is not None else None
-        if current_hash != expected:
+        if not installed_hash_matches(action.path, current, expected):
             drifted.append(action.path)
             updated.append(
                 Action(
@@ -494,7 +574,7 @@ def apply_installed_drift(
         current = None if has_symlink_component(destination, codex_home) else read_bytes(destination)
         current_hash = sha256_bytes(current) if current is not None else None
         expected = normalized_installed[retired]
-        if current_hash != expected:
+        if not installed_hash_matches(retired, current, expected):
             drifted.append(retired)
             updated.append(
                 Action(
@@ -516,6 +596,21 @@ def apply_installed_drift(
                 )
             )
     return updated, sorted(drifted)
+
+
+def planned_installed_files(
+    actions: list[Action], desired: dict[str, bytes]
+) -> dict[str, str]:
+    files: dict[str, str] = {}
+    for action in actions:
+        if action.after_hash is None:
+            continue
+        value = desired.get(action.path)
+        digest = installed_target_hash(action.path, value)
+        if digest is None:
+            raise ValueError(f"managed setup target is unavailable: {action.path}")
+        files[action.path] = digest
+    return files
 
 
 def apply_plan(
@@ -552,6 +647,17 @@ def apply_plan(
                 + ", ".join(drifted)
             )
         conflicts = [item for item in actions if item.action == "conflict"]
+        malformed_agents = [
+            item
+            for item in conflicts
+            if item.path == AGENTS_PATH
+            and item.reason == "malformed Rootloom managed block"
+        ]
+        if malformed_agents:
+            raise RuntimeError(
+                "AGENTS.md has malformed Rootloom managed markers; repair the markers "
+                "before setup"
+            )
         if conflicts and not replace_conflicts:
             raise RuntimeError(
                 "setup has user-owned conflicts; inspect plan and use --replace-conflicts "
@@ -560,8 +666,16 @@ def apply_plan(
         changed = [item for item in actions if item.action != "unchanged"]
         if not changed:
             previous_version = previous_state.get("version")
-            if current is not None and previous_version != version:
-                state = {**previous_state, "version": version}
+            tracked_files = planned_installed_files(actions, desired)
+            if current is not None and (
+                previous_version != version
+                or previous_state.get("files") != tracked_files
+            ):
+                state = {
+                    **previous_state,
+                    "version": version,
+                    "files": tracked_files,
+                }
                 atomic_write(
                     codex_home / STATE_PATH,
                     (json.dumps(state, indent=2, sort_keys=True) + "\n").encode(),
@@ -624,11 +738,7 @@ def apply_plan(
             "capabilities": list(selected),
             "components": list(components_for_capabilities(selected)),
             "backup": str(backup.relative_to(codex_home / STATE_DIRNAME)),
-            "files": {
-                action.path: action.after_hash
-                for action in actions
-                if action.after_hash is not None
-            },
+            "files": planned_installed_files(actions, desired),
         }
         state_bytes = (json.dumps(state, indent=2, sort_keys=True) + "\n").encode()
         staged_entries: list[dict[str, Any]] = []
@@ -737,8 +847,7 @@ def rollback(codex_home: Path) -> dict[str, Any]:
             if has_symlink_component(destination, codex_home):
                 raise RuntimeError(f"refusing symlinked rollback target: {relative}")
             current = read_bytes(destination)
-            current_hash = sha256_bytes(current) if current is not None else None
-            if current_hash != expected_hash:
+            if not installed_hash_matches(relative, current, expected_hash):
                 raise RuntimeError(f"refusing rollback because {relative} changed after setup")
 
         restores: list[tuple[Path, bytes | None, int]] = []

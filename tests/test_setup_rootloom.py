@@ -86,15 +86,22 @@ class SetupRootloomTests(unittest.TestCase):
         self.assertFalse((self.codex_home / "rules" / "rootloom.rules").exists())
         self.assertFalse((self.codex_home / setup.COMPONENT_POLICY_PATH).exists())
 
-    def test_user_owned_conflict_requires_explicit_replacement_and_restores_mode(self) -> None:
+    def test_install_merges_user_owned_agents_and_rollback_restores_mode(self) -> None:
         agents = self.codex_home / "AGENTS.md"
         agents.write_text("# Mine\n", encoding="utf-8")
         if os.name != "nt":
             agents.chmod(0o644)
-        with self.assertRaisesRegex(RuntimeError, "user-owned conflicts"):
-            setup.apply_plan(self.codex_home, replace_conflicts=False)
 
-        setup.apply_plan(self.codex_home, replace_conflicts=True)
+        planned = setup.build_plan(self.codex_home)[2]
+        agents_action = next(item for item in planned if item.path == "AGENTS.md")
+        self.assertEqual(agents_action.action, "update")
+        setup.apply_plan(self.codex_home, replace_conflicts=False)
+        expected = (
+            setup.desired_bytes(setup.all_targets(setup.plugin_root())[0], setup.FULL_CAPABILITIES)
+            + b"\n# Mine\n"
+        )
+        self.assertEqual(agents.read_bytes(), expected)
+
         setup.rollback(self.codex_home)
         self.assertEqual(agents.read_text(encoding="utf-8"), "# Mine\n")
         if os.name != "nt":
@@ -135,7 +142,10 @@ class SetupRootloomTests(unittest.TestCase):
         def updated(target: object, capabilities: tuple[str, ...]) -> bytes:
             value = original_desired(target, capabilities)
             if isinstance(target, setup.Target) and target.relative_path == "AGENTS.md":
-                return value + b"\n# simulated update\n"
+                return value.replace(
+                    setup.MANAGED_END,
+                    b"# simulated update\n" + setup.MANAGED_END,
+                )
             return value
 
         with mock.patch.object(setup, "desired_bytes", side_effect=updated):
@@ -195,12 +205,60 @@ class SetupRootloomTests(unittest.TestCase):
         self.assertEqual(current["version"], setup.plugin_version(setup.plugin_root()))
         self.assertEqual(current["backup"], before_backup)
 
-    def test_upgrade_refuses_post_install_drift_even_with_replace_flag(self) -> None:
+    def test_upgrade_merges_managed_agents_and_preserves_user_content(self) -> None:
         setup.apply_plan(
             self.codex_home, replace_conflicts=False, operation="install"
         )
         agents = self.codex_home / "AGENTS.md"
-        edited = agents.read_text(encoding="utf-8") + "\n# personal edit\n"
+        original = agents.read_bytes()
+        state = setup.load_state(self.codex_home)
+        self.assertEqual(
+            state["files"]["AGENTS.md"],
+            setup.sha256_bytes(original),
+        )
+        user_content = b"\n## Shared server profiles\n\n- Keep this custom profile.\n"
+        agents.write_bytes(original + user_content)
+        status = setup.status_payload(self.codex_home)
+        self.assertEqual(status["drifted_paths"], [])
+        self.assertEqual(
+            next(item for item in status["actions"] if item["path"] == "AGENTS.md")[
+                "action"
+            ],
+            "unchanged",
+        )
+
+        original_desired = setup.desired_bytes
+
+        def updated(target: object, capabilities: tuple[str, ...]) -> bytes:
+            value = original_desired(target, capabilities)
+            if isinstance(target, setup.Target) and target.relative_path == "AGENTS.md":
+                return value.replace(
+                    setup.MANAGED_END,
+                    b"# simulated update\n" + setup.MANAGED_END,
+                )
+            return value
+
+        with mock.patch.object(setup, "desired_bytes", side_effect=updated):
+            upgraded = setup.apply_plan(
+                self.codex_home, replace_conflicts=False, operation="upgrade"
+            )
+
+        merged = agents.read_bytes()
+        self.assertEqual(upgraded["status"], "upgraded")
+        self.assertIn(b"# simulated update\n", merged)
+        self.assertTrue(merged.endswith(user_content))
+        setup.rollback(self.codex_home)
+        self.assertEqual(agents.read_bytes(), original + user_content)
+
+    def test_upgrade_refuses_managed_block_drift_even_with_replace_flag(self) -> None:
+        setup.apply_plan(
+            self.codex_home, replace_conflicts=False, operation="install"
+        )
+        agents = self.codex_home / "AGENTS.md"
+        edited = agents.read_text(encoding="utf-8").replace(
+            "# Global Codex Working Agreement",
+            "# Edited managed agreement",
+        )
         agents.write_text(edited, encoding="utf-8")
         status = setup.status_payload(self.codex_home)
         self.assertEqual(status["drifted_paths"], ["AGENTS.md"])
@@ -211,6 +269,20 @@ class SetupRootloomTests(unittest.TestCase):
                 operation="upgrade",
             )
         self.assertEqual(agents.read_text(encoding="utf-8"), edited)
+
+    def test_malformed_agents_markers_are_never_replaced(self) -> None:
+        agents = self.codex_home / "AGENTS.md"
+        malformed = b"<!-- rootloom:managed-start version=1 -->\n# Mine\n"
+        agents.write_bytes(malformed)
+
+        for replace_conflicts in (False, True):
+            with self.assertRaisesRegex(RuntimeError, "malformed"):
+                setup.apply_plan(
+                    self.codex_home,
+                    replace_conflicts=replace_conflicts,
+                    operation="install",
+                )
+            self.assertEqual(agents.read_bytes(), malformed)
 
     def test_upgrade_removes_pristine_retired_target_and_rollback_restores_it(self) -> None:
         setup.apply_plan(

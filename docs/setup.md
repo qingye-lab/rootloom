@@ -68,7 +68,7 @@ Selecting `autonomy` always includes `global-policy`; Rules that suppress duplic
 
 | Path | Purpose |
 | --- | --- |
-| `~/.codex/AGENTS.md` | Personal engineering working agreement |
+| `~/.codex/AGENTS.md` | Rootloom-managed block in the personal engineering working agreement; content outside the markers stays user-owned |
 | `~/.codex/rules/rootloom.rules` | Optional low-confirmation authorization policy |
 | `~/.codex/.rootloom/components.json` | Hook enablement |
 | `~/.codex/.rootloom/state.json` | Installed selection and target hashes |
@@ -83,13 +83,14 @@ Setup:
 
 - shows a plan before the Skill applies it;
 - uses an ordinary create-exclusive local lock;
-- refuses symlinked targets and unmarked user-owned conflicts;
+- inserts or replaces only the `rootloom:managed-start` / `rootloom:managed-end` block in `AGENTS.md`, preserving existing content outside that block;
+- refuses symlinked targets, malformed `AGENTS.md` managed markers, and unmarked user-owned conflicts on whole-file targets;
 - requires exact authorization before `--replace-conflicts`;
 - copies every replaced file before the first managed target write;
 - stages the complete target set and final setup state before publishing a transaction journal;
 - writes each target atomically;
 - resumes a pending staged transaction under the setup lock before the next mutating setup or rollback operation;
-- records post-apply hashes for drift detection;
+- records the `AGENTS.md` managed-block hash and whole-file hashes for other targets so user-owned guidance does not become setup drift;
 - refuses upgrade when a managed target no longer matches its installed hash, even when `--replace-conflicts` is present;
 - restores original content and POSIX mode during rollback.
 
@@ -151,6 +152,12 @@ python3 <setup-skill>/scripts/setup_rootloom.py upgrade
 ```
 
 Optional setup `upgrade` always preserves the installed capability selection. It reports `up_to_date` when the current plugin and assets already match. If only the plugin version changed, it updates setup state without creating a redundant asset backup; if managed content changed, it creates the normal backup before writing. A managed target retired by the new catalog is removed only when it still matches its installed hash, and it is backed up so rollback restores it. Installed state paths are normalized and checked before access. `status` reports `installed_version`, `upgrade_available`, and `drifted_paths`. Drift is never overwritten by upgrade: restore the expected content or roll back first. `--replace-conflicts` is reserved for a newly introduced user-owned target after exact authorization.
+
+For `AGENTS.md`, drift means a change inside Rootloom's marked block. Setup preserves
+content before and after that block byte-for-byte during install and upgrade. On first
+install into an unmarked file, it inserts the managed block before the existing content.
+Malformed or duplicated markers stop the operation and must be repaired explicitly;
+setup never falls back to replacing the whole file.
 
 ## Migrate from Archived Assurance Edition 1.2.19
 

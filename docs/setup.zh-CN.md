@@ -65,7 +65,7 @@ python3 <setup-skill>/scripts/setup_rootloom.py plan \
 
 | 路径 | 用途 |
 | --- | --- |
-| `~/.codex/AGENTS.md` | 个人工程工作协议 |
+| `~/.codex/AGENTS.md` | 个人工程工作协议中的 Rootloom 托管区块；标记外内容归用户所有 |
 | `~/.codex/rules/rootloom.rules` | 可选低确认授权策略 |
 | `~/.codex/.rootloom/components.json` | Hook 开关 |
 | `~/.codex/.rootloom/state.json` | 已安装选择与目标哈希 |
@@ -80,13 +80,14 @@ Setup：
 
 - Skill 应用前先展示 plan；
 - 使用普通 create-exclusive 本地锁；
-- 拒绝符号链接目标和无标记的用户文件冲突；
+- 在 `AGENTS.md` 中只插入或替换 `rootloom:managed-start` / `rootloom:managed-end` 区块，保留区块外已有内容；
+- 拒绝符号链接目标、损坏的 `AGENTS.md` 托管标记，以及整文件托管目标中无标记的用户文件冲突；
 - 使用 `--replace-conflicts` 前需要精确授权；
 - 第一个托管目标写入前复制所有被替换文件；
 - 在发布事务日志前暂存完整目标集合和最终 setup 状态；
 - 逐目标原子写入；
 - 下一个会写入的 setup 或 rollback 操作会在 setup 锁下恢复待处理事务；
-- 记录 apply 后哈希以检测漂移；
+- 对 `AGENTS.md` 记录托管区块 Hash，对其他目标记录整文件 Hash，避免把用户自定义指导误判为 setup 漂移；
 - 托管目标不再匹配已安装哈希时拒绝升级，即使传入 `--replace-conflicts` 也不会覆盖；
 - 回滚时恢复原内容和 POSIX mode。
 
@@ -147,6 +148,10 @@ python3 <setup-skill>/scripts/setup_rootloom.py upgrade
 ```
 
 可选 setup 的 `upgrade` 始终保持已安装 capability 选择。插件与资产已经一致时返回 `up_to_date`；只有插件版本变化时只更新 setup 状态，不创建多余资产备份；托管内容变化时仍会在写入前创建正常备份。新版目录已退役的托管目标只有在仍匹配安装 Hash 时才会被移除，并会先备份，使 rollback 能恢复；访问前还会重新规范并校验已安装状态路径。`status` 会报告 `installed_version`、`upgrade_available` 与 `drifted_paths`。升级不会覆盖漂移：请先恢复预期内容或回滚。`--replace-conflicts` 只用于新版本首次引入的用户文件冲突，并且需要精确授权。
+
+对 `AGENTS.md` 而言，只有 Rootloom 标记区块内的修改才属于漂移。安装和升级会逐字节
+保留区块前后的内容。首次安装遇到无标记文件时，会把托管区块插入到已有内容之前。
+标记缺失、损坏或重复时操作会停止，必须显式修复；setup 不会退化为覆盖整份文件。
 
 ## 从 Archived Assurance Edition 1.2.19 迁移
 

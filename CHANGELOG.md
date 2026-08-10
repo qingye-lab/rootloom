@@ -6,6 +6,15 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.2.2] - 2026-08-10
+
+### Fixed
+
+- Make optional global setup merge only Rootloom's marker-bounded block in
+  `~/.codex/AGENTS.md`. Existing user guidance is preserved during install and upgrade,
+  content outside the block no longer counts as drift, and malformed markers stop
+  instead of falling back to whole-file replacement.
+
 ## [4.2.1] - 2026-08-10
 
 ### Fixed

@@ -1,6 +1,6 @@
 {
   "name": "rootloom",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "description": "Four focused OpenAI Codex Skills for inspectable change, review, project guidance, and setup.",
   "author": {
     "name": "liyanqing",

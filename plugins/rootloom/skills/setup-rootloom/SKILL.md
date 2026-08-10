@@ -45,7 +45,14 @@ The personal preset manages only:
 
 Setup is serialized by an ordinary local lock, refuses symlinked or user-owned targets, stages the complete target set before publishing a transaction journal, resumes interrupted staged work before the next mutating setup or rollback operation, writes each file atomically, and preserves original content and mode for rollback. Recovery refuses a target changed after interruption and does not claim hostile shared-filesystem locking.
 
-If the plan contains `conflict`, show the exact paths. Use `--replace-conflicts` only after the user authorizes those replacements. A backup does not replace authorization.
+`AGENTS.md` is a managed-block target: setup inserts or replaces only the content between
+the Rootloom markers and preserves everything outside them. Existing unmarked guidance is
+kept after the inserted block. Malformed or duplicated markers stop setup and are never
+replaced through `--replace-conflicts`.
+
+If another target's plan contains `conflict`, show the exact paths. Use
+`--replace-conflicts` only after the user authorizes those replacements. A backup does not
+replace authorization.
 
 ## Verify optional Autonomy
 
@@ -73,7 +80,7 @@ If the user previously installed the optional global layer and wants its copied 
 python3 <skill-dir>/scripts/setup_rootloom.py upgrade
 ```
 
-Upgrade preserves the installed capability selection. It reports `up_to_date` for the same version, records a version-only upgrade without a redundant asset backup, and backs up changed managed assets before replacement. A pristine target retired by the new catalog is backed up and removed, so rollback restores it; a drifted retired target is refused. All installed target paths are revalidated before access. If any managed target drifted after setup, both `status` and `upgrade` expose/refuse it; restore the installed content or roll back instead of overwriting the edit. `--replace-conflicts` applies only to newly introduced user-owned targets after exact authorization, not post-install drift.
+Upgrade preserves the installed capability selection. It reports `up_to_date` for the same version, records a version-only upgrade without a redundant asset backup, and backs up changed managed assets before replacement. A pristine target retired by the new catalog is backed up and removed, so rollback restores it; a drifted retired target is refused. All installed target paths are revalidated before access. `AGENTS.md` drift is scoped to its Rootloom-managed block; user-owned content outside the block is preserved and does not block upgrade. If any other managed target or the managed block drifted after setup, both `status` and `upgrade` expose/refuse it; restore the installed content or roll back instead of overwriting the edit. `--replace-conflicts` applies only to newly introduced user-owned whole-file targets after exact authorization, not post-install drift.
 
 ## Roll back or change preset
 
