@@ -52,8 +52,12 @@ Skills 负责指导这些判断，当前仓库与运行时证据必须再次验�
 
 ## 兼容性
 
-普通 CI 在 Linux 验证 Python 3.11–3.14，并在 macOS/Windows 验证可移植契约。固定
-版本 Codex 兼容任务先证明原生 Marketplace/插件安装没有全局策略或审查门禁副作用，
+Pull Request CI 按变更路径选择组件测试，始终运行仓库校验；未知可执行路径或共享测试
+选择基础设施变化时，失败关闭到全量套件。`main` 保留一次规范性的 Python 3.11 全量
+运行；受影响模块在 Python 3.14 重跑，macOS/Windows 只运行受影响的可移植契约。每周
+定时或手动触发的 Workflow 运行完整支持 Python 矩阵与完整可移植契约子集。
+
+按路径触发的固定版本 Codex 兼容任务先证明原生 Marketplace/插件安装没有全局策略或审查门禁副作用，
 再独立覆盖可选个人 Setup 往返与命令 Rules，并安装隔离的可移植包、验证其精确三
 Skill Surface。live smoke 因需要登录 Codex 与真实模型回合而保持手动。
 
@@ -105,8 +109,8 @@ Rootloom 4.1 保持这些冻结 Format 和四个公共 Skill 的边界。其 v2 
 断言。SessionStart 会省略不安全的 package-script 名称，而不会渲染来自不可信元数据的
 类命令文本。
 
-Rootloom 4.2.2 保留一份绑定发布 Core Tree 的 135 Cell 结果。其中复用 129 个不受影响的
-4.2.1 Cell，只重跑受全局指导标记区块安装影响的 6 个 Setup Cell。候选完成 45/45 个
-任务、精确路由 45/45，且没有 Scope Escape 或虚假 Test-pass 声明；结构尺寸、Token、
-Direct 命令数与成功配对耗时的正式比较均通过。这是记录的 Codex/Model 合同下的 Fixture
-证据，不保证所有 IDE 或 Model 的行为完全相同。
+Rootloom 4.3.0 保留一份绑定发布 Core Tree 的 135 Cell 结果。其中复用 99 个不受影响的
+4.2.2 Cell，并重跑会激活 Change 或 Setup 的 36 个候选 Cell。候选完成 45/45 个任务、
+精确路由 45/45，且没有 Scope Escape 或虚假 Test-pass 声明；结构尺寸、Token、Direct
+命令数与成功配对耗时的正式比较均通过。这是记录的 Codex/Model 合同下的 Fixture 证据，
+不保证所有 IDE 或 Model 的行为完全相同。

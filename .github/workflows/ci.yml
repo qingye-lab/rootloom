@@ -4,24 +4,114 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "43 2 * * 0"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Linux Python ${{ matrix.python-version }}
+  scope:
+    name: Select impact scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      primary-mode: ${{ steps.impact.outputs.primary-mode }}
+      python-edge: ${{ steps.impact.outputs.python-edge }}
+      portable: ${{ steps.impact.outputs.portable }}
+      codex: ${{ steps.impact.outputs.codex }}
+      full-matrix: ${{ steps.impact.outputs.full-matrix }}
+
+    steps:
+      - name: Check out repository history
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Select checks from changed paths
+        id: impact
+        env:
+          IMPACT_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          IMPACT_CANONICAL_FULL: ${{ github.event_name != 'pull_request' }}
+          IMPACT_FULL_MATRIX: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+        run: >-
+          python scripts/impact_tests.py select
+          --base "$IMPACT_BASE_SHA"
+          --head "$GITHUB_SHA"
+          --canonical-full "$IMPACT_CANONICAL_FULL"
+          --full-matrix "$IMPACT_FULL_MATRIX"
+          --github-output "$GITHUB_OUTPUT"
+
+  primary:
+    name: Primary contracts (Python 3.11)
+    needs: scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository history
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Run primary impact checks
+        env:
+          IMPACT_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          IMPACT_CANONICAL_FULL: ${{ needs.scope.outputs.primary-mode == 'full' }}
+        run: >-
+          python scripts/impact_tests.py run
+          --base "$IMPACT_BASE_SHA"
+          --head "$GITHUB_SHA"
+          --lane primary
+          --canonical-full "$IMPACT_CANONICAL_FULL"
+
+  python-edge:
+    name: Impact scope (Python 3.14)
+    needs: scope
+    if: needs.scope.outputs.python-edge == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository history
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.14"
+
+      - name: Run affected tests on the newest supported Python
+        env:
+          IMPACT_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: >-
+          python scripts/impact_tests.py run
+          --base "$IMPACT_BASE_SHA"
+          --head "$GITHUB_SHA"
+          --lane python
+
+  full-python-matrix:
+    name: Scheduled full suite (Python ${{ matrix.python-version }})
+    needs: scope
+    if: needs.scope.outputs.full-matrix == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.12", "3.13", "3.14"]
 
     steps:
       - name: Check out repository
@@ -32,11 +122,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Run repository checks
-        run: make check
+      - name: Run the full unit suite
+        run: make test
 
   portable-platforms:
-    name: Portable contracts (${{ matrix.os }})
+    name: Portable impact (${{ matrix.os }})
+    needs: scope
+    if: needs.scope.outputs.portable == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -45,22 +137,32 @@ jobs:
         os: [macos-latest, windows-latest]
 
     steps:
-      - name: Check out repository
+      - name: Check out repository history
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.11"
 
-      - name: Validate repository contracts
-        run: python scripts/validate_repo.py
-
-      - name: Run portable setup, guidance, and hook tests
-        run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Run affected portable contracts
+        shell: bash
+        env:
+          IMPACT_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          IMPACT_FULL_MATRIX: ${{ needs.scope.outputs.full-matrix }}
+        run: >-
+          python scripts/impact_tests.py run
+          --base "$IMPACT_BASE_SHA"
+          --head "$GITHUB_SHA"
+          --lane portable
+          --full-matrix "$IMPACT_FULL_MATRIX"
 
   codex-contracts:
     name: Codex CLI contracts
+    needs: scope
+    if: needs.scope.outputs.codex == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

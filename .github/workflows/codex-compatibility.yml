@@ -38,8 +38,8 @@ jobs:
       - name: Record probed version
         run: codex --version
 
-      - name: Run repository contracts with latest Codex
-        run: make check
+      - name: Validate repository structure
+        run: make validate
 
       - name: Run offline native plugin compatibility smoke
         run: make compatibility-smoke

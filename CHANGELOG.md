@@ -6,6 +6,20 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.3.0] - 2026-08-11
+
+### Changed
+
+- Make impact-scoped verification the default in Rootloom guidance and CI. Pull requests
+  now select component tests from changed paths, unknown executable paths fail closed to
+  the full suite, `main` retains one canonical full run, and broad Python/platform
+  matrices run only on scheduled or explicit requests.
+- Add one repository-owned selector for component tests and keep local branch comparison
+  isolated from unrelated untracked work. Full regression remains the fail-closed path
+  for shared selection infrastructure and the explicit release gate.
+- Refresh only the 36 affected Change and Setup behavior cells for the 4.3.0 release
+  gate while retaining the other 99 reviewed cells.
+
 ## [4.2.2] - 2026-08-10
 
 ### Fixed
@@ -824,7 +838,9 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A deterministic high-assurance `codex exec` runner with one writer, exact scope gates, structured outputs, real verification, independent review, and a bounded repair cycle.
 - Bilingual documentation, architecture and capability visuals, tests, CI, security policy, contribution guidance, and release governance.
 
-[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v4.2.1...HEAD
+[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v4.3.0...HEAD
+[4.3.0]: https://github.com/liyanqing90/rootloom/compare/v4.2.2...v4.3.0
+[4.2.2]: https://github.com/liyanqing90/rootloom/compare/v4.2.1...v4.2.2
 [4.2.1]: https://github.com/liyanqing90/rootloom/compare/v4.2.0...v4.2.1
 [4.2.0]: https://github.com/liyanqing90/rootloom/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/liyanqing90/rootloom/compare/v4.0.0...v4.1.0

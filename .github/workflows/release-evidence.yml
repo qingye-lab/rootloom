@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   core-reset:
-    name: Rootloom 4.2.2 behavioral gate
+    name: Rootloom 4.3.0 behavioral gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -31,7 +31,7 @@ jobs:
       - name: Verify reviewed website telemetry runtime
         run: make telemetry-check
 
-      - name: Verify retained Rootloom 4.2.2 behavior evidence
+      - name: Verify retained Rootloom 4.3.0 behavior evidence
         run: >-
           make core-reset-release-eval
-          CORE_RESET_RESULTS=evals/core-reset/results-4.2.2.json
+          CORE_RESET_RESULTS=evals/core-reset/results-4.3.0.json

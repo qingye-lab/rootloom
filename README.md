@@ -242,11 +242,10 @@ Run `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.j
 to enforce that formal gate.
 Elapsed ratios compare only pairs where both variants complete the task successfully;
 task-success regression remains independently forbidden.
-The retained [4.2.2 candidate report](evals/core-reset/reports/4.2.2.md) records all
-135 cells, including the current-only regenerable-artifact regression and six fresh
-Setup cells for managed-block installation. Every outcome, exact-route, quality, token,
-command-count, and successful-pair elapsed gate passes. The version-tag workflow runs
-that retained result.
+The retained [4.3.0 candidate report](evals/core-reset/reports/4.3.0.md) records all
+135 cells, reusing 99 unaffected cells and replacing the 36 candidate cells that activate
+Change or Setup. Every outcome, exact-route, quality, token, command-count, and
+successful-pair elapsed gate passes. The version-tag workflow runs that retained result.
 
 Repository state is accepted only after **two consecutive bounded captures** agree. Each capture lifecycle is bounded by `--max-capture-seconds`. A **material metadata change**, including a **newly discovered ignored addition**, activates metadata-only quarantine before ordinary content capture. Classification uses `is_sensitive_material_path`; Rootloom is not a content-aware secret scanner.
 
@@ -331,6 +330,7 @@ The public GitHub Pages site loads the official VibeLoft browser runtime once fr
 ## Development
 
 ```bash
+make check-changed BASE=origin/main
 make validate
 make test
 make check
@@ -340,6 +340,13 @@ make telemetry-check
 # Preview the website at http://localhost:8000
 python3 -m http.server 8000
 ```
+
+`check-changed` is the default development path: it selects tests from changed owners
+across committed, staged, and unstaged tracked work, while excluding unrelated untracked
+files. Use `INCLUDE_UNTRACKED=1` only when they all belong to the task. Unknown executable
+paths or shared test-selection infrastructure fall back to the full suite. `test` and
+`check` are explicit full-suite targets. CI keeps one canonical full run on `main`;
+broad version matrices are scheduled or manually invoked.
 
 ## License
 

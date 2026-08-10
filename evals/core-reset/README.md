@@ -138,3 +138,12 @@ The repository retains the sanitized
 Setup change and replaces only the six `setup-plan` / `setup-roundtrip` candidate cells.
 All six fresh cells pass in isolated homes, and the complete 135-cell formal gate remains
 green without rerunning unrelated scenarios.
+
+## Retained 4.3.0 candidate evidence
+
+The repository retains the sanitized
+[`results-4.3.0.json`](results-4.3.0.json) matrix and its
+[`4.3.0 report`](reports/4.3.0.md). It reuses 99 cells unaffected by the impact-scoped
+verification policy and replaces the 36 candidate cells that activate Change or Setup.
+All 36 retained fresh cells pass in isolated homes, and the complete 135-cell formal gate
+remains green without rerunning Review, Guidance, or historical baseline cells.

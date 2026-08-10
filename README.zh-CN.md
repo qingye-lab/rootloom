@@ -227,10 +227,10 @@ Direct 与 Scoped 是自包含的 Routine 路由，不加载 Reference；Governe
 使用 `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
 执行该正式门禁。
 耗时比率只比较两个版本都成功完成任务的配对；任务成功率回退仍由独立硬门禁禁止。
-仓库保留的 [4.2.2 候选报告](evals/core-reset/reports/4.2.2.md)记录了全部 135 个 Cell，
-其中包含 Current-only 的可再生产物回归，以及针对托管区块安装的 6 个新 Setup Cell。
-结果、精确路由、质量、Token、命令数与成功配对耗时门禁全部通过；版本 Tag Workflow
-会运行这份保留结果。
+仓库保留的 [4.3.0 候选报告](evals/core-reset/reports/4.3.0.md)记录了全部 135 个 Cell，
+复用 99 个未受影响的 Cell，并替换会激活 Change 或 Setup 的 36 个候选 Cell。结果、
+精确路由、质量、Token、命令数与成功配对耗时门禁全部通过；版本 Tag Workflow 会运行
+这份保留结果。
 
 仓库状态只有在**连续两次有界采集**一致后才会被接受；每个采集生命周期受 `--max-capture-seconds` 约束。任何**材料元数据变化**——包括**新发现的 Ignored 新增**——都会在普通内容采集前启用仅元数据隔离。分类使用 `is_sensitive_material_path`；Rootloom 不是内容感知型 Secret Scanner。
 
@@ -313,6 +313,7 @@ codex plugin add rootloom-memory@rootloom
 ## 开发
 
 ```bash
+make check-changed BASE=origin/main
 make validate
 make test
 make check
@@ -322,6 +323,11 @@ make telemetry-check
 # 在 http://localhost:8000 预览网站
 python3 -m http.server 8000
 ```
+
+`check-changed` 是默认开发路径：它覆盖已提交、已暂存及未暂存的受跟踪变更，并默认排除
+无关未跟踪文件；只有它们都属于当前任务时才使用 `INCLUDE_UNTRACKED=1`。未知可执行路径
+或共享测试选择基础设施变化时，回退到全量套件。`test` 与 `check` 是显式全量 Target。
+CI 只在 `main` 保留一次规范性全量运行；宽版本矩阵由定时或手动触发。
 
 ## 许可证
 
