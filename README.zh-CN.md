@@ -227,9 +227,10 @@ Direct 与 Scoped 是自包含的 Routine 路由，不加载 Reference；Governe
 使用 `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
 执行该正式门禁。
 耗时比率只比较两个版本都成功完成任务的配对；任务成功率回退仍由独立硬门禁禁止。
-仓库保留的 [4.2.1 候选报告](evals/core-reset/reports/4.2.1.md)记录了全部 135 个 Cell，
-其中包含 Current-only 的可再生产物回归。结果、精确路由、质量、Token、命令数与成功
-配对耗时门禁全部通过；版本 Tag Workflow 会运行这份保留结果。
+仓库保留的 [4.2.2 候选报告](evals/core-reset/reports/4.2.2.md)记录了全部 135 个 Cell，
+其中包含 Current-only 的可再生产物回归，以及针对托管区块安装的 6 个新 Setup Cell。
+结果、精确路由、质量、Token、命令数与成功配对耗时门禁全部通过；版本 Tag Workflow
+会运行这份保留结果。
 
 仓库状态只有在**连续两次有界采集**一致后才会被接受；每个采集生命周期受 `--max-capture-seconds` 约束。任何**材料元数据变化**——包括**新发现的 Ignored 新增**——都会在普通内容采集前启用仅元数据隔离。分类使用 `is_sensitive_material_path`；Rootloom 不是内容感知型 Secret Scanner。
 

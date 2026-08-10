@@ -116,8 +116,10 @@ Evidence orchestration is an additive ergonomic wrapper, not a new assurance sta
 machine proof; its semantic-review flag remains an operator assertion. SessionStart
 omits unsafe package-script names rather than rendering untrusted command-like text.
 
-Rootloom 4.2.1 retains a 135-cell result bound to the released Core tree. The current
-candidate completes 45/45 tasks and routes 45/45 exactly, with no scope escape or false
-passing-test claim. Its formal comparisons pass for structural size, token use, Direct
-commands, and successful-pair elapsed time. This is fixture evidence under the recorded
-Codex/model contract, not a guarantee of identical behavior across every IDE or model.
+Rootloom 4.2.2 retains a 135-cell result bound to the released Core tree. It reuses 129
+unaffected 4.2.1 cells and reruns the six Setup cells touched by marker-bounded global
+guidance installation. The candidate completes 45/45 tasks and routes 45/45 exactly,
+with no scope escape or false passing-test claim. Its formal comparisons pass for
+structural size, token use, Direct commands, and successful-pair elapsed time. This is
+fixture evidence under the recorded Codex/model contract, not a guarantee of identical
+behavior across every IDE or model.

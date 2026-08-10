@@ -874,7 +874,7 @@ def validate_core_reset_eval(errors: list[str]) -> None:
             errors.append(f"retained 4.1 report is missing {marker!r}")
 
     release_result = load_json(
-        ROOT / "evals" / "core-reset" / "results-4.2.1.json",
+        ROOT / "evals" / "core-reset" / "results-4.2.2.json",
         errors,
     )
     release_runs = release_result.get("runs")
@@ -889,9 +889,9 @@ def validate_core_reset_eval(errors: list[str]) -> None:
         or not isinstance(release_candidate, dict)
         or release_candidate.get("root") != "plugins/rootloom"
         or release_candidate.get("tree_sha256")
-        != "fd40efafbda17206c271f0401631b4dd35278e5586084a8344db1e8987f148cc"
+        != "25aac94f39c646ca69621f5f15dfbbd5eba584a6ea6eb2cd27a35d7aa41ccc81"
     ):
-        errors.append("retained 4.2.1 behavioral result contract differs")
+        errors.append("retained 4.2.2 behavioral result contract differs")
     elif len(
         {
             (
@@ -903,9 +903,9 @@ def validate_core_reset_eval(errors: list[str]) -> None:
             if isinstance(run, dict)
         }
     ) != 135:
-        errors.append("retained 4.2.1 behavioral result cells must be unique")
+        errors.append("retained 4.2.2 behavioral result cells must be unique")
     release_report = (
-        ROOT / "evals" / "core-reset" / "reports" / "4.2.1.md"
+        ROOT / "evals" / "core-reset" / "reports" / "4.2.2.md"
     ).read_text(encoding="utf-8")
     for marker in (
         "formal behavioral gate accepted",
@@ -914,7 +914,7 @@ def validate_core_reset_eval(errors: list[str]) -> None:
         "regenerable-versioned-artifact",
         "successful-pair elapsed",
         "Direct command count",
-        "fd40efafbda17206c271f0401631b4dd35278e5586084a8344db1e8987f148cc",
+        "25aac94f39c646ca69621f5f15dfbbd5eba584a6ea6eb2cd27a35d7aa41ccc81",
     ):
         if marker not in release_report:
             errors.append(f"retained 4.2 report is missing {marker!r}")
@@ -1477,7 +1477,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             '      - "v*"',
             "make telemetry-check",
             "make core-reset-release-eval",
-            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.1.json",
+            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.2.json",
         ),
         ROOT / "PRODUCT.md": (
             "## Register",

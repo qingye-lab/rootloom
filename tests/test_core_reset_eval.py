@@ -319,7 +319,7 @@ class CoreResetEvalTests(unittest.TestCase):
         self.assertIn('      - "v*"', workflow)
         self.assertIn("make core-reset-release-eval", workflow)
         self.assertIn(
-            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.1.json",
+            "CORE_RESET_RESULTS=evals/core-reset/results-4.2.2.json",
             workflow,
         )
 

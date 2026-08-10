@@ -105,7 +105,8 @@ Rootloom 4.1 保持这些冻结 Format 和四个公共 Skill 的边界。其 v2 
 断言。SessionStart 会省略不安全的 package-script 名称，而不会渲染来自不可信元数据的
 类命令文本。
 
-Rootloom 4.2.1 保留一份绑定发布 Core Tree 的 135 Cell 结果。当前候选完成 45/45 个任务、
-精确路由 45/45，且没有 Scope Escape 或虚假 Test-pass 声明；结构尺寸、Token、Direct
-命令数与成功配对耗时的正式比较均通过。这是记录的 Codex/Model 合同下的 Fixture 证据，
-不保证所有 IDE 或 Model 的行为完全相同。
+Rootloom 4.2.2 保留一份绑定发布 Core Tree 的 135 Cell 结果。其中复用 129 个不受影响的
+4.2.1 Cell，只重跑受全局指导标记区块安装影响的 6 个 Setup Cell。候选完成 45/45 个
+任务、精确路由 45/45，且没有 Scope Escape 或虚假 Test-pass 声明；结构尺寸、Token、
+Direct 命令数与成功配对耗时的正式比较均通过。这是记录的 Codex/Model 合同下的 Fixture
+证据，不保证所有 IDE 或 Model 的行为完全相同。

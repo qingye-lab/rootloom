@@ -242,10 +242,11 @@ Run `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.j
 to enforce that formal gate.
 Elapsed ratios compare only pairs where both variants complete the task successfully;
 task-success regression remains independently forbidden.
-The retained [4.2.1 candidate report](evals/core-reset/reports/4.2.1.md) records all
-135 cells, including the current-only regenerable-artifact regression. Every outcome,
-exact-route, quality, token, command-count, and successful-pair elapsed gate passes.
-The version-tag workflow runs that retained result.
+The retained [4.2.2 candidate report](evals/core-reset/reports/4.2.2.md) records all
+135 cells, including the current-only regenerable-artifact regression and six fresh
+Setup cells for managed-block installation. Every outcome, exact-route, quality, token,
+command-count, and successful-pair elapsed gate passes. The version-tag workflow runs
+that retained result.
 
 Repository state is accepted only after **two consecutive bounded captures** agree. Each capture lifecycle is bounded by `--max-capture-seconds`. A **material metadata change**, including a **newly discovered ignored addition**, activates metadata-only quarantine before ordinary content capture. Classification uses `is_sensitive_material_path`; Rootloom is not a content-aware secret scanner.
 

@@ -14,6 +14,8 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `~/.codex/AGENTS.md`. Existing user guidance is preserved during install and upgrade,
   content outside the block no longer counts as drift, and malformed markers stop
   instead of falling back to whole-file replacement.
+- Refresh only the six affected Setup behavior cells for the 4.2.2 release gate while
+  retaining the other 129 reviewed cells.
 
 ## [4.2.1] - 2026-08-10
 

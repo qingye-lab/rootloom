@@ -129,3 +129,12 @@ artifact whose current runtime must reject old and future formats, route Scoped,
 load no compatibility Reference. Existing public API and data-migration scenarios keep
 their Governed routes so the correction does not remove compatibility where real
 consumers or irreplaceable stored state exist.
+
+## Retained 4.2.2 candidate evidence
+
+The repository retains the sanitized
+[`results-4.2.2.json`](results-4.2.2.json) matrix and its
+[`4.2.2 report`](reports/4.2.2.md). It reuses the 129 cells unaffected by the global
+Setup change and replaces only the six `setup-plan` / `setup-roundtrip` candidate cells.
+All six fresh cells pass in isolated homes, and the complete 135-cell formal gate remains
+green without rerunning unrelated scenarios.
