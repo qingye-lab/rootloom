@@ -107,6 +107,25 @@ Risk         What remains unverified or uncertain?
 
 That is Rootloom's everyday path. You do not need an evidence bundle, global setup, or every Skill in the plugin to use it.
 
+### Keep large files out of the main task context
+
+When a change depends on path-backed images, audio, video, PDFs, Office documents, large
+logs/data, or the same files across several turns, Change can use the Artifact Context Lane.
+Rootloom hashes and deduplicates the files locally, leaves their raw bytes in place, and
+reuses a user-local receipt for the same content, inferred media type, and intent. On a cache miss, one independent
+worker with no inherited conversation reads the files once. The main task receives only a
+validated JSON receipt capped at 24 KiB.
+
+This is direct preprocessing, not an IDE `/compact` call, and the deterministic helper makes
+no model or network request. The isolated worker is the only model call added by the lane;
+cache hits add none. A host without a no-history worker fails closed before semantic analysis
+instead of loading the raw files into the main task.
+
+The lane must run before files enter the main history. It cannot remove an attachment already
+stored in a task; for an already-polluted task, create the receipt from an accessible local
+path and continue in a clean task using only that receipt. Inline-only attachments need to be
+reattached as path-backed files in the clean task.
+
 ## Agent Plugins portable preview
 
 `portable/rootloom/` is a separate Agent Plugins 1.0.0 package containing exactly
@@ -125,6 +144,8 @@ surface are intentionally larger than Agent Plugins v1.
 The preview includes Review, Project Guidance, and Direct, Scoped, and Governed Change.
 Persistent guidance still requires exact user intent. The package deliberately omits
 Setup, Hooks, Rules, Memory, MCP, OpenAI UI metadata, and the plugin-wide Evidence helpers.
+It includes the standard-library Artifact Context helper; semantic cache misses still require
+the host to expose a no-history worker or equivalent fresh-worker facility.
 An explicit Evidence request therefore fails closed
 instead of fabricating an evidence bundle. Do not install the native and portable
 packages into the same client because duplicate-Skill precedence is not standardized.

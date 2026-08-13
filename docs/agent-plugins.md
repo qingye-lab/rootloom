@@ -145,7 +145,9 @@ For Cursor, VS Code, Copilot CLI, and Kiro, a release-specific smoke must show e
 `operating-code-review`, `operating-coding-change`, and `project-guidance`; invoke Review
 without changing a fixture worktree; complete a small Change with reported verification;
 inject the same bounded read-only context through the selected opt-in adapter; and make
-an explicit Evidence request fail closed. It must also confirm that no Rules, Setup,
+an explicit Evidence request fail closed. Claiming Artifact Context support additionally
+requires a cache-miss fixture to run in a no-history worker, finalize to a bounded receipt,
+and repeat as a cache hit without reading the raw file again. It must also confirm that no Rules, Setup,
 permission policy, or MCP configuration appeared. The repository does not yet contain passed,
 current-version runtime evidence for those hosts, so these checks remain pending rather
 than reported as passed.
@@ -161,6 +163,7 @@ than reported as passed.
 | Evidence Mode | Unavailable; the portable package fails closed because plugin-wide Evidence helpers are absent |
 | Project Guidance probe/seed/validate | Included; persistent writes require exact user intent |
 | Read-only 4 KiB SessionStart context | Same renderer; Codex native Hook or optional host adapter |
+| Artifact Context identity/cache/24 KiB receipt | Included; semantic misses require a no-history worker supplied by the host |
 | Setup, `~/.codex`, command Rules, Hook enablement | Codex-native only |
 | MCP servers | Not shipped |
 
@@ -170,6 +173,11 @@ package containment, relative References, an exact three-Skill allowlist, and by
 synchronization with the native source Skills. Codex has a separate compatibility smoke;
 Cursor, VS Code, GitHub Copilot, Kiro, and other clients still require release-specific
 runtime smoke tests before Rootloom claims feature parity.
+
+The Artifact Context helper is portable, network-free, and standard-library-only. It can
+prepare and validate receipts in any compatible host, but the Skill must stop before reading
+raw artifacts unless that host exposes a worker with no inherited conversation. A normal conversation-inheriting child is not an equivalent fallback. The lane does not use an MCP
+server and does not modify already-recorded task history.
 
 ## Maintainer workflow
 
