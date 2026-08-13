@@ -45,6 +45,7 @@ and the [4.1 efficiency-loop decision](decisions/2026-07-29-rootloom-4.1-efficie
 | Global task policy and semantic risk rules | `plugins/rootloom/assets/system/AGENTS.md` |
 | Static risk and verification intelligence | `plugins/rootloom/resources/evidence/runner/intelligence.py` |
 | Direct, Scoped, Governed, and Evidence routing | `plugins/rootloom/skills/operating-coding-change/` |
+| Out-of-context artifact identity, cache, and bounded receipts | `plugins/rootloom/skills/operating-coding-change/{references/artifact-context.md,scripts/artifact_context.py}` |
 | Deterministic Evidence helpers and two-step orchestration | `plugins/rootloom/resources/evidence/` |
 | Governed change and durable decision records | `plugins/rootloom/skills/operating-coding-change/references/governed-change.md` |
 | Review-only workflow | `plugins/rootloom/skills/operating-code-review/` |
@@ -94,6 +95,26 @@ Installing Rootloom never starts the analyzer or finalizer.
 For defects, `ROOT_CAUSE_ALIGNMENT: PASS` requires the observed trigger, owning boundary, violated invariant, evidence-backed cause, and rejection of the strongest plausible alternative. For features and mechanical work, alignment is `NOT_APPLICABLE` and the intended invariant is explicit.
 
 Verification maps to behavior: the primary path, owning invariant, and an adjacent negative or alternate path. Risk-specific recommendations add auth boundaries, migration coexistence, financial idempotency, state ordering, deployment rollback, or consumer compatibility when relevant. Detected Make/test commands are suggestions only. Passing one convenient command is not automatically adequate, and a generated plan is never recorded as executed evidence.
+
+### Artifact Context Lane
+
+Large or repeatedly used path-backed artifacts follow a separate context lane before the
+main task reads them. A network-free standard-library helper computes SHA-256 identities,
+deduplicates equal content, and looks up a user-local receipt keyed by content plus intent.
+It stores only a small manifest, a worker draft, and the finalized receipt; raw bytes remain
+at their source paths and are never copied into the cache.
+
+A cache miss is analyzed by one host-owned worker with no inherited conversation. The worker
+receives only the manifest, exact intent, exact source paths, and a strict draft schema. The
+main task then consumes a validated receipt capped at 24 KiB. Finalization rehashes sources,
+rejects changed files and embedded raw media, and commits atomically. Cache hits require no
+model call. If a host lacks fresh-worker isolation, the semantic lane fails closed.
+
+This mechanism is deliberately Skill-owned rather than a Hook, MCP server, or nested Codex
+CLI call. Current task history is host-owned: Rootloom neither rewrites attachment payloads
+nor claims to remove files already stored in that history. Already-polluted tasks require a
+clean-task handoff after receipt generation. The manifest and receipt are regenerable,
+current-only cache records and do not extend the frozen Evidence formats.
 
 ## Lightweight artifact helper
 

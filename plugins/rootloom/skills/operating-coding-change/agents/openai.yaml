@@ -1,6 +1,6 @@
 interface:
   display_name: "Rootloom Change"
-  short_description: "Route direct, scoped, governed, or evidence changes"
-  default_prompt: "Use $operating-coding-change to route this change, fix it at the owning boundary, and verify it proportionally."
+  short_description: "Route changes and externalize heavy file context"
+  default_prompt: "Use $operating-coding-change to route this change, keep token-heavy path-backed artifacts behind bounded receipts, fix the owning boundary, and verify proportionally."
 policy:
   allow_implicit_invocation: true

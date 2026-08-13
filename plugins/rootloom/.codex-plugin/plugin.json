@@ -29,8 +29,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Rootloom",
-    "shortDescription": "Scoped, evidence-honest engineering for OpenAI Codex.",
-    "longDescription": "Rootloom is a local, inspectable OpenAI Codex engineering workflow with four public Skills: Change, Review, Project Guidance, and Setup. Governed and Evidence modes load only through Change; optional Project Memory is installed separately.",
+    "shortDescription": "Scoped engineering with bounded artifact context.",
+    "longDescription": "Rootloom is a local, inspectable OpenAI Codex engineering workflow with four public Skills: Change, Review, Project Guidance, and Setup. Change can keep token-heavy path-backed files behind cached bounded receipts. Governed and Evidence modes load only through Change; optional Project Memory is installed separately.",
     "developerName": "liyanqing",
     "category": "Productivity",
     "capabilities": [
@@ -45,7 +45,7 @@
     "logo": "./assets/logo.svg",
     "logoDark": "./assets/logo-dark.svg",
     "defaultPrompt": [
-      "Use Change to route this task as direct, scoped, governed, or evidence-backed work.",
+      "Use Change to route this task and keep token-heavy path-backed files behind bounded receipts.",
       "Review this change and separate findings from suggested or executed verification.",
       "Seed, refine, or validate concise evidence-backed AGENTS.md guidance."
     ]

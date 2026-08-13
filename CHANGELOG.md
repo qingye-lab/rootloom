@@ -6,6 +6,16 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Add an Artifact Context Lane to Change for path-backed images and other token-heavy files.
+  A standard-library helper hashes and deduplicates content locally, caches intent-specific
+  receipts, and limits the main task to a validated 24 KiB receipt; cache misses route to a
+  no-history worker instead of IDE compaction or repeated main-context ingestion.
+- Ship the same helper and workflow in the Agent Plugins portable package, with explicit
+  fail-closed behavior when a host cannot provide fresh-worker isolation, plus English and
+  Chinese architecture, capability, migration, and already-polluted-task boundaries.
+
 ## [4.3.0] - 2026-08-11
 
 ### Changed

@@ -105,6 +105,22 @@ Worker 在取消后仍能重连，最终会出现两个活跃 Session。
 
 这就是 Rootloom 的日常用法。你不需要先生成证据包，不需要安装全局配置，也不必把插件里的每个 Skill 都跑一遍。
 
+### 不让大文件进入主任务上下文
+
+当代码修改依赖有本地路径的图片、音频、视频、PDF、Office 文档、大型日志/数据，或会在
+多个轮次复用同一批文件时，Change 可以启用 Artifact Context Lane。Rootloom 在本地计算
+哈希并去重，原始字节仍留在原处；相同内容、推断媒体类型与意图直接复用用户本地回执。缓存未命中时，
+只让一个不继承会话历史的独立 Worker 读取一次文件，主任务只接收经过校验、最大 24 KiB
+的 JSON 回执。
+
+这是直接预处理，不是调用 IDE 的 `/compact`。确定性 Helper 不调用模型、也不访问网络；
+只有缓存未命中的独立 Worker 会新增一次模型调用，命中缓存不会增加模型调用。Host 如果
+不能提供无历史 Worker，会在语义分析前失败关闭，不会悄悄把原始文件载入主任务。
+
+该通道必须在文件进入主历史之前使用，不能删除已经存入某个任务的附件。对于已经被附件污染的任务，
+如果存在可访问的本地路径，应先生成回执，再在干净任务里只携带回执继续；
+只有内联数据、没有本地路径的附件，需要在干净任务中以有路径文件重新附加。
+
 ## Agent Plugins 可移植预览
 
 `portable/rootloom/` 是一个独立的 Agent Plugins 1.0.0 包，只包含
@@ -120,7 +136,8 @@ Surface 有意大于 Agent Plugins v1。
 
 预览包含 Review、Project Guidance，以及 Direct、Scoped、Governed Change；持久 Guidance
 仍要求精确用户意图。它有意不包含 Setup、Hook、Rules、Memory、MCP、OpenAI UI 元数据和插件级
-Evidence Helper。明确请求 Evidence 时会失败关闭，不会伪造 Evidence Bundle。同一
+Evidence Helper。它包含标准库 Artifact Context Helper；语义缓存未命中时，Host 仍必须
+提供无历史 Worker 或等价的全新 Worker 能力。明确请求 Evidence 时会失败关闭，不会伪造 Evidence Bundle。同一
 客户端不要同时安装原生包与可移植包，因为规范没有定义同名 Skill 的优先级。
 
 仓库检查能够证明包结构、路径包含关系、Agent Skills 元数据、相对 References 以及与

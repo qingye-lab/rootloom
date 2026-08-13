@@ -43,6 +43,7 @@ Codex 的格式选择并关闭既有 Hook，因此两个安装根保持隔离。
 | 全局任务策略与语义风险规则 | `plugins/rootloom/assets/system/AGENTS.md` |
 | 静态风险与验证智能 | `plugins/rootloom/resources/evidence/runner/intelligence.py` |
 | Direct、Scoped、Governed 与 Evidence 路由 | `plugins/rootloom/skills/operating-coding-change/` |
+| 上下文外文件身份、缓存与有界回执 | `plugins/rootloom/skills/operating-coding-change/{references/artifact-context.md,scripts/artifact_context.py}` |
 | 确定性 Evidence Helper 与两步编排 | `plugins/rootloom/resources/evidence/` |
 | Governed Change 与持久决策记录 | `plugins/rootloom/skills/operating-coding-change/references/governed-change.md` |
 | 仅审查工作流 | `plugins/rootloom/skills/operating-code-review/` |
@@ -85,6 +86,22 @@ Migration/Coexistence、Rollback/Replay、Verification 与 Residual Risk。显�
 缺陷的 `ROOT_CAUSE_ALIGNMENT: PASS` 必须包含触发方式、所属边界、被违反的不变量、有证据的根因以及对最强替代假设的否定。功能或机械任务使用 `NOT_APPLICABLE` 并明确目标不变量。
 
 验证对应行为：主路径、所属边界不变量、相邻负向或替代路径。识别到对应风险时，还会要求 auth 边界、迁移共存、资金幂等、状态顺序、部署回滚或消费者兼容等检查。发现的 Make/test 命令只是建议；一个方便命令通过不等于验证完整，生成的计划也不会冒充已执行证据。
+
+### Artifact Context Lane
+
+大型或重复使用的有路径文件，会在主任务读取前进入独立上下文通道。一个不联网、只依赖
+标准库的 Helper 计算 SHA-256 身份、去重相同内容，并用“内容 + 意图”查询用户本地回执。
+缓存只保存小型 Manifest、Worker Draft 与最终回执；原始字节保留在源路径，不复制到缓存。
+
+缓存未命中时，由一个不继承会话历史、归 Host 管理的独立 Worker 分析。Worker 只获得
+Manifest、精确意图、精确源路径和严格 Draft Schema；主任务随后只消费最大 24 KiB 的
+已校验回执。Finalize 会重新计算源文件哈希，拒绝变化文件与内嵌原始媒体，并原子提交。
+缓存命中不调用模型；Host 如果没有全新 Worker 隔离能力，语义通道失败关闭。
+
+该机制有意归属 Skill，而不是 Hook、MCP Server 或嵌套 Codex CLI 调用。当前任务历史归
+Host 所有：Rootloom 不改写附件 Payload，也不声称能移除已进入历史的文件。已污染任务在
+生成回执后需要交接到干净任务。Manifest 与回执都是可再生、Current-only 缓存记录，
+不会扩展冻结的 Evidence 格式。
 
 ## 轻量产物辅助工具
 
