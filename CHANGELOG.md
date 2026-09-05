@@ -10,6 +10,9 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Reduce redundant test setup by copying isolated Git fixtures and testing filename aliases
+  at their shared policy boundary. Consolidate duplicated website assertions around the
+  repository validator, retain negative cases, and remove prose-only checks.
 - Simplify global guidance and the four Core Skills around task scope, unique safeguards,
   and observable completion. Remove fixed shell batches, empty inapplicable report fields,
   and unconditional caller/challenge steps while retaining self-contained Skills-only safety.
@@ -34,6 +37,8 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Update the optional live smoke to verify read-only SessionStart context instead of
+  expecting automatic AGENTS creation, and skip model execution after setup failure.
 - Stop artifact preparation as soon as the deduplicated byte total exceeds its limit,
   avoiding reads of later inputs and manifest/draft writes for the rejected bundle. Keep duplicate
   content reuse and conflicting-media-type rejection intact.

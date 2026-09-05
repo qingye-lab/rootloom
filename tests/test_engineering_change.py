@@ -6,6 +6,7 @@ import inspect
 from datetime import UTC, datetime, timedelta
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -66,6 +67,19 @@ from runner.verification import split_command, verify
 
 
 class EngineeringChangeTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        temporary = tempfile.TemporaryDirectory(prefix="rootloom-change-seed-", dir=Path.home())
+        cls.addClassCleanup(temporary.cleanup)
+        cls.repo_seed = Path(temporary.name) / "repo"
+        cls.repo_seed.mkdir()
+        subprocess.run(["git", "init", "-q"], cwd=cls.repo_seed, check=True)
+        subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=cls.repo_seed, check=True)
+        subprocess.run(["git", "config", "user.name", "Test"], cwd=cls.repo_seed, check=True)
+        (cls.repo_seed / "app.py").write_text("value = 1\n", encoding="utf-8")
+        subprocess.run(["git", "add", "app.py"], cwd=cls.repo_seed, check=True)
+        subprocess.run(["git", "commit", "-qm", "initial"], cwd=cls.repo_seed, check=True)
+
     ALL_CLAIM_IDS = (
         "primary-behavior",
         "owning-invariant",
@@ -374,15 +388,30 @@ class EngineeringChangeTests(unittest.TestCase):
             )
 
     def make_repo(self, root: Path) -> Path:
-        repo = root / "repo"
-        repo.mkdir()
-        subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
-        subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
-        subprocess.run(["git", "config", "user.name", "Test"], cwd=repo, check=True)
-        (repo / "app.py").write_text("value = 1\n", encoding="utf-8")
-        subprocess.run(["git", "add", "app.py"], cwd=repo, check=True)
-        subprocess.run(["git", "commit", "-qm", "initial"], cwd=repo, check=True)
-        return repo
+        # Copy the worktree and Git metadata; never share mutable files or hardlinks.
+        return shutil.copytree(self.repo_seed, root / "repo")
+
+    def test_repository_fixtures_isolate_worktree_index_config_and_history(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="rootloom-change-isolation-", dir=Path.home()) as temporary:
+            root = Path(temporary)
+            first = self.make_repo(root / "first")
+            (first / "app.py").write_text("value = 2\n", encoding="utf-8")
+            subprocess.run(["git", "add", "app.py"], cwd=first, check=True)
+            subprocess.run(["git", "commit", "-qm", "first-only"], cwd=first, check=True)
+            subprocess.run(["git", "config", "user.name", "Changed"], cwd=first, check=True)
+            (first / "app.py").write_text("value = 3\n", encoding="utf-8")
+            subprocess.run(["git", "add", "app.py"], cwd=first, check=True)
+
+            second = self.make_repo(root / "second")
+            self.assertEqual((second / "app.py").read_text(), "value = 1\n")
+            for command, expected in (
+                (["git", "status", "--porcelain"], ""),
+                (["git", "log", "--format=%s"], "initial"),
+                (["git", "config", "user.name"], "Test"),
+            ):
+                self.assertEqual(
+                    subprocess.check_output(command, cwd=second, text=True).strip(), expected
+                )
 
     def analyze(self, repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
@@ -946,6 +975,33 @@ class EngineeringChangeTests(unittest.TestCase):
             self.assertEqual(json.loads(reintake.stdout)["status"], "reintake-required")
             self.assertFalse((root / "historical-run").exists())
 
+    def test_sensitive_key_aliases_cannot_be_declared_reviewable(self) -> None:
+        for path in (
+            "key.pem",
+            "key.der",
+            "server-key.pem",
+            "server-key.der",
+            "client-key.pem",
+            "client-key.der",
+            "host-key.pem",
+            "host-key.der",
+            "ssh-key.pem",
+            "ssh-key.der",
+            "identity-key.pem",
+            "identity-key.der",
+            "privkey.pem",
+            "privatekey.pem",
+            "rsa-key.pem",
+            "ec-key.pem",
+            "ecdsa-key.pem",
+            "ed25519-key.pem",
+            "encryption-key.pem",
+            "decryption-key.pem",
+        ):
+            with self.subTest(path=path):
+                with self.assertRaisesRegex(ValueError, "strong sensitive material"):
+                    normalize_reviewable_paths([path])
+
     def test_begin_review_rejects_invalid_reviewable_path_overrides(self) -> None:
         with tempfile.TemporaryDirectory(prefix="rootloom-change-", dir=Path.home()) as temporary:
             root = Path(temporary)
@@ -953,29 +1009,7 @@ class EngineeringChangeTests(unittest.TestCase):
             (repo / "public.pem").write_text("PUBLIC CERTIFICATE\n", encoding="utf-8")
             (repo / "private.key").write_text("synthetic-private-key\n", encoding="utf-8")
             (repo / "private-key.pem").write_text("synthetic-private-key\n", encoding="utf-8")
-            for name in (
-                "key.pem",
-                "key.der",
-                "server-key.pem",
-                "server-key.der",
-                "client-key.pem",
-                "client-key.der",
-                "host-key.pem",
-                "host-key.der",
-                "ssh-key.pem",
-                "ssh-key.der",
-                "identity-key.pem",
-                "identity-key.der",
-                "privkey.pem",
-                "privatekey.pem",
-                "rsa-key.pem",
-                "ec-key.pem",
-                "ecdsa-key.pem",
-                "ed25519-key.pem",
-                "encryption-key.pem",
-                "decryption-key.pem",
-            ):
-                (repo / name).write_text("synthetic-private-key\n", encoding="utf-8")
+            (repo / "server-key.der").write_text("synthetic-private-key\n", encoding="utf-8")
             (repo / ".env").write_text("TOKEN=synthetic\n", encoding="utf-8")
             (repo / "public.crt").write_text("PUBLIC CERTIFICATE\n", encoding="utf-8")
             (repo / "material-dir").mkdir()
@@ -992,35 +1026,7 @@ class EngineeringChangeTests(unittest.TestCase):
                     ["--reviewable-path", "private-key.pem"],
                     "strong sensitive material",
                 ),
-                *(
-                    (
-                        f"strong-{name}",
-                        ["--reviewable-path", name],
-                        "strong sensitive material",
-                    )
-                    for name in (
-                        "key.pem",
-                        "key.der",
-                        "server-key.pem",
-                        "server-key.der",
-                        "client-key.pem",
-                        "client-key.der",
-                        "host-key.pem",
-                        "host-key.der",
-                        "ssh-key.pem",
-                        "ssh-key.der",
-                        "identity-key.pem",
-                        "identity-key.der",
-                        "privkey.pem",
-                        "privatekey.pem",
-                        "rsa-key.pem",
-                        "ec-key.pem",
-                        "ecdsa-key.pem",
-                        "ed25519-key.pem",
-                        "encryption-key.pem",
-                        "decryption-key.pem",
-                    )
-                ),
+                ("strong-named-der", ["--reviewable-path", "server-key.der"], "strong sensitive material"),
                 ("strong-env", ["--reviewable-path", ".env"], "strong sensitive material"),
                 (
                     "overlap",

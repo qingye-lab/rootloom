@@ -520,17 +520,6 @@ class PortablePluginTests(unittest.TestCase):
                         f"missing skill resource: {markdown}: {raw_target}",
                     )
 
-    def test_skills_only_fallbacks_are_explicit(self) -> None:
-        change_root = PORTABLE_ROOT / "skills" / "operating-coding-change"
-        evidence = (change_root / "references" / "evidence-mode.md").read_text(
-            encoding="utf-8"
-        )
-        governed = (change_root / "references" / "governed-change.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("Evidence Mode as unavailable", evidence)
-        self.assertIn("A Skills-only package may omit that template", governed)
-
     def test_skill_frontmatter_rejects_non_string_and_optional_shapes(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="rootloom-skill-", dir=ROOT

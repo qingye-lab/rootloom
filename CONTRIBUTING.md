@@ -92,6 +92,12 @@ or exact procedural wording as a substitute for executable behavior tests.
 
 Prefer real temporary Git repositories and behavioral assertions. Avoid network calls, arbitrary sleeps, fixture snapshots tied to incidental whitespace, and mocks when a small filesystem fixture can prove behavior directly.
 
+Keep one owner for static repository contracts; test the validator with valid and mutated
+fixtures instead of maintaining another parser or credential catalog in tests. Keep real
+CLI coverage for integration boundaries, while filename aliases can exercise their shared
+policy function directly. The Evidence suite copies one initialized Git seed into separate
+repositories; mutable worktrees, indexes, configuration, and history are never shared.
+
 Impact-scoped verification is the default. `make check-changed BASE=<ref>` always runs
 repository validation and maps committed, staged, and unstaged tracked changes to their
 component tests. It excludes unrelated untracked files by default; use
@@ -119,7 +125,7 @@ The full supported-Python matrix is scheduled weekly and available through manua
 workflow dispatch. Do not add another platform or runtime lane unless it proves a
 distinct risk.
 
-The manual live smoke test requires a logged-in local Codex session. It installs the current checkout into a disposable `CODEX_HOME` and does not mutate the user's main Codex configuration:
+The manual live smoke test requires a logged-in local Codex session. It installs the current checkout into a disposable `CODEX_HOME` and does not mutate the user's main Codex configuration. It checks that SessionStart supplies the project name without writing repository guidance or changing the sample project; setup failure stops before a model call:
 
 ```bash
 make smoke
