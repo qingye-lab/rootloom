@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -22,6 +23,14 @@ import validate_repo as validator  # noqa: E402
 PORTABLE_ROOT = ROOT / "portable" / "rootloom"
 CODEX_MANIFEST = ROOT / "plugins" / "rootloom" / ".codex-plugin" / "plugin.json"
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+ARTIFACT_HELPER = (
+    ROOT / "plugins" / "rootloom" / "skills" / "operating-coding-change"
+    / "scripts" / "artifact_context.py"
+)
+ARTIFACT_SPEC = importlib.util.spec_from_file_location("artifact_context", ARTIFACT_HELPER)
+assert ARTIFACT_SPEC is not None and ARTIFACT_SPEC.loader is not None
+artifact_context = importlib.util.module_from_spec(ARTIFACT_SPEC)
+ARTIFACT_SPEC.loader.exec_module(artifact_context)
 
 
 class PortablePluginTests(unittest.TestCase):
@@ -115,15 +124,7 @@ class PortablePluginTests(unittest.TestCase):
             )
 
     def test_artifact_context_receipt_cache_and_validation(self) -> None:
-        helper = (
-            ROOT
-            / "plugins"
-            / "rootloom"
-            / "skills"
-            / "operating-coding-change"
-            / "scripts"
-            / "artifact_context.py"
-        )
+        helper = ARTIFACT_HELPER
         with tempfile.TemporaryDirectory(prefix="rootloom-artifact-") as temporary:
             root = Path(temporary)
             cache = root / "cache"
@@ -204,16 +205,58 @@ class PortablePluginTests(unittest.TestCase):
             self.assertNotIn("draft_path", cached_payload)
             self.assertEqual(manifest["artifacts"][0]["sha256"], receipt["artifact_notes"][0]["sha256"])
 
+    def test_artifact_context_stops_reading_after_unique_total_exceeds_limit(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="rootloom-artifact-limit-") as temporary:
+            root = Path(temporary)
+            paths = [root / f"{name}.txt" for name in ("first", "second", "third")]
+            for path, content in zip(paths, (b"a" * 8, b"b" * 8, b"c" * 8)):
+                path.write_bytes(content)
+            arguments = ["prepare", "--intent", "inspect"]
+            for path in paths:
+                arguments.extend(("--path", str(path)))
+            args = artifact_context.parser().parse_args(arguments)
+            cache = root / "cache"
+
+            with (
+                mock.patch.object(artifact_context, "MAX_TOTAL_BYTES", 10),
+                mock.patch.object(
+                    artifact_context, "inspect_artifact", wraps=artifact_context.inspect_artifact
+                ) as inspect,
+            ):
+                with self.assertRaisesRegex(artifact_context.ArtifactContextError, "bundle exceeds 10 bytes"):
+                    artifact_context.command_prepare(args, cache)
+
+            self.assertEqual(inspect.call_args_list, [mock.call(str(path)) for path in paths[:2]])
+            self.assertFalse(cache.exists())
+
+    def test_artifact_context_total_limit_preserves_deduplication_and_media_identity(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="rootloom-artifact-dedup-") as temporary:
+            root = Path(temporary)
+            first, duplicate, last = [root / name for name in ("first.txt", "copy.txt", "last.txt")]
+            first.write_bytes(b"abcdef")
+            duplicate.write_bytes(first.read_bytes())
+            last.write_bytes(b"ghij")
+            args = artifact_context.parser().parse_args([
+                "prepare", "--intent", "inspect", "--path", str(first),
+                "--path", str(duplicate), "--path", str(last),
+            ])
+
+            with mock.patch.object(artifact_context, "MAX_TOTAL_BYTES", 10):
+                prepared = artifact_context.command_prepare(args, root / "cache")
+                self.assertEqual(prepared["total_bytes"], 10)
+                self.assertEqual(prepared["artifact_count"], 2)
+                self.assertTrue(Path(prepared["manifest_path"]).is_file())
+                self.assertTrue(Path(prepared["draft_path"]).is_file())
+
+                conflict = root / "copy.json"
+                duplicate.rename(conflict)
+                args.path = [str(first), str(conflict)]
+                with self.assertRaisesRegex(artifact_context.ArtifactContextError, "conflicting inferred media types"):
+                    artifact_context.command_prepare(args, root / "conflict-cache")
+                self.assertFalse((root / "conflict-cache").exists())
+
     def test_artifact_context_rejects_raw_receipt_and_changed_source(self) -> None:
-        helper = (
-            ROOT
-            / "plugins"
-            / "rootloom"
-            / "skills"
-            / "operating-coding-change"
-            / "scripts"
-            / "artifact_context.py"
-        )
+        helper = ARTIFACT_HELPER
         with tempfile.TemporaryDirectory(prefix="rootloom-artifact-negative-") as temporary:
             root = Path(temporary)
             cache = root / "cache"

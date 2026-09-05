@@ -34,6 +34,12 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Stop artifact preparation as soon as the deduplicated byte total exceeds its limit,
+  avoiding reads of later inputs and manifest/draft writes for the rejected bundle. Keep duplicate
+  content reuse and conflicting-media-type rejection intact.
+- Reuse one repository file inventory per validation run for telemetry and secret checks,
+  retaining fresh discovery on each invocation without a persistent cache.
+
 - Include both source and destination paths when selecting tests for a rename, preventing
   a move into documentation from silently dropping the original component's regression tests.
 

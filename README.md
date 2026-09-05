@@ -113,6 +113,9 @@ Start with bounded reads that answer the task. When repeated reads or substantia
 cost justify preprocessing, Change can use the optional Artifact Context Lane: a local
 standard-library helper hashes and deduplicates files and caches intent-specific receipts.
 Raw bytes stay at their source; finalized receipts are capped at 24 KiB.
+Preparation accepts up to 16 files, at most 512 MiB each and 1 GiB of unique contents.
+Once the unique total exceeds that limit, it rejects the bundle before reading later files
+or writing a manifest or draft; duplicate contents count once.
 
 A cache miss can use one host-owned worker with no inherited conversation. If that facility
 is unavailable, continue with bounded reads and skip the receipt optimization. Explicit user

@@ -1854,7 +1854,7 @@ def validate_links(errors: list[str]) -> None:
                 errors.append(f"broken local link in {path.relative_to(ROOT)}: {raw}")
 
 
-def validate_web_telemetry(errors: list[str]) -> None:
+def validate_web_telemetry(errors: list[str], files: list[Path]) -> None:
     index = ROOT / "index.html"
     index_text = index.read_text(encoding="utf-8")
     parser = WebDocumentParser()
@@ -1878,7 +1878,6 @@ def validate_web_telemetry(errors: list[str]) -> None:
         elif hashlib.sha256(auth_key.encode()).hexdigest() != VIBELOFT_AUTH_KEY_SHA256:
             errors.append("VibeLoft browser auth key differs from the configured product credential")
 
-    files = repository_files()
     html_entries = [path for path in files if path.suffix.lower() == ".html"]
     if html_entries != [index]:
         errors.append("GitHub Pages must keep one global HTML entry with one telemetry initializer")
@@ -1987,7 +1986,7 @@ def validate_assets(errors: list[str]) -> None:
             errors.append(f"invalid WebP image: {path.relative_to(ROOT)}")
 
 
-def validate_secrets(errors: list[str]) -> None:
+def validate_secrets(errors: list[str], files: list[Path]) -> None:
     suffixes = {
         ".css",
         ".html",
@@ -2000,7 +1999,7 @@ def validate_secrets(errors: list[str]) -> None:
         ".yaml",
         ".yml",
     }
-    for path in repository_files():
+    for path in files:
         if "tests" in path.parts:
             continue
         if path.suffix.lower() not in suffixes and path.name not in {"Makefile", "AGENTS.md"}:
@@ -2028,10 +2027,11 @@ def main() -> int:
     validate_personal_contracts(errors)
     validate_python(errors)
     validate_links(errors)
-    validate_web_telemetry(errors)
+    files = repository_files()
+    validate_web_telemetry(errors, files)
     validate_workflows(errors)
     validate_assets(errors)
-    validate_secrets(errors)
+    validate_secrets(errors, files)
     if errors:
         for error in errors:
             print(f"ERROR: {error}")

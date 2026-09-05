@@ -30,6 +30,10 @@ artifact bytes into its user-local cache. The default cache is
 `CODEX_HOME` is unset. `ROOTLOOM_ARTIFACT_CACHE` or `--cache-root` may select another
 user-controlled location.
 
+Each file is capped at 512 MiB and the deduplicated bundle at 1 GiB. Preparation checks
+the unique total after each file and rejects an oversized bundle before reading later
+files or writing a manifest or draft. Duplicate contents count once toward the total.
+
 The bundle identity covers the order-independent SHA-256/size/inferred-media-type identities
 and the exact intent. Names and paths are not identity, so the same bytes and media type at a
 new path can reuse a receipt. Conflicting types for identical bytes fail closed; a different

@@ -357,20 +357,22 @@ def command_prepare(args: argparse.Namespace, cache_root: Path) -> dict[str, Any
         fail(f"intent exceeds {MAX_INTENT_BYTES} UTF-8 bytes")
     if not 1 <= len(args.path) <= MAX_ARTIFACTS:
         fail(f"prepare accepts 1-{MAX_ARTIFACTS} paths")
-    inspected = [inspect_artifact(raw_path) for raw_path in args.path]
     artifacts_by_digest: dict[str, dict[str, Any]] = {}
-    for artifact in inspected:
+    total_bytes = 0
+    for raw_path in args.path:
+        artifact = inspect_artifact(raw_path)
         existing = artifacts_by_digest.get(artifact["sha256"])
         if existing is not None and existing["media_type"] != artifact["media_type"]:
             fail(
                 "identical artifact bytes have conflicting inferred media types: "
                 f"{existing['name']} and {artifact['name']}"
             )
-        artifacts_by_digest.setdefault(artifact["sha256"], artifact)
+        if existing is None:
+            total_bytes += artifact["bytes"]
+            if total_bytes > MAX_TOTAL_BYTES:
+                fail(f"artifact bundle exceeds {MAX_TOTAL_BYTES} bytes")
+            artifacts_by_digest[artifact["sha256"]] = artifact
     artifacts = sorted(artifacts_by_digest.values(), key=lambda item: item["sha256"])
-    total_bytes = sum(artifact["bytes"] for artifact in artifacts)
-    if total_bytes > MAX_TOTAL_BYTES:
-        fail(f"artifact bundle exceeds {MAX_TOTAL_BYTES} bytes")
     identity = {
         "artifacts": [
             {key: artifact[key] for key in ("bytes", "media_type", "sha256")} for artifact in artifacts
