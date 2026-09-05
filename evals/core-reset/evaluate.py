@@ -662,7 +662,7 @@ def main() -> int:
     else:
         report["behavioral"] = {
             "passed": None,
-            "status": "not-run; required before a formal release",
+            "status": "not-run; optional historical comparison",
         }
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if report["structural"]["passed"] and report["behavioral"]["passed"] is not False else 1
