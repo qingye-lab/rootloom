@@ -5,7 +5,7 @@
 - Owners: Rootloom maintainers
 - Scope: Change Skill 文件摄入、用户本地回执缓存、可移植 Host 隔离边界
 - Supersedes: none
-- Superseded by: none
+- Superseded by: [4.4 工作流决策](2026-09-05-rootloom-4.4-workflow.zh-CN.md) 替代默认路由与发布验收；格式保障及历史结果不变。
 
 ## Context
 

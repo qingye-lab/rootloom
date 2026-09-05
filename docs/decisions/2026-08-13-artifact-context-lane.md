@@ -5,7 +5,7 @@
 - Owners: Rootloom maintainers
 - Scope: Change Skill artifact ingestion, user-local receipt cache, portable host isolation boundary
 - Supersedes: none
-- Superseded by: none
+- Superseded by: [4.4 workflow decision](2026-09-05-rootloom-4.4-workflow.md) for default routing and release acceptance; retained formats and historical results are unchanged.
 
 ## Context
 
