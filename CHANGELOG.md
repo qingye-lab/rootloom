@@ -22,6 +22,10 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Add read-only impact-check previews, including JSON command output, without requiring a
+  GitHub output file. Preview and execution share lane-aware command selection; running
+  checks display the current command immediately and stop on the first failure.
+
 - Add an optional Artifact Context Lane for repeated reads or substantial context cost.
   Its standard-library helper hashes and deduplicates local files and caches intent-specific
   receipts capped at 24 KiB. Hosts without a no-history worker continue with bounded reads,
@@ -29,6 +33,9 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   same helper; cache and frozen Evidence formats remain unchanged.
 
 ### Fixed
+
+- Include both source and destination paths when selecting tests for a rename, preventing
+  a move into documentation from silently dropping the original component's regression tests.
 
 - Reject non-project or malformed managed blocks before project probing, keeping Setup's
   global policy block separate from generated project guidance. CLI validation rejects

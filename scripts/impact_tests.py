@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import json
 from dataclasses import dataclass
 import os
+import shlex
 from pathlib import Path
 import subprocess
 import sys
@@ -270,6 +272,7 @@ def changed_paths(
         "git",
         "diff",
         "--name-only",
+        "--no-renames",
         "--diff-filter=ACDMRTUXB",
         "-z",
         base,
@@ -329,19 +332,10 @@ def run_command(argv: list[str]) -> int:
     return subprocess.run(argv, cwd=ROOT, env=environment, check=False).returncode
 
 
-def run_tests(selection: Selection, args: argparse.Namespace) -> int:
-    print(
-        "Impact selection:",
-        f"mode={selection.mode}",
-        f"groups={','.join(selection.groups) or 'none'}",
-    )
-    for reason in selection.reasons:
-        print(f"Impact fallback: {reason}", file=sys.stderr)
-
+def test_commands(selection: Selection, args: argparse.Namespace) -> list[list[str]]:
+    commands: list[list[str]] = []
     if args.lane == "primary":
-        validation = run_command([sys.executable, "scripts/validate_repo.py"])
-        if validation != 0:
-            return validation
+        commands.append([sys.executable, "scripts/validate_repo.py"])
         discover = args.canonical_full or selection.fallback_full
         modules = selection.modules
     elif args.lane == "python":
@@ -359,25 +353,58 @@ def run_tests(selection: Selection, args: argparse.Namespace) -> int:
             if args.full_matrix or selection.fallback_full
             else selection.portable_modules
         )
-
     if discover:
-        return run_command(
+        commands.append(
             [
-                sys.executable,
-                "-m",
-                "unittest",
-                "discover",
-                "-s",
-                "tests",
-                "-p",
-                "test_*.py",
-                "-v",
+                sys.executable, "-m", "unittest", "discover",
+                "-s", "tests", "-p", "test_*.py", "-v",
             ]
         )
-    if not modules:
-        print("No impact-scoped unit tests selected.")
-        return 0
-    return run_command([sys.executable, "-m", "unittest", "-v", *modules])
+    elif modules:
+        commands.append([sys.executable, "-m", "unittest", "-v", *modules])
+    return commands
+
+
+def report_selection(selection: Selection, args: argparse.Namespace) -> None:
+    report = {
+        "mode": "full" if args.canonical_full and args.lane == "primary" else selection.mode,
+        "groups": list(selection.groups),
+        "lane": args.lane,
+        "portable": selection.portable,
+        "codex": selection.codex,
+        "reasons": list(selection.reasons),
+        "commands": test_commands(selection, args),
+    }
+    if getattr(args, "json", False):
+        print(json.dumps(report, indent=2), flush=True)
+        return
+    print(
+        "Impact selection:",
+        f"mode={report['mode']}",
+        f"groups={','.join(selection.groups) or 'none'}",
+        f"lane={args.lane}",
+        f"portable={selection.portable}",
+        f"codex={selection.codex}",
+        flush=True,
+    )
+    for reason in selection.reasons:
+        print(f"Impact fallback: {reason}", file=sys.stderr, flush=True)
+    if args.command == "select":
+        for command in report["commands"]:
+            print(f"Planned: {shlex.join(command)}", flush=True)
+
+
+def run_tests(selection: Selection, args: argparse.Namespace) -> int:
+    report_selection(selection, args)
+    commands = test_commands(selection, args)
+    if not commands:
+        print("No impact-scoped checks selected.", flush=True)
+    for command in commands:
+        print(f"Running: {shlex.join(command)}", flush=True)
+        result = run_command(command)
+        if result != 0:
+            return result
+    return 0
 
 
 def boolean(value: str) -> bool:
@@ -398,13 +425,14 @@ def parser() -> argparse.ArgumentParser:
         subparser.add_argument("--include-untracked", action="store_true")
         subparser.add_argument("--canonical-full", type=boolean, default=False)
         subparser.add_argument("--full-matrix", type=boolean, default=False)
+        subparser.add_argument(
+            "--lane", choices=("primary", "python", "portable"), default="primary"
+        )
         if command == "select":
-            subparser.add_argument("--github-output", type=Path, required=True)
-        else:
+            subparser.add_argument("--github-output", type=Path)
             subparser.add_argument(
-                "--lane",
-                choices=("primary", "python", "portable"),
-                default="primary",
+                "--json", action="store_true",
+                help="Print the planned checks as JSON without running them",
             )
     return cli
 
@@ -413,21 +441,14 @@ def main() -> int:
     args = parser().parse_args()
     selection = resolve_selection(args)
     if args.command == "select":
-        write_github_output(
-            args.github_output,
-            selection,
-            canonical_full=args.canonical_full,
-            full_matrix=args.full_matrix,
-        )
-        print(
-            "Impact selection:",
-            f"mode={selection.mode}",
-            f"groups={','.join(selection.groups) or 'none'}",
-            f"portable={selection.portable}",
-            f"codex={selection.codex}",
-        )
-        for reason in selection.reasons:
-            print(f"Impact fallback: {reason}", file=sys.stderr)
+        if args.github_output is not None:
+            write_github_output(
+                args.github_output,
+                selection,
+                canonical_full=args.canonical_full,
+                full_matrix=args.full_matrix,
+            )
+        report_selection(selection, args)
         return 0
     return run_tests(selection, args)
 

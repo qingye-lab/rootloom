@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import io
+import json
+from contextlib import redirect_stdout
 from pathlib import Path
 import subprocess
 import sys
@@ -237,6 +240,66 @@ class ImpactTestSelectionTests(unittest.TestCase):
 
         self.assertEqual(selection.mode, "full")
         self.assertIn("unsafe or empty changed path", selection.reasons[0])
+
+    def test_cross_component_rename_keeps_source_and_destination_checks(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            original = "plugins/rootloom/lib/rootloom_paths.py"
+            destination = "docs/moved.md"
+            source = repo / original
+            source.parent.mkdir(parents=True)
+            source.write_text("value = 1\n" * 80, encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+            commit = ["git", "-C", str(repo), "-c", "user.name=Test", "-c",
+                      "user.email=test@example.invalid", "commit", "-qm"]
+            subprocess.run([*commit, "initial"], check=True)
+            (repo / "docs").mkdir()
+            subprocess.run(["git", "-C", str(repo), "mv", original, destination], check=True)
+            for committed in (False, True):
+                if committed:
+                    subprocess.run([*commit, "move"], check=True)
+                with self.subTest(committed=committed), mock.patch.object(self.selector, "ROOT", repo):
+                    paths, error = self.selector.changed_paths(
+                        "HEAD~1" if committed else "HEAD", "HEAD" if committed else None
+                    )
+                self.assertIsNone(error)
+                self.assertEqual(set(paths), {original, destination})
+                self.assertEqual(self.selector.select_paths(paths).groups, ("setup", "evidence"))
+
+    def test_json_preview_needs_no_output_file_and_executes_no_checks(self) -> None:
+        output = io.StringIO()
+        with mock.patch.object(sys, "argv", [str(SELECTOR_PATH), "select", "--path", "README.md", "--json"]), \
+             mock.patch.object(self.selector, "run_command") as run, redirect_stdout(output):
+            self.assertEqual(self.selector.main(), 0)
+        run.assert_not_called()
+        preview = json.loads(output.getvalue())
+        self.assertEqual(preview["mode"], "validate")
+        self.assertEqual(preview["groups"], [])
+        self.assertEqual(preview["commands"], [[sys.executable, "scripts/validate_repo.py"]])
+
+    def test_preview_distinguishes_canonical_and_portable_lanes(self) -> None:
+        selection = self.select("README.md")
+        args = self.selector.parser().parse_args([
+            "select", "--path", "README.md", "--canonical-full", "true"
+        ])
+        commands = self.selector.test_commands(selection, args)
+        self.assertEqual(commands[0], [sys.executable, "scripts/validate_repo.py"])
+        self.assertIn("discover", commands[1])
+        args.lane = "portable"
+        self.assertEqual(self.selector.test_commands(selection, args), [])
+        args.full_matrix = True
+        commands = self.selector.test_commands(selection, args)
+        self.assertEqual(len(commands), 1)
+        self.assertIn("tests.test_setup_rootloom", commands[0])
+        self.assertNotIn("tests.test_core_reset_eval", commands[0])
+
+    def test_validation_failure_stops_before_selected_tests(self) -> None:
+        selection = self.select("plugins/rootloom/skills/project-guidance/SKILL.md")
+        args = self.selector.parser().parse_args(["run", "--group", "guidance"])
+        with mock.patch.object(self.selector, "run_command", return_value=7) as run, redirect_stdout(io.StringIO()):
+            self.assertEqual(self.selector.run_tests(selection, args), 7)
+        run.assert_called_once_with([sys.executable, "scripts/validate_repo.py"])
 
     def test_github_outputs_keep_canonical_full_separate_from_other_lanes(self) -> None:
         selection = self.select("README.md")

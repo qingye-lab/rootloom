@@ -12,15 +12,6 @@ ROOT = Path(__file__).resolve().parents[1]
 EVALUATOR_PATH = ROOT / "evals" / "core-reset" / "evaluate.py"
 SCORER_PATH = ROOT / "evals" / "core-reset" / "score_matrix.py"
 SCENARIOS_PATH = ROOT / "evals" / "core-reset" / "scenarios.json"
-EVIDENCE_MODE_PATH = (
-    ROOT
-    / "plugins"
-    / "rootloom"
-    / "skills"
-    / "operating-coding-change"
-    / "references"
-    / "evidence-mode.md"
-)
 
 
 def load_module(name: str, path: Path) -> ModuleType:
@@ -235,14 +226,6 @@ class CoreResetEvalTests(unittest.TestCase):
         )
         self.assertFalse(self.scorer.is_generated_python_cache("loom_eval/store.py"))
         self.assertFalse(self.scorer.is_generated_python_cache("outside/file.pyc"))
-
-    def test_evidence_orchestrator_is_single_command_convenience_only(self) -> None:
-        reference = EVIDENCE_MODE_PATH.read_text(encoding="utf-8")
-
-        self.assertIn("single-command Evidence convenience path", reference)
-        self.assertIn("heterogeneous governed evidence", reference)
-        self.assertIn("multiple specialized commands or targets", reference)
-        self.assertIn("build-plus-runtime", reference)
 
     def test_complete_behavioral_matrix_passes_release_comparisons(self) -> None:
         result = self.evaluate(

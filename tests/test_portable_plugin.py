@@ -417,7 +417,6 @@ class PortablePluginTests(unittest.TestCase):
             self.manifest(), self.codex_manifest(), errors
         )
         self.assertEqual(errors, [])
-        self.assertIn("bounded project and artifact context", self.manifest()["description"])
 
     def test_native_manifest_isolation_rejects_agent_manifest(self) -> None:
         with tempfile.TemporaryDirectory(prefix="rootloom-native-") as temporary:

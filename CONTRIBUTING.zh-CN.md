@@ -96,6 +96,17 @@ Handle Cargo workspace module boundaries
 时，失败关闭到全量套件。组件 Target 包括 `make test-setup`、`test-guidance`、
 `test-packaging`、`test-change`、`test-evidence`、`test-memory`、`test-web`。
 
+无需执行检查或写 GitHub 输出文件，即可预览实际命令：
+
+```bash
+python3 scripts/impact_tests.py select --base origin/main --json
+python3 scripts/impact_tests.py select --path plugins/rootloom/skills/project-guidance/SKILL.md
+```
+
+预览与执行共用命令选择逻辑；可用 `--lane primary`、`python` 或 `portable` 查看特定
+CI 通道。CI 继续支持 `--github-output`。重命名同时覆盖原组件和目标组件；执行前立即
+显示当前命令，首个检查失败后停止。
+
 CI 对 Pull Request 运行精准测试，在 `main` 保留一次规范性全量套件，在最新支持的
 Python 上只重跑受影响模块，并仅在 macOS/Windows 运行相关可移植契约。完整 Python
 版本矩阵每周定时运行，也可手动触发。除非新增平台或运行时能证明一种独立风险，

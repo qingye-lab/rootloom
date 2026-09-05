@@ -540,11 +540,6 @@ def frontmatter_fields(path: Path) -> dict[str, str] | None:
     return fields
 
 
-def frontmatter_name(path: Path) -> str | None:
-    fields = frontmatter_fields(path)
-    return fields.get("name") if fields else None
-
-
 def validate_agent_skill(path: Path, errors: list[str]) -> None:
     fields = frontmatter_fields(path)
     relative = path.relative_to(ROOT)

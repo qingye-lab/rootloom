@@ -101,6 +101,18 @@ selector, validator, Makefile, or CI workflow fail closed to the full suite. Com
 targets are `make test-setup`, `test-guidance`, `test-packaging`, `test-change`,
 `test-evidence`, `test-memory`, and `test-web`.
 
+Preview the exact check commands without running them or writing a GitHub output file:
+
+```bash
+python3 scripts/impact_tests.py select --base origin/main --json
+python3 scripts/impact_tests.py select --path plugins/rootloom/skills/project-guidance/SKILL.md
+```
+
+Preview and execution use the same command selection. Choose `--lane primary`, `python`,
+or `portable` when inspecting a specific CI lane. `--github-output` remains available for
+CI. Renames include both their source and destination components; execution prints each
+command before starting it and stops at the first failed check.
+
 CI runs focused pull-request checks, one canonical full suite on `main`, affected tests
 on the newest supported Python, and only relevant portable contracts on macOS/Windows.
 The full supported-Python matrix is scheduled weekly and available through manual
