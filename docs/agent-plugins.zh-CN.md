@@ -145,7 +145,7 @@ Session Context；明确 Evidence 请求会失败关闭。要声明支持 Artifa
 | Evidence Mode | 不可用；可移植包缺少插件级 Evidence Helper，因此会失败关闭 |
 | Project Guidance probe/seed/validate | 已包含；持久写入需要用户精确意图 |
 | 只读 4 KiB SessionStart Context | 同一 Renderer；Codex 原生 Hook 或可选 Host Adapter |
-| Artifact Context 身份/缓存/24 KiB 回执 | 已包含；语义未命中需要 Host 提供无历史 Worker |
+| Artifact Context 身份/缓存/24 KiB 回执 | 可选优化需要 Host 提供无历史 Worker；普通有界读取不需要 |
 | Setup、`~/.codex`、命令 Rules、Hook 启用 | 仅 Codex 原生包 |
 | MCP Server | 未提供 |
 
@@ -155,10 +155,9 @@ Allowlist，以及与原生来源逐字节同步。Codex 另有兼容性冒烟�
 等价前，Cursor、VS Code、GitHub Copilot、Kiro 等客户端仍需要面向具体版本的真实
 运行冒烟。
 
-Artifact Context Helper 可移植、不联网且只依赖标准库；它能在兼容 Host 中 Prepare 与
-Validate 回执，但除非 Host 暴露不继承会话历史的 Worker，否则 Skill 必须在读取原文件前
-停止。继承普通会话的子任务不是等价回退。该通道不使用 MCP Server，也不修改已经记录的
-任务历史。
+Artifact Context Helper 可移植、不联网且只依赖标准库。可选语义回执创建使用无历史
+Worker；继承历史的子任务不能提供该隔离。Host 没有此能力时继续普通有界读取，除非用户
+明确隔离要求不允许该回退。通道不使用 MCP Server，也不能修改已记录的任务历史。
 
 ## 维护流程
 

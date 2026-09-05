@@ -4,7 +4,7 @@ The system uses a small instruction hierarchy instead of one giant prompt. The e
 
 ## What comes from OpenAI's current guidance
 
-OpenAI's [GPT-5.6 model guidance](https://developers.openai.com/api/docs/guides/latest-model) recommends lean prompts, stating each rule once, defining autonomy and approval boundaries, and keeping domain context, hard constraints, and success criteria explicit. Codex's [AGENTS.md documentation](https://developers.openai.com/codex/agent-configuration/agents-md) adds a natural hierarchy: one global file, then root-to-current-directory project guidance, with closer files taking precedence.
+OpenAI's [GPT-6 Astra model guidance](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-6-astra) recommends auditing accessible Skills and instruction files for conflicting guidance, making user/Skill priority explicit, completing authorized work before approval, and calibrating verification to the change. Rootloom applies this by keeping unique facts and boundaries while removing redundant procedures; length alone is not an acceptance criterion. Codex's [AGENTS.md documentation](https://developers.openai.com/codex/agent-configuration/agents-md) adds a natural hierarchy: one global file, then root-to-current-directory project guidance, with closer files taking precedence.
 
 That leads to four design rules:
 
@@ -13,7 +13,7 @@ That leads to four design rules:
 3. Put reusable multi-step procedures in Skills rather than repeating them in every task.
 4. Keep executable policy and proof in Rules, sandboxing, scripts, tests, and CI.
 
-The default 32 KiB project-instruction budget is a ceiling, not a target. This project's managed global template targets 3–4 KiB and 30–45 lines; generated project context is intentionally smaller.
+The default 32 KiB project-instruction budget is a ceiling, not a target. Rootloom retains a 4 KiB global-template cap and bounded generated context; neither has a minimum length or rule count.
 
 ## What we retain from GEB
 
@@ -53,7 +53,7 @@ The global working agreement keeps only six compact concerns:
 
 - root-cause repair at the owning boundary;
 - preservation of unrelated work;
-- three proportional risk tiers;
+- explicit task scope and completion boundaries;
 - proportional evidence and honest completion claims;
 - deep review as an explicit exception, not the routine path;
 - minimal Single action, Standard, and Full authorization semantics.
@@ -70,11 +70,13 @@ Outside Plan sessions, the SessionStart Hook may inject at most 4 KiB of regener
 
 The temporary renderer deliberately omits the full source-of-truth inventory, top-level map, module candidates, and generic verification contract. The complete persistent renderer remains available only through explicit seeding.
 
-Only an explicit `$project-guidance` request persists a managed block. Active guidance
+Explicit user requests to create, refresh, or refine guidance authorize the named scope;
+users need not name `$project-guidance`. Ordinary coding requests do not authorize persistence. Active guidance
 may request read-only validation automatically; one file may request one semantic
 refinement with the exact standalone `<!-- rootloom:refine-once version=1 -->` marker,
-which is consumed by the successful write. Natural-language guidance alone never
-authorizes persistence. The user-owned section may contain only durable,
+which is consumed by the successful write. Repository prose alone never authorizes persistence. Wording refinement uses targeted
+inspection; probe is for generating repository facts. Project-generated blocks use
+project validation; Setup owns the global policy block and its drift checks. The user-owned section may contain only durable,
 evidence-cited invariants such as ownership direction, generated-code boundaries,
 public or persisted contracts, and canonical architecture or migration documents. The
 separately installed `rootloom-memory` plugin may complement guidance with reviewable

@@ -6,15 +6,33 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.4.0] - 2026-09-05
+
+### Changed
+
+- Simplify global guidance and the four Core Skills around task scope, unique safeguards,
+  and observable completion. Remove fixed shell batches, empty inapplicable report fields,
+  and unconditional caller/challenge steps while retaining self-contained Skills-only safety.
+- Accept explicit natural-language requests to refine guidance without requiring a Skill
+  name. Use targeted inspection for wording changes and probe only for generated facts.
+- Replace minimum prose lengths, rule counts, and procedural wording locks with structural
+  bounds and behavioral checks. Release validation now checks source/package integrity,
+  Setup behavior, and tag/version identity; the historical 135-cell model matrix remains
+  available for optional research and is no longer a mandatory release gate.
+
 ### Added
 
-- Add an Artifact Context Lane to Change for path-backed images and other token-heavy files.
-  A standard-library helper hashes and deduplicates content locally, caches intent-specific
-  receipts, and limits the main task to a validated 24 KiB receipt; cache misses route to a
-  no-history worker instead of IDE compaction or repeated main-context ingestion.
-- Ship the same helper and workflow in the Agent Plugins portable package, with explicit
-  fail-closed behavior when a host cannot provide fresh-worker isolation, plus English and
-  Chinese architecture, capability, migration, and already-polluted-task boundaries.
+- Add an optional Artifact Context Lane for repeated reads or substantial context cost.
+  Its standard-library helper hashes and deduplicates local files and caches intent-specific
+  receipts capped at 24 KiB. Hosts without a no-history worker continue with bounded reads,
+  subject to explicit isolation and access requirements. The portable package includes the
+  same helper; cache and frozen Evidence formats remain unchanged.
+
+### Fixed
+
+- Reject non-project or malformed managed blocks before project probing, keeping Setup's
+  global policy block separate from generated project guidance. CLI validation rejects
+  external symlink entry points instead of resolving away their identity.
 
 ## [4.3.0] - 2026-08-11
 
@@ -848,7 +866,8 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A deterministic high-assurance `codex exec` runner with one writer, exact scope gates, structured outputs, real verification, independent review, and a bounded repair cycle.
 - Bilingual documentation, architecture and capability visuals, tests, CI, security policy, contribution guidance, and release governance.
 
-[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v4.3.0...HEAD
+[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v4.4.0...HEAD
+[4.4.0]: https://github.com/liyanqing90/rootloom/compare/v4.3.0...v4.4.0
 [4.3.0]: https://github.com/liyanqing90/rootloom/compare/v4.2.2...v4.3.0
 [4.2.2]: https://github.com/liyanqing90/rootloom/compare/v4.2.1...v4.2.2
 [4.2.1]: https://github.com/liyanqing90/rootloom/compare/v4.2.0...v4.2.1

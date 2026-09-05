@@ -78,10 +78,6 @@ def structural_gate() -> dict[str, Any]:
             "Core Skill catalog differs: "
             f"expected {sorted(EXPECTED_SKILLS)}, found {sorted(actual_skills)}"
         )
-    if reduction < 0.30:
-        errors.append(
-            f"ordinary Change context reduction is {reduction:.1%}; expected >= 30%"
-        )
     return {
         "passed": not errors,
         "errors": errors,

@@ -82,6 +82,12 @@ Commit messages should be short and imperative, for example:
 Handle Cargo workspace module boundaries
 ```
 
+Release acceptance uses the checks justified by the change plus existing CI. The historical
+135-cell Core Reset matrix remains an optional research tool, not a standing release gate.
+Workflow changes should use a bounded, explicitly selected behavioral comparison and report
+failures and limitations honestly. Do not enforce minimum prose size, a shrink percentage,
+or exact procedural wording as a substitute for executable behavior tests.
+
 ## Testing guidance
 
 Prefer real temporary Git repositories and behavioral assertions. Avoid network calls, arbitrary sleeps, fixture snapshots tied to incidental whitespace, and mocks when a small filesystem fixture can prove behavior directly.

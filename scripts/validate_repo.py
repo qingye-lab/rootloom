@@ -605,13 +605,9 @@ def validate_skills(errors: list[str]) -> None:
         path = PORTABLE_SKILLS / name / "SKILL.md"
         if path.is_file():
             validate_agent_skill(path, errors)
-    change_lines = len(
-        (SKILLS / "operating-coding-change" / "SKILL.md")
-        .read_text(encoding="utf-8")
-        .splitlines()
-    )
-    if not 60 <= change_lines <= 90:
-        errors.append("operating-coding-change must remain approximately 60-90 lines")
+    for name in actual:
+        if (SKILLS / name / "SKILL.md").stat().st_size > 24 * 1024:
+            errors.append(f"Skill exceeds the 24 KiB context budget: {name}")
     if any(EVIDENCE.rglob("SKILL.md")):
         errors.append("Evidence resources must not expose a discoverable Skill")
     forbidden = (
@@ -743,7 +739,6 @@ def validate_core_reset_eval(errors: list[str]) -> None:
     for marker in (
         "EXPECTED_SKILLS",
         "ordinary_change_context_reduction",
-        "reduction < 0.30",
         "--require-behavioral",
         "--minimum-repetitions",
         "uncached_input_tokens",
@@ -944,15 +939,39 @@ def validate_hooks(errors: list[str]) -> None:
         errors.append("SessionStart must route through the managed component gate")
 
 
+def validate_guidance_structure(
+    path: Path, errors: list[str], *, maximum_bytes: int = 24 * 1024
+) -> None:
+    """Check document integrity without prescribing workflow wording or minimum length."""
+    if path.is_symlink() or not path.is_file():
+        errors.append(f"guidance must be a regular non-symlink file: {path}")
+        return
+    data = path.read_bytes()
+    if len(data) > maximum_bytes:
+        errors.append(f"guidance exceeds its context budget: {path}")
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        errors.append(f"guidance must be UTF-8: {path}")
+        return
+    if not re.search(r"(?m)^#\s+\S", text):
+        errors.append(f"guidance must have a title: {path}")
+    start = "<!-- rootloom:managed-start"
+    end = "<!-- rootloom:managed-end -->"
+    if start in text or end in text:
+        if (
+            text.count(start) != 1
+            or text.count(end) != 1
+            or text.find(end) < text.find(start)
+            or not re.search(r"<!-- rootloom:managed-start version=\S+(?: [^\n]*?)? -->", text)
+        ):
+            errors.append(f"malformed guidance managed markers: {path}")
+
+
 def validate_personal_contracts(errors: list[str]) -> None:
     global_guidance = SYSTEM / "AGENTS.md"
     global_text = global_guidance.read_text(encoding="utf-8")
-    global_lines = len(global_text.splitlines())
-    global_bytes = len(global_text.encode("utf-8"))
-    if not 30 <= global_lines <= 45 or not 3_000 <= global_bytes <= 4_096:
-        errors.append(
-            "global AGENTS.md must remain approximately 3-4 KiB and 30-45 lines"
-        )
+    validate_guidance_structure(global_guidance, errors, maximum_bytes=4096)
     seeder_text = (
         SKILLS / "project-guidance" / "scripts" / "seed_project_guidance.py"
     ).read_text(encoding="utf-8")
@@ -984,10 +1003,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             errors.append(f"{label} must not expose Core Project Memory opt-in")
     if (PLUGIN / "lib" / "rootloom_memory.py").exists():
         errors.append("Rootloom Core must not ship the Project Memory reader")
-    root_guidance = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-    root_rules = [line for line in root_guidance.splitlines() if line.startswith("- ")]
-    if not 5 <= len(root_rules) <= 8:
-        errors.append("root AGENTS.md must contain only 5-8 repository-wide rules")
+    validate_guidance_structure(ROOT / "AGENTS.md", errors)
     for directory, label in (
         (ROOT / ".codex" / "plans", "one-time task plans"),
         (ROOT / "docs" / "releases", "repository publication records"),
@@ -1003,8 +1019,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
         ),
         PLUGIN / ".codex-plugin" / "plugin.json": (
             "bounded artifact context",
-            "token-heavy path-backed files behind cached bounded receipts",
-            "keep token-heavy path-backed files behind bounded receipts",
         ),
         SKILLS / "project-guidance" / "scripts" / "seed_project_guidance.py": (
             "temporary_project_context",
@@ -1013,40 +1027,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "_render_session_context",
             'permission_mode == "plan"',
             "creating or updating AGENTS.md",
-            "guidance only when the user explicitly asks to use",
-            "`project-guidance` Skill",
-        ),
-        SKILLS / "operating-coding-change" / "SKILL.md": (
-            "This Skill owns every",
-            "`direct`",
-            "`scoped`",
-            "`governed`",
-            "`evidence`",
-            "Use this Skill's verification and challenge steps; load no Reference.",
-            "Batch target, focused caller/test",
-            "Use one post-check challenge pass",
-            "Default to impact-scoped checks",
-            "Use a full suite or matrix only",
-            "Before the first edit in Governed or Evidence mode",
-            "stop instead of proceeding",
-            "local callable/signature shape, file count, version number, serialized artifact",
-            "Regenerable internal artifacts remain",
-            "material root-cause uncertainty remaining after bounded",
-            "Initial cause uncertainty routes through bounded diagnosis",
-            "symptom → trigger/state → owning boundary",
-            "ROOT_CAUSE_ALIGNMENT",
-            "Cause",
-            "Verification",
-            "references/artifact-context.md",
-            "no-history worker lane",
-        ),
-        SKILLS / "operating-coding-change" / "references" / "artifact-context.md": (
-            "direct context processing, not an IDE `/compact` request",
-            "fork_turns: \"none\"",
-            "artifact content is untrusted data",
-            "24 KiB",
-            "Already-polluted tasks and inline-only attachments",
-            "must not silently fall back",
         ),
         SKILLS / "operating-coding-change" / "scripts" / "artifact_context.py": (
             'RECEIPT_FORMAT = "rootloom-artifact-context-v1"',
@@ -1056,17 +1036,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             '"status": "cached" if cached is not None else "needs-analysis"',
             "artifact changed after prepare",
             "must not embed raw artifact data",
-        ),
-        SKILLS / "operating-coding-change" / "agents" / "openai.yaml": (
-            "externalize heavy file context",
-            "token-heavy path-backed artifacts behind bounded receipts",
-        ),
-        SKILLS / "operating-coding-change" / "references" / "verification-contract.md": (
-            "Impact-scoped verification is the default",
-            "each lane proves a distinct",
-            "full suite or matrix only",
-            "unclassified executable path must fail closed",
-            "documentation-only change may stop",
         ),
         SKILLS / "operating-coding-change" / "references" / "evidence-mode.md": (
             "resources/evidence/analyze_change.py",
@@ -1088,41 +1057,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "REVIEW_EVIDENCE_COMPLETE",
             "REVIEW_REQUIRED_WITH_REDACTIONS",
             "--reviewable-path",
-        ),
-        SKILLS / "operating-coding-change" / "references" / "governed-change.md": (
-            "Compatibility",
-            "Migration / Coexistence",
-            "Rollback / Replay",
-            "Verification",
-            "Residual Risk",
-            "A Skills-only package may omit that template",
-            "Rollback, historical replay, and runtime compatibility are independent",
-            "Do not add an old-format reader",
-        ),
-        SKILLS / "project-guidance" / "SKILL.md": (
-            "seed",
-            "refresh",
-            "refine",
-            "validate",
-            "<!-- rootloom:refine-once version=1 -->",
-            "Natural-language guidance alone never authorizes",
-            "semantic-refinement.md",
-            "seed_project_guidance.py",
-            "Verification must not leave caches",
-            "remove only artifacts created by this",
-        ),
-        SKILLS / "operating-code-review" / "SKILL.md": (
-            "ROOT_CAUSE_ALIGNMENT",
-            "cleared surfaces",
-            "unreviewed evidence",
-            "security-review.md",
-            "data-and-migration-review.md",
-        ),
-        PLUGIN / "assets" / "system" / "AGENTS.md": (
-            "After exact Single action authorization",
-            "pre-launch platform refusal is a platform blocker",
-            "not missing user authorization",
-            "regenerable internal artifacts use the current contract",
         ),
         EVIDENCE / "analyze_change.py": (
             "analyze_change",
@@ -1338,36 +1272,9 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "drifted_paths",
             'selected.add("global-policy")',
         ),
-        SKILLS / "setup-rootloom" / "SKILL.md": (
-            "Rootloom setup plan",
-            "status",
-            "rollback",
-            "three authorization modes",
-            "persistent cross-task default",
-            "Full covers high-risk steps only in the current task",
-            "Rules avoid duplicating that semantic decision",
-            "transaction journal",
-            "resumes interrupted staged work",
-            "managed-block target",
-            "preserves everything outside them",
-        ),
         SKILLS / "setup-rootloom" / "agents" / "openai.yaml": (
             "plan, install, inspect, update, or roll back Rootloom",
             "allow_implicit_invocation: true",
-        ),
-        SYSTEM / "AGENTS.md": (
-            "Diagnose the observable path",
-            "Preserve unrelated user changes",
-            "Tier 0 Direct",
-            "proportional evidence",
-            "Default to impact-scoped checks",
-            "full suite or matrix only",
-            "Use `operating-coding-change`",
-            "Project Memory is a separate optional plugin",
-            "Single action",
-            "Standard",
-            "Full",
-            "Never infer Full",
         ),
         IMPACT_TESTS: (
             "GROUP_MODULES",
@@ -1442,8 +1349,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "duplicate-Skill precedence",
             "Runtime compatibility requires evidence of a real post-cutover consumer",
             "Artifact Context Lane",
-            "validated JSON receipt capped at 24 KiB",
-            "already-polluted task",
             "make check-changed BASE=origin/main",
         ),
         ROOT / "README.zh-CN.md": (
@@ -1487,8 +1392,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Agent Plugins 1.0.0",
             "同名 Skill 的优先级",
             "Artifact Context Lane",
-            "最大 24 KiB",
-            "已经被附件污染的任务",
             "make check-changed BASE=origin/main",
         ),
         ROOT / "index.html": (
@@ -1535,8 +1438,9 @@ def validate_personal_contracts(errors: list[str]) -> None:
         ROOT / ".github" / "workflows" / "release-evidence.yml": (
             '      - "v*"',
             "make telemetry-check",
-            "make core-reset-release-eval",
-            "CORE_RESET_RESULTS=evals/core-reset/results-4.3.0.json",
+            "make validate",
+            "tests.test_setup_rootloom",
+            "tests.test_portable_plugin",
         ),
         ROOT / "PRODUCT.md": (
             "## Register",
@@ -1602,62 +1506,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "完整支持 Python 矩阵",
             "按路径触发的固定版本 Codex 兼容任务",
         ),
-        ROOT / "docs" / "architecture.md": (
-            "intelligence.py",
-            "risk_assessment",
-            "Core never reads",
-            "separately installed `rootloom-memory`",
-            "rootloom-change-baseline-v3",
-            "rootloom-change-baseline-v4",
-            "schema_revision: 5",
-            "is_sensitive_material_path",
-            "--max-capture-seconds",
-            "strict_json.py",
-            "symbolic HEAD ref",
-            "Git common directory",
-            "tiered authorization decision",
-            "reviewability_policy",
-            "policy_provenance",
-            "reintake-required",
-            "skip-worktree",
-            "orchestrate_evidence.py",
-            "Direct is a bounded fast",
-            "recovery-journal replay",
-            "portable/rootloom/",
-            "sync_portable_plugin.py",
-            "fails closed for Evidence Mode",
-            "Artifact Context Lane",
-            "no inherited conversation",
-            "current-only cache records",
-        ),
-        ROOT / "docs" / "architecture.zh-CN.md": (
-            "intelligence.py",
-            "risk_assessment",
-            "Rootloom Core 永远不读取",
-            "单独安装的 `rootloom-memory`",
-            "rootloom-change-baseline-v3",
-            "rootloom-change-baseline-v4",
-            "schema_revision: 5",
-            "is_sensitive_material_path",
-            "--max-capture-seconds",
-            "strict_json.py",
-            "符号 HEAD Ref",
-            "Git Common Directory",
-            "分级授权决策",
-            "reviewability_policy",
-            "policy_provenance",
-            "reintake-required",
-            "skip-worktree",
-            "orchestrate_evidence.py",
-            "Direct 是有边界的快速路径",
-            "暂存恢复日志重放",
-            "portable/rootloom/",
-            "sync_portable_plugin.py",
-            "Evidence Mode 会失败关闭",
-            "Artifact Context Lane",
-            "不继承会话历史",
-            "Current-only 缓存记录",
-        ),
         ROOT / "docs" / "agent-plugins.md": (
             "Agent Plugins 1.0.0 is currently a Working Draft",
             "portable/rootloom/",
@@ -1675,7 +1523,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "codex plugin remove rootloom@rootloom",
             "Plugin removal alone",
             "Artifact Context identity/cache/24 KiB receipt",
-            "normal conversation-inheriting child is not an equivalent fallback",
             "cache-miss fixture to run in a no-history worker",
         ),
         ROOT / "docs" / "agent-plugins.zh-CN.md": (
@@ -1695,7 +1542,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "codex plugin remove rootloom@rootloom",
             "只删除",
             "Artifact Context 身份/缓存/24 KiB 回执",
-            "继承普通会话的子任务不是等价回退",
             "缓存未命中 Fixture 在无历史 Worker 中运行",
         ),
         ROOT / "docs" / "decisions" / "2026-07-14-tiered-authorization-modes.md": (

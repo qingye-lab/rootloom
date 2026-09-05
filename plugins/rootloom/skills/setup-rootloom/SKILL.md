@@ -61,7 +61,11 @@ When `autonomy` is selected, run `codex execpolicy check` for at least:
 - routine and high-risk commands represented in the Rules → allow, because static argv Rules cannot carry authorization-mode state;
 - catastrophic recursive deletion of root, home, the current directory, or its parent → forbidden.
 
-The installed global guidance owns three authorization modes. Single action covers one displayed command/action. Standard is the persistent cross-task default for all non-high-risk steps required by each explicit goal; every task still resolves its own operation type and scope. Full covers high-risk steps only in the current task and scope and is never inferred. When a Standard task reaches a high-risk boundary, offer all three modes once. Rules avoid duplicating that semantic decision; they do not grant authority themselves. Other active Rules and Codex platform policy remain authoritative and may still require approval.
+The global working agreement owns authorization. Standard covers non-high-risk steps of
+explicit goals across tasks; Single action covers the exact displayed action once; Full
+is limited to the current task and scope and is never inferred. Request only missing
+specific approval after preparing the action. Rules avoid duplicating that semantic
+decision and do not grant authority. Other active Rules and platform policy remain binding.
 
 Start a new Codex task after setup or plugin update so assets and Hooks are rediscovered.
 

@@ -109,6 +109,10 @@ codex execpolicy check --pretty --rules ~/.codex/rules/rootloom.rules -- git res
 codex execpolicy check --pretty --rules ~/.codex/rules/rootloom.rules -- rm -rf /
 ```
 
+4.4 指导更新保留现有授权语义。当前请求精确指定一个高危动作时，已提供该动作的一次
+授权，无需再选择同一权限；真实缺失的授权或独立审批仍阻塞该动作。此次指导升级不涉及
+模型、Provider、沙箱或其他插件设置。
+
 预期依次是十个 `allow`，最后一个 `forbidden`。授权状态由安装后的全局指导管理，而不是由参数规则管理：本条命令只生效一次；普通权限跨任务持久，覆盖每个明确目标的全部非高危步骤；所有权限只在当前任务与范围内覆盖高危步骤。命令规则负责避免语义授权后再次弹窗，只保留灾难性递归删除的硬拒绝。其他更严格的有效规则或平台策略仍可能要求审批。
 如果宿主仍把精确授权的动作归类为需要审批，而当前任务或组织 Profile 又禁止发起审批
 （例如 `AskForApproval=Never`），应把该控制 Profile 视为阻断层；重复同一用户确认

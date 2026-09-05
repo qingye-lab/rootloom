@@ -68,40 +68,34 @@ Codex 的格式选择并关闭既有 Hook，因此两个安装根保持隔离。
 
 ## Engineering Workflow
 
-`operating-coding-change` 拥有实现工作流。Direct 是有边界的快速路径：不加载
-Reference，只检查精确目标并运行最小相关检查。脏工作树仍是保护约束，不会单独触发
-模式升级；文件数量、局部 Callable/Signature 形态、版本号或序列化产物也不能证明公共
-契约存在。Schema 与格式工作会先判断产物是否权威或不可替代，以及新运行时是否必须遇到
-旧实例。可再生内部产物保持 Scoped 并只接受当前合同；回滚恢复完整旧版本，历史回放使用
-匹配的旧运行时。只有共享/外部消费者、真实的切换后兼容义务或其他 Governed 风险信号
-成立时才进入 Governed。初始根因未知时
-先在 Scoped 中做有限诊断；只有诊断后仍存在材料级不确定性才升级。Direct 与 Scoped
-都由 Change Skill 自包含且不加载 Reference；Scoped 仍要求成比例的仓库证据、按行为
-映射的验证以及一次检查后挑战，但不再增加一次模型/工具往返。Governed 加载兼容、
-Rollout、Rollback 与详细验证规则，并且必须在首次编辑前完成；必需 Reference 无法
-加载时停止。其完成合同明确报告产物权威性与消费者证据、Compatibility、
-Migration/Coexistence、Rollback/Replay、Verification 与 Residual Risk。显式 Evidence Mode 才增加
-确定性采集。安装 Rootloom 永远不会启动 Analyzer 或 Finalizer。
+`operating-coding-change` 拥有实现工作流。Direct 处理机械局部修改，Scoped 处理有界
+行为与缺陷修复；二者的最小保障自包含，不依赖可选全局 Setup。脏工作树要求保护无关
+修改，不自动升级风险。公共或不可替代的持久契约、安全、生产、破坏性动作及重大影响
+不确定性进入 Governed。版本号、文件数或可再生内部产物本身不能证明兼容义务，须识别
+真实消费者。Governed 在相关修改前加载必要合同；缺少前置条件只阻塞依赖该条件的工作，
+其余已授权步骤可继续。显式选用或仓库合同要求时，Evidence 才增加确定性生命周期。
 
-缺陷的 `ROOT_CAUSE_ALIGNMENT: PASS` 必须包含触发方式、所属边界、被违反的不变量、有证据的根因以及对最强替代假设的否定。功能或机械任务使用 `NOT_APPLICABLE` 并明确目标不变量。
+缺陷工作说明实际触发、所属不变量与有证据的根因。替代原因和调用方检查对应可信风险，
+不强制套用固定清单。日常完成报告使用有信息的自然语言；正式 Evidence 保留必需机器
+字段。Review 保持只读，两条路径都不要求空白或不适用字段。
 
-验证对应行为：主路径、所属边界不变量、相邻负向或替代路径。识别到对应风险时，还会要求 auth 边界、迁移共存、资金幂等、状态顺序、部署回滚或消费者兼容等检查。发现的 Make/test 命令只是建议；一个方便命令通过不等于验证完整，生成的计划也不会冒充已执行证据。
+验证对应实际变化和风险：主路径、所属不变量，以及相关时的负向或替代路径。证据充分
+后，仅因新修改、失败或未解疑点才扩展检查。缺少的证据须明示，方便通过的命令不能替代
+必需验证。
 
 ### Artifact Context Lane
 
-大型或重复使用的有路径文件，会在主任务读取前进入独立上下文通道。一个不联网、只依赖
-标准库的 Helper 计算 SHA-256 身份、去重相同内容，并用“内容 + 意图”查询用户本地回执。
-缓存只保存小型 Manifest、Worker Draft 与最终回执；原始字节保留在源路径，不复制到缓存。
+默认按任务需要有界读取。预计重复读取或明显上下文成本时，可选通道通过不联网的标准库
+Helper 计算 SHA-256、内容去重并查询用户本地的意图回执。缓存只保存 Manifest、Worker
+Draft 和回执，不复制原始文件字节。
 
-缓存未命中时，由一个不继承会话历史、归 Host 管理的独立 Worker 分析。Worker 只获得
-Manifest、精确意图、精确源路径和严格 Draft Schema；主任务随后只消费最大 24 KiB 的
-已校验回执。Finalize 会重新计算源文件哈希，拒绝变化文件与内嵌原始媒体，并原子提交。
-缓存命中不调用模型；Host 如果没有全新 Worker 隔离能力，语义通道失败关闭。
+有收益且能力可用时，由一个归 Host 管理、不继承历史的 Worker 根据 Manifest、精确意图、
+源路径和 Draft Schema 分析缓存未命中项。Finalize 重新计算源哈希，拒绝变化文件和内嵌
+原始媒体，原子提交最多 24 KiB 的回执。命中不增加模型调用。没有 Worker 时有界读取并
+跳过语义回执创建；用户明确要求隔离时不能以此绕过。文件访问、上传与保留限制仍然优先。
 
-该机制有意归属 Skill，而不是 Hook、MCP Server 或嵌套 Codex CLI 调用。当前任务历史归
-Host 所有：Rootloom 不改写附件 Payload，也不声称能移除已进入历史的文件。已污染任务在
-生成回执后需要交接到干净任务。Manifest 与回执都是可再生、Current-only 缓存记录，
-不会扩展冻结的 Evidence 格式。
+该可选流程归属 Skill，不是 Hook、MCP Server 或嵌套 Codex CLI 启动器。它不能删除已记录
+附件，也不要求普通任务交接到干净任务。Current-only 缓存格式不扩展冻结 Evidence 格式。
 
 ## 轻量产物辅助工具
 
@@ -152,11 +146,11 @@ Runner 辅助模块保持小型：
 
 ## 独立 Project Memory
 
-显式调用 `project-guidance` 可以把可复现事实写入托管 `AGENTS.md` 区块；
+用户明确要求创建、刷新或优化指导文件即可触发 `project-guidance`，不必点名 Skill；
 SessionStart Hook 绝不写入。Active Guidance 可以自动请求只读 Validate。没有当前
 用户请求时，持久 Refine 必须由独立且精确的
 `<!-- rootloom:refine-once version=1 -->` Marker 授权，只作用于该文件，并在成功
-写入时消费；自然语言指导本身不能授权持久化。Guidance 完成前会对照初始状态与授权
+写入时消费；仓库泛化文字不能授权持久化。Guidance 完成前会对照初始状态与授权
 路径检查最终工作树，只清理由当前任务生成的验证 Artifact，不留下 Cache、Coverage
 或 Build 输出。可选历史经验属于单独安装的 `rootloom-memory`
 插件。它的 `$project-memory` Skill 只选择有界任务/路径匹配，

@@ -105,21 +105,16 @@ Worker 在取消后仍能重连，最终会出现两个活跃 Session。
 
 这就是 Rootloom 的日常用法。你不需要先生成证据包，不需要安装全局配置，也不必把插件里的每个 Skill 都跑一遍。
 
-### 不让大文件进入主任务上下文
+### 按任务需要读取大文件
 
-当代码修改依赖有本地路径的图片、音频、视频、PDF、Office 文档、大型日志/数据，或会在
-多个轮次复用同一批文件时，Change 可以启用 Artifact Context Lane。Rootloom 在本地计算
-哈希并去重，原始字节仍留在原处；相同内容、推断媒体类型与意图直接复用用户本地回执。缓存未命中时，
-只让一个不继承会话历史的独立 Worker 读取一次文件，主任务只接收经过校验、最大 24 KiB
-的 JSON 回执。
+默认使用足够回答任务的有界读取。预计重复读取或明显上下文成本时，Change 可以按需启用
+Artifact Context Lane：本地标准库 Helper 计算哈希、去重并缓存与意图绑定的回执。
+原始字节仍留在源路径，最终回执最多 24 KiB。
 
-这是直接预处理，不是调用 IDE 的 `/compact`。确定性 Helper 不调用模型、也不访问网络；
-只有缓存未命中的独立 Worker 会新增一次模型调用，命中缓存不会增加模型调用。Host 如果
-不能提供无历史 Worker，会在语义分析前失败关闭，不会悄悄把原始文件载入主任务。
-
-该通道必须在文件进入主历史之前使用，不能删除已经存入某个任务的附件。对于已经被附件污染的任务，
-如果存在可访问的本地路径，应先生成回执，再在干净任务里只携带回执继续；
-只有内联数据、没有本地路径的附件，需要在干净任务中以有路径文件重新附加。
+缓存未命中时可使用一个不继承会话历史、归 Host 管理的 Worker；没有此能力时，继续有界
+读取并跳过回执优化。用户明确要求的隔离、文件访问、上传与保留边界仍然优先。Helper 不
+调用模型或网络；可选 Worker 会增加模型调用，缓存命中不会。Rootloom 无法擦除已经记录
+的附件或任务历史，也不会仅因文件已被读取而要求新建任务。
 
 ## Agent Plugins 可移植预览
 
@@ -136,8 +131,8 @@ Surface 有意大于 Agent Plugins v1。
 
 预览包含 Review、Project Guidance，以及 Direct、Scoped、Governed Change；持久 Guidance
 仍要求精确用户意图。它有意不包含 Setup、Hook、Rules、Memory、MCP、OpenAI UI 元数据和插件级
-Evidence Helper。它包含标准库 Artifact Context Helper；语义缓存未命中时，Host 仍必须
-提供无历史 Worker 或等价的全新 Worker 能力。明确请求 Evidence 时会失败关闭，不会伪造 Evidence Bundle。同一
+Evidence Helper。它包含可选的标准库 Artifact Context Helper；没有无历史 Worker 的
+Host 可以使用普通有界读取，不创建语义缓存回执。明确请求 Evidence 时会失败关闭，不会伪造 Evidence Bundle。同一
 客户端不要同时安装原生包与可移植包，因为规范没有定义同名 Skill 的优先级。
 
 仓库检查能够证明包结构、路径包含关系、Agent Skills 元数据、相对 References 以及与
@@ -164,9 +159,9 @@ Rootloom Core 始终只展示这四个入口。Change 只有在风险和证据�
 回滚恢复完整旧版本，历史回放使用匹配的旧运行时。只有存在真实的切换后消费者证据时，
 才启用运行时兼容。
 当仓库指导要求检查时，Project Guidance 可以自动执行只读 Validate；持久化 Seed、
-Refresh 或 Refine 则需要用户明确意图。仓库只能通过独立且精确的
+Refresh 或 Refine 则需要用户明确意图；直接要求优化指定指导文件即可，不必点名 Skill。仓库只能通过独立且精确的
 `<!-- rootloom:refine-once version=1 -->` Marker 授权对该文件进行一次 Refine；
-自然语言说明本身绝不授权写入。
+仓库中的泛化说明本身不授权写入。
 
 ## 一次日常修改会怎样进行
 
@@ -236,18 +231,16 @@ Change、Review、Project Guidance 和 Setup。Optional Autonomy 通过 Setup �
 `quality_status` 与稳定能力字段 `evidence_complete`。`REVIEW_EVIDENCE_COMPLETE`
 表示证据链完整，`REVIEW_REQUIRED_WITH_REDACTIONS` 表示材料脱敏阻止了这一声明。
 
-Core Reset v2 会记录实际 Codex 完成回合的 Token 用量、精确 Mode/Reference 路由以及
-隔离的重复运行。结构性缩减可用于开发期间，但正式 4.1 候选需要至少三轮的已评分 v2
-矩阵；详见[4.1 效率决策](docs/decisions/2026-07-29-rootloom-4.1-efficiency-loop.md)。
-Direct 与 Scoped 是自包含的 Routine 路由，不加载 Reference；Governed 与 Evidence
-只在相应模式成立时、首次编辑前加载详细合同，必需 Reference 无法加载时停止。
-使用 `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
-执行该正式门禁。
-耗时比率只比较两个版本都成功完成任务的配对；任务成功率回退仍由独立硬门禁禁止。
-仓库保留的 [4.3.0 候选报告](evals/core-reset/reports/4.3.0.md)记录了全部 135 个 Cell，
-复用 99 个未受影响的 Cell，并替换会激活 Change 或 Setup 的 36 个候选 Cell。结果、
-精确路由、质量、Token、命令数与成功配对耗时门禁全部通过；版本 Tag Workflow 会运行
-这份保留结果。
+Core Reset v2 保留历史模型对比与可选研究命令
+`make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`。
+固定 135 个 Cell 的矩阵及其历史效率阈值不再是发布门禁。
+保留的 [4.3.0 报告](evals/core-reset/reports/4.3.0.md)只描述该版本，不为后续候选背书。
+
+当前发布根据实际变更选择检查，验证打包与 Setup，并在工作流变化时对比模型行为。
+4.4 变更采用六个场景、每个场景当前版与候选版各一次，同模型、推理强度和隔离条件下
+串行运行。以任务结果和权限边界验收，耗时和可获得用量仅供观察；小样本不能证明普遍
+性能提升。详见 [4.4 工作流决策](docs/decisions/2026-09-05-rootloom-4.4-workflow.zh-CN.md)。
+Tag Workflow 检查源码/打包完整性、Setup 行为及 Tag/版本一致性。
 
 仓库状态只有在**连续两次有界采集**一致后才会被接受；每个采集生命周期受 `--max-capture-seconds` 约束。任何**材料元数据变化**——包括**新发现的 Ignored 新增**——都会在普通内容采集前启用仅元数据隔离。分类使用 `is_sensitive_material_path`；Rootloom 不是内容感知型 Secret Scanner。
 

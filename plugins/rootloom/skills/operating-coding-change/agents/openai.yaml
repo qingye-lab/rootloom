@@ -1,6 +1,6 @@
 interface:
   display_name: "Rootloom Change"
-  short_description: "Route changes and externalize heavy file context"
-  default_prompt: "Use $operating-coding-change to route this change, keep token-heavy path-backed artifacts behind bounded receipts, fix the owning boundary, and verify proportionally."
+  short_description: "Complete changes with proportional verification"
+  default_prompt: "Use $operating-coding-change to complete this change within its authorized scope, verify the changed behavior, and use bounded artifact reads or reusable receipts as appropriate."
 policy:
   allow_implicit_invocation: true

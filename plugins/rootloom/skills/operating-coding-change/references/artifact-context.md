@@ -1,18 +1,13 @@
 # Artifact Context Lane
 
-Use this lane before a path-backed artifact would enter the main task context. It is for
-images, audio, video, PDFs, Office documents, archives, large logs or data files, repeated
-artifacts, and bundles whose raw contents would materially increase later requests. Small,
-single-use source or text files may stay on the normal Change path.
+Use this optional performance lane when repeated artifact access or substantial context
+cost makes receipt reuse worthwhile. Ordinary tasks may use bounded local reads directly.
+A file extension or worker availability alone does not determine the route. User-required
+isolation, access, retention, and upload restrictions remain binding.
 
-The invariant is:
-
-```text
-raw artifact stays outside the main context
-→ deterministic local identity and cache lookup
-→ one no-history worker reads a cache miss
-→ main context receives only a bounded receipt
-```
+When using this lane, raw artifacts stay at their source paths, a local cache supplies
+existing receipts, and a no-history worker analyzes cache misses. The main task consumes a
+bounded receipt. This is a cost/reuse technique, not an additional authorization mode.
 
 This is direct context processing, not an IDE `/compact` request. It does not alter Codex
 task history and cannot remove an attachment already recorded there.
@@ -77,11 +72,12 @@ an array of strings:
 }
 ```
 
-Do not use a normal child that inherits the current conversation: that preserves the very
-history cost this lane exists to avoid. If the host cannot create a no-history worker, stop
-before semantic analysis and report the capability gap. Deterministic hashing/cache lookup
-may still complete, but Rootloom must not silently fall back to loading raw artifacts into
-the main task.
+A child with inherited conversation does not provide this lane's intended context savings.
+If no no-history worker is available, use permitted bounded reads in the main task and skip
+receipt generation. If the user explicitly required isolation, stop only the dependent
+analysis and report the missing capability; do not relax that requirement. Continue other
+independent authorized work. Never upload artifacts or invoke another service merely to
+work around a missing worker.
 
 ## 3. Finalize and consume the receipt
 
@@ -105,10 +101,10 @@ Receipts and manifests are regenerable current-only cache records, not Evidence 
 authoritative persisted state. Deleting the user-local cache loses only reuse and causes the
 next prepare to analyze again. Never commit cache paths or receipts to the target repository.
 
-## Already-polluted tasks and inline-only attachments
+## Already attached or inline-only inputs
 
-If the current task already contains the raw attachment, preparing a receipt cannot shrink
-that task's stored history. When a local path exists, create/finalize the receipt, then hand
-remaining work to a clean task or fresh worker that receives only the receipt. When an inline
-attachment has no accessible path, ask for a local path or reattachment in a clean task;
-Rootloom cannot extract or delete opaque composer history through this Skill.
+A receipt cannot remove an attachment from existing conversation history. Do not force a
+fresh task just to complete an otherwise supported analysis. For inline-only inputs, use
+the host's available bounded viewing tools; request a local path only if the required
+content cannot be accessed. Describe context savings honestly instead of claiming that
+preparing a receipt erased past input.

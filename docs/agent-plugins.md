@@ -163,7 +163,7 @@ than reported as passed.
 | Evidence Mode | Unavailable; the portable package fails closed because plugin-wide Evidence helpers are absent |
 | Project Guidance probe/seed/validate | Included; persistent writes require exact user intent |
 | Read-only 4 KiB SessionStart context | Same renderer; Codex native Hook or optional host adapter |
-| Artifact Context identity/cache/24 KiB receipt | Included; semantic misses require a no-history worker supplied by the host |
+| Artifact Context identity/cache/24 KiB receipt | Optional optimization with a host-supplied no-history worker; ordinary bounded reads need none |
 | Setup, `~/.codex`, command Rules, Hook enablement | Codex-native only |
 | MCP servers | Not shipped |
 
@@ -174,10 +174,11 @@ synchronization with the native source Skills. Codex has a separate compatibilit
 Cursor, VS Code, GitHub Copilot, Kiro, and other clients still require release-specific
 runtime smoke tests before Rootloom claims feature parity.
 
-The Artifact Context helper is portable, network-free, and standard-library-only. It can
-prepare and validate receipts in any compatible host, but the Skill must stop before reading
-raw artifacts unless that host exposes a worker with no inherited conversation. A normal conversation-inheriting child is not an equivalent fallback. The lane does not use an MCP
-server and does not modify already-recorded task history.
+The Artifact Context helper is portable, network-free, and standard-library-only. Optional
+semantic receipt creation uses a no-history worker; a history-inheriting child does not
+provide that isolation. Hosts without it continue through ordinary bounded reads unless
+explicit user isolation rules prevent that fallback. The lane uses no MCP server and cannot
+modify already-recorded task history.
 
 ## Maintainer workflow
 
