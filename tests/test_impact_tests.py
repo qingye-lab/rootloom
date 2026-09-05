@@ -293,6 +293,11 @@ class ImpactTestSelectionTests(unittest.TestCase):
         self.assertEqual(len(commands), 1)
         self.assertIn("tests.test_setup_rootloom", commands[0])
         self.assertNotIn("tests.test_core_reset_eval", commands[0])
+        args.json = True
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.selector.report_selection(selection, args)
+        self.assertTrue(json.loads(output.getvalue())["portable"])
 
     def test_validation_failure_stops_before_selected_tests(self) -> None:
         selection = self.select("plugins/rootloom/skills/project-guidance/SKILL.md")

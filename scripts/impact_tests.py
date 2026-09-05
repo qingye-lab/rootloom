@@ -370,7 +370,7 @@ def report_selection(selection: Selection, args: argparse.Namespace) -> None:
         "mode": "full" if args.canonical_full and args.lane == "primary" else selection.mode,
         "groups": list(selection.groups),
         "lane": args.lane,
-        "portable": selection.portable,
+        "portable": args.full_matrix or selection.portable,
         "codex": selection.codex,
         "reasons": list(selection.reasons),
         "commands": test_commands(selection, args),
@@ -383,7 +383,7 @@ def report_selection(selection: Selection, args: argparse.Namespace) -> None:
         f"mode={report['mode']}",
         f"groups={','.join(selection.groups) or 'none'}",
         f"lane={args.lane}",
-        f"portable={selection.portable}",
+        f"portable={report['portable']}",
         f"codex={selection.codex}",
         flush=True,
     )
