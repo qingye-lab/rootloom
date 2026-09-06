@@ -6,6 +6,55 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.4.0] - 2026-09-05
+
+### Changed
+
+- Reduce routine CI repetitions to named runtime/platform compatibility cases; keep full
+  affected modules in the primary lane and full matrices on explicit scheduled/manual runs.
+  Validate case ownership and existence so renamed tests cannot silently drop coverage.
+- Reduce redundant test setup by copying isolated Git fixtures and testing filename aliases
+  at their shared policy boundary. Consolidate duplicated website assertions around the
+  repository validator, retain negative cases, and remove prose-only checks.
+- Simplify global guidance and the four Core Skills around task scope, unique safeguards,
+  and observable completion. Remove fixed shell batches, empty inapplicable report fields,
+  and unconditional caller/challenge steps while retaining self-contained Skills-only safety.
+- Accept explicit natural-language requests to refine guidance without requiring a Skill
+  name. Use targeted inspection for wording changes and probe only for generated facts.
+- Replace minimum prose lengths, rule counts, and procedural wording locks with structural
+  bounds and behavioral checks. Release validation now checks source/package integrity,
+  Setup behavior, and tag/version identity; the historical 135-cell model matrix remains
+  available for optional research and is no longer a mandatory release gate.
+
+### Added
+
+- Add read-only impact-check previews, including JSON command output, without requiring a
+  GitHub output file. Preview and execution share lane-aware command selection; running
+  checks display the current command immediately and stop on the first failure.
+
+- Add an optional Artifact Context Lane for repeated reads or substantial context cost.
+  Its standard-library helper hashes and deduplicates local files and caches intent-specific
+  receipts capped at 24 KiB. Hosts without a no-history worker continue with bounded reads,
+  subject to explicit isolation and access requirements. The portable package includes the
+  same helper; cache and frozen Evidence formats remain unchanged.
+
+### Fixed
+
+- Update the optional live smoke to verify read-only SessionStart context instead of
+  expecting automatic AGENTS creation, and skip model execution after setup failure.
+- Stop artifact preparation as soon as the deduplicated byte total exceeds its limit,
+  avoiding reads of later inputs and manifest/draft writes for the rejected bundle. Keep duplicate
+  content reuse and conflicting-media-type rejection intact.
+- Reuse one repository file inventory per validation run for telemetry and secret checks,
+  retaining fresh discovery on each invocation without a persistent cache.
+
+- Include both source and destination paths when selecting tests for a rename, preventing
+  a move into documentation from silently dropping the original component's regression tests.
+
+- Reject non-project or malformed managed blocks before project probing, keeping Setup's
+  global policy block separate from generated project guidance. CLI validation rejects
+  external symlink entry points instead of resolving away their identity.
+
 ## [4.3.0] - 2026-08-11
 
 ### Changed
@@ -838,7 +887,8 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A deterministic high-assurance `codex exec` runner with one writer, exact scope gates, structured outputs, real verification, independent review, and a bounded repair cycle.
 - Bilingual documentation, architecture and capability visuals, tests, CI, security policy, contribution guidance, and release governance.
 
-[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v4.3.0...HEAD
+[Unreleased]: https://github.com/liyanqing90/rootloom/compare/v4.4.0...HEAD
+[4.4.0]: https://github.com/liyanqing90/rootloom/compare/v4.3.0...v4.4.0
 [4.3.0]: https://github.com/liyanqing90/rootloom/compare/v4.2.2...v4.3.0
 [4.2.2]: https://github.com/liyanqing90/rootloom/compare/v4.2.1...v4.2.2
 [4.2.1]: https://github.com/liyanqing90/rootloom/compare/v4.2.0...v4.2.1

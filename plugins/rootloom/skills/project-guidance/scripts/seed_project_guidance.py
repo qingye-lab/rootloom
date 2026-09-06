@@ -749,8 +749,7 @@ def _render_session_context(data: dict[str, Any], *, cwd: Path) -> str:
     else:
         lines.append(
             "- No project guidance was detected; use these facts temporarily and "
-            "persist guidance only after an explicit request to use the "
-            "`project-guidance` Skill."
+            "persist guidance only on the user's explicit create, refresh, or refine request."
         )
 
     commands: list[str] = []
@@ -906,16 +905,25 @@ def validate(file_path: Path) -> dict[str, Any]:
     if "[TODO" in content or "[TBD" in content:
         errors.append("placeholder_content_detected")
     if MANAGED_START_PREFIX in content or MANAGED_END in content:
-        data = probe(file_path.parent, file_path.parent)
-        if data.get("status") != "ready":
-            errors.append(f"probe_failed:{data.get('reason', 'unknown')}")
+        start = content.find(MANAGED_START_PREFIX)
+        end = content.find(MANAGED_END)
+        if (
+            content.count(MANAGED_START_PREFIX) != 1
+            or content.count(MANAGED_END) != 1
+            or end < start
+        ):
+            errors.append("malformed_managed_block")
+        elif not re.match(
+            r"<!-- rootloom:managed-start version=\S+ fingerprint=\S+ scope=\S+ -->",
+            content[start:],
+        ):
+            errors.append("not_project_managed_guidance")
         else:
-            expected = _render_managed(data)
-            start = content.find(MANAGED_START_PREFIX)
-            end = content.find(MANAGED_END)
-            if start == -1 or end == -1 or end < start:
-                errors.append("malformed_managed_block")
+            data = probe(file_path.parent, file_path.parent)
+            if data.get("status") != "ready":
+                errors.append(f"probe_failed:{data.get('reason', 'unknown')}")
             else:
+                expected = _render_managed(data)
                 actual = content[start : end + len(MANAGED_END)]
                 if actual != expected:
                     errors.append("managed_block_drift")
@@ -958,8 +966,8 @@ def _advisory_context(content: str) -> str:
         "Rootloom detected the following repository facts for this session without "
         "creating or updating AGENTS.md. Treat them as advisory context subordinate "
         "to current repository evidence and any existing project guidance. Persist "
-        "guidance only when the user explicitly asks to use the `project-guidance` "
-        "Skill to persist it.\n\n"
+        "guidance only on the user's explicit request to create, refresh, or refine it; "
+        "the user need not name a Skill.\n\n"
         f"<rootloom_project_context>\n{content}\n</rootloom_project_context>"
     )
 
@@ -1097,7 +1105,7 @@ def main(argv: list[str] | None = None) -> int:
         _json_print(result)
         return 1 if result.get("status") == "error" else 0
     if args.command == "validate":
-        result = validate(Path(args.file).expanduser().resolve())
+        result = validate(Path(args.file).expanduser().absolute())
         _json_print(result)
         return 0 if result["valid"] else 1
     if args.command == "hook":

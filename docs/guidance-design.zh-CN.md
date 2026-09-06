@@ -4,7 +4,7 @@
 
 ## 来自 OpenAI 当前官方建议的原则
 
-OpenAI 的 [GPT-5.6 模型指南](https://developers.openai.com/api/docs/guides/latest-model)建议精简提示词、每条规则只写一次、明确自主权与审批边界，并显式提供领域上下文、硬约束和成功标准。Codex 的 [`AGENTS.md` 文档](https://developers.openai.com/codex/agent-configuration/agents-md)进一步给出了自然层级：一个全局文件，再叠加从仓库根目录到当前目录的项目指导，越近的文件优先级越高。
+OpenAI 的 [GPT-6 Astra 模型指南](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-6-astra)建议审计可访问的 Skills 和指令文件中的冲突，明确用户与 Skill 的优先级，在审批前完成已授权准备，并按变更校准验证范围。Rootloom 据此保留独有事实与边界、移除重复流程，不把长度本身作为验收标准。Codex 的 [`AGENTS.md` 文档](https://developers.openai.com/codex/agent-configuration/agents-md)进一步给出了自然层级：一个全局文件，再叠加从仓库根目录到当前目录的项目指导，越近的文件优先级越高。
 
 因此本系统采用四条原则：
 
@@ -13,7 +13,7 @@ OpenAI 的 [GPT-5.6 模型指南](https://developers.openai.com/api/docs/guides/
 3. 可复用的多步流程放在 Skills，不在每个任务中重复。
 4. 可执行的策略和证据交给 Rules、sandbox、脚本、测试和 CI。
 
-默认 32 KiB 的项目指令预算是上限，不是目标。本项目的全局托管模板目标为 3–4 KiB、30–45 行，生成的项目 Context 更短。
+默认 32 KiB 的项目指令预算是上限，不是目标。Rootloom 保留全局模板 4 KiB 上限与生成上下文容量限制，不设置最低长度或规则条数。
 
 ## 从 GEB 保留什么
 
@@ -53,7 +53,7 @@ GEB 是个人文章/课程站点，不是 OpenAI 规范或同行评审标准。�
 
 - 在所属边界修复根因；
 - 保护无关修改；
-- 三档比例化风险；
+- 明确任务范围与完成边界；
 - 比例化证据与诚实完成声明；
 - 深度审查保持显式例外；
 - 本条命令、普通权限、所有权限的最小语义。
@@ -70,10 +70,12 @@ GEB 是个人文章/课程站点，不是 OpenAI 规范或同行评审标准。�
 
 临时 Renderer 明确省略完整事实来源清单、顶级目录地图、Module Candidate 与通用验证契约。完整持久 Renderer 只在显式 Seed 时使用。
 
-只有显式调用 `$project-guidance` 才会持久化托管区块。Active Guidance 可以自动
+用户明确要求创建、刷新或优化指定指导文件即可授权相应范围，不必点名
+`$project-guidance`；普通编码任务不授权持久化。Active Guidance 可以自动
 请求只读 Validate；单个文件可以用独立且精确的
 `<!-- rootloom:refine-once version=1 -->` Marker 请求一次语义 Refine，并由成功写入
-消费该 Marker。自然语言指导本身绝不授权持久化。用户区只保留持久且有路径证据的
+消费该 Marker。仓库泛化文字本身不授权持久化。措辞优化只做定点检查，生成项目事实才使用 Probe。
+项目生成块使用项目校验；全局策略块及其漂移检查归 Setup 所有。用户区只保留持久且有路径证据的
 不变量，例如所有权方向、生成代码边界、公开或持久化契约，以及权威架构或迁移文档。
 单独安装的 `rootloom-memory` 插件可用可审查的风险和失败经验补充指导，但不能替代
 `AGENTS.md` 权威或当前仓库证据。

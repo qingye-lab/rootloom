@@ -1,5 +1,11 @@
 # Rootloom Core Reset v2 evaluation
 
+This directory preserves the optional historical research protocol and its version-bound
+results. Since 4.4, the fixed 135-cell matrix and its old efficiency thresholds are not
+mandatory release gates. Run the full protocol only for an explicitly chosen comparison;
+do not rebind historical results to a new version. Release acceptance follows the actual
+change and the [4.4 workflow decision](../../docs/decisions/2026-09-05-rootloom-4.4-workflow.md).
+
 Compare the same fifteen scenarios with:
 
 1. no Rootloom;
@@ -25,8 +31,8 @@ historical 4.0 evidence. They are not rebound to a later Core digest.
 make core-reset-eval
 ```
 
-This checks that Core exposes exactly four Skills and that the ordinary Change Skill is
-at least 30% smaller than the frozen 3.4 byte baseline. Bytes are a repository-owned
+This checks that Core exposes exactly four Skills and reports the ordinary Change Skill
+size relative to the frozen 3.4 byte baseline, without a minimum reduction target. Bytes are a repository-owned
 context proxy, not a tokenizer estimate. The structural gate deliberately does not
 claim a behavioral release result.
 
@@ -60,7 +66,7 @@ directory, bounded semantically equivalent completion signals, and generated Pyt
 bytecode caches as verification residue rather than source-scope changes. The formal gate
 rejects results with an older or missing scoring contract.
 
-## Formal behavioral gate
+## Optional historical behavioral gate
 
 ```bash
 make core-reset-release-eval \

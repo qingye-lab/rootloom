@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -22,6 +23,14 @@ import validate_repo as validator  # noqa: E402
 PORTABLE_ROOT = ROOT / "portable" / "rootloom"
 CODEX_MANIFEST = ROOT / "plugins" / "rootloom" / ".codex-plugin" / "plugin.json"
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+ARTIFACT_HELPER = (
+    ROOT / "plugins" / "rootloom" / "skills" / "operating-coding-change"
+    / "scripts" / "artifact_context.py"
+)
+ARTIFACT_SPEC = importlib.util.spec_from_file_location("artifact_context", ARTIFACT_HELPER)
+assert ARTIFACT_SPEC is not None and ARTIFACT_SPEC.loader is not None
+artifact_context = importlib.util.module_from_spec(ARTIFACT_SPEC)
+ARTIFACT_SPEC.loader.exec_module(artifact_context)
 
 
 class PortablePluginTests(unittest.TestCase):
@@ -92,6 +101,226 @@ class PortablePluginTests(unittest.TestCase):
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertEqual(json.loads(completed.stdout)["status"], "ready")
+
+            artifact_helper = (
+                output
+                / "skills"
+                / "operating-coding-change"
+                / "scripts"
+                / "artifact_context.py"
+            )
+            self.assertTrue(artifact_helper.is_file())
+            self.assertEqual(
+                artifact_helper.read_bytes(),
+                (
+                    ROOT
+                    / "plugins"
+                    / "rootloom"
+                    / "skills"
+                    / "operating-coding-change"
+                    / "scripts"
+                    / "artifact_context.py"
+                ).read_bytes(),
+            )
+
+    def test_artifact_context_receipt_cache_and_validation(self) -> None:
+        helper = ARTIFACT_HELPER
+        with tempfile.TemporaryDirectory(prefix="rootloom-artifact-") as temporary:
+            root = Path(temporary)
+            cache = root / "cache"
+            artifact = root / "fixture.txt"
+            artifact.write_text("alpha\nbeta\n", encoding="utf-8")
+
+            def run(*arguments: str) -> subprocess.CompletedProcess[str]:
+                return subprocess.run(
+                    [
+                        sys.executable,
+                        str(helper),
+                        "--cache-root",
+                        str(cache),
+                        *arguments,
+                    ],
+                    cwd=ROOT,
+                    env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+
+            prepared = run(
+                "prepare",
+                "--intent",
+                "summarize the fixture",
+                "--path",
+                str(artifact),
+            )
+            self.assertEqual(prepared.returncode, 0, prepared.stderr)
+            prepare_payload = json.loads(prepared.stdout)
+            self.assertEqual(prepare_payload["status"], "needs-analysis")
+            if os.name == "posix":
+                self.assertEqual(cache.stat().st_mode & 0o777, 0o700)
+                self.assertEqual(
+                    Path(prepare_payload["manifest_path"]).stat().st_mode & 0o777,
+                    0o600,
+                )
+            manifest = json.loads(
+                Path(prepare_payload["manifest_path"]).read_text(encoding="utf-8")
+            )
+            draft = Path(prepare_payload["draft_path"])
+            receipt = json.loads(draft.read_text(encoding="utf-8"))
+            self.assertEqual(receipt["facts"], [{"claim": "", "evidence": []}])
+            receipt["summary"] = "The fixture contains two short lines."
+            receipt["artifact_notes"][0]["summary"] = "Text with alpha and beta."
+            receipt["artifact_notes"][0]["locators"] = ["lines 1-2"]
+            receipt["facts"] = [
+                {"claim": "There are two entries.", "evidence": ["lines 1-2"]}
+            ]
+            draft.write_text(json.dumps(receipt), encoding="utf-8")
+
+            finalized = run(
+                "finalize",
+                "--bundle-id",
+                prepare_payload["bundle_id"],
+                "--draft",
+                str(draft),
+            )
+            self.assertEqual(finalized.returncode, 0, finalized.stderr)
+            shown = run("show", "--bundle-id", prepare_payload["bundle_id"])
+            self.assertEqual(shown.returncode, 0, shown.stderr)
+            self.assertEqual(json.loads(shown.stdout)["format"], "rootloom-artifact-context-v1")
+
+            renamed = root / "renamed.txt"
+            renamed.write_bytes(artifact.read_bytes())
+            cached = run(
+                "prepare",
+                "--intent",
+                "summarize the fixture",
+                "--path",
+                str(renamed),
+            )
+            self.assertEqual(cached.returncode, 0, cached.stderr)
+            cached_payload = json.loads(cached.stdout)
+            self.assertEqual(cached_payload["bundle_id"], prepare_payload["bundle_id"])
+            self.assertEqual(cached_payload["status"], "cached")
+            self.assertNotIn("draft_path", cached_payload)
+            self.assertEqual(manifest["artifacts"][0]["sha256"], receipt["artifact_notes"][0]["sha256"])
+
+    def test_artifact_context_stops_reading_after_unique_total_exceeds_limit(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="rootloom-artifact-limit-") as temporary:
+            root = Path(temporary)
+            paths = [root / f"{name}.txt" for name in ("first", "second", "third")]
+            for path, content in zip(paths, (b"a" * 8, b"b" * 8, b"c" * 8)):
+                path.write_bytes(content)
+            arguments = ["prepare", "--intent", "inspect"]
+            for path in paths:
+                arguments.extend(("--path", str(path)))
+            args = artifact_context.parser().parse_args(arguments)
+            cache = root / "cache"
+
+            with (
+                mock.patch.object(artifact_context, "MAX_TOTAL_BYTES", 10),
+                mock.patch.object(
+                    artifact_context, "inspect_artifact", wraps=artifact_context.inspect_artifact
+                ) as inspect,
+            ):
+                with self.assertRaisesRegex(artifact_context.ArtifactContextError, "bundle exceeds 10 bytes"):
+                    artifact_context.command_prepare(args, cache)
+
+            self.assertEqual(inspect.call_args_list, [mock.call(str(path)) for path in paths[:2]])
+            self.assertFalse(cache.exists())
+
+    def test_artifact_context_total_limit_preserves_deduplication_and_media_identity(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="rootloom-artifact-dedup-") as temporary:
+            root = Path(temporary)
+            first, duplicate, last = [root / name for name in ("first.txt", "copy.txt", "last.txt")]
+            first.write_bytes(b"abcdef")
+            duplicate.write_bytes(first.read_bytes())
+            last.write_bytes(b"ghij")
+            args = artifact_context.parser().parse_args([
+                "prepare", "--intent", "inspect", "--path", str(first),
+                "--path", str(duplicate), "--path", str(last),
+            ])
+
+            with mock.patch.object(artifact_context, "MAX_TOTAL_BYTES", 10):
+                prepared = artifact_context.command_prepare(args, root / "cache")
+                self.assertEqual(prepared["total_bytes"], 10)
+                self.assertEqual(prepared["artifact_count"], 2)
+                self.assertTrue(Path(prepared["manifest_path"]).is_file())
+                self.assertTrue(Path(prepared["draft_path"]).is_file())
+
+                conflict = root / "copy.json"
+                duplicate.rename(conflict)
+                args.path = [str(first), str(conflict)]
+                with self.assertRaisesRegex(artifact_context.ArtifactContextError, "conflicting inferred media types"):
+                    artifact_context.command_prepare(args, root / "conflict-cache")
+                self.assertFalse((root / "conflict-cache").exists())
+
+    def test_artifact_context_rejects_raw_receipt_and_changed_source(self) -> None:
+        helper = ARTIFACT_HELPER
+        with tempfile.TemporaryDirectory(prefix="rootloom-artifact-negative-") as temporary:
+            root = Path(temporary)
+            cache = root / "cache"
+            artifact = root / "fixture.bin"
+            artifact.write_bytes(b"stable")
+
+            def run(*arguments: str) -> subprocess.CompletedProcess[str]:
+                return subprocess.run(
+                    [sys.executable, str(helper), "--cache-root", str(cache), *arguments],
+                    cwd=ROOT,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+
+            first = run("prepare", "--intent", "inspect", "--path", str(artifact))
+            self.assertEqual(first.returncode, 0, first.stderr)
+            first_payload = json.loads(first.stdout)
+            raw_draft = Path(first_payload["draft_path"])
+            raw_receipt = json.loads(raw_draft.read_text(encoding="utf-8"))
+            raw_receipt["summary"] = "data:image/png;base64,AAAA"
+            raw_receipt["artifact_notes"][0]["summary"] = "binary"
+            raw_receipt["facts"] = []
+            raw_draft.write_text(json.dumps(raw_receipt), encoding="utf-8")
+            rejected = run(
+                "finalize",
+                "--bundle-id",
+                first_payload["bundle_id"],
+                "--draft",
+                str(raw_draft),
+            )
+            self.assertEqual(rejected.returncode, 2)
+            self.assertIn("must not embed raw artifact data", rejected.stderr)
+
+            second = run("prepare", "--intent", "inspect differently", "--path", str(artifact))
+            self.assertEqual(second.returncode, 0, second.stderr)
+            second_payload = json.loads(second.stdout)
+            changed_draft = Path(second_payload["draft_path"])
+            changed_receipt = json.loads(changed_draft.read_text(encoding="utf-8"))
+            changed_receipt["summary"] = "A stable binary fixture."
+            changed_receipt["artifact_notes"][0]["summary"] = "Binary fixture."
+            changed_receipt["facts"] = []
+            changed_draft.write_text(json.dumps(changed_receipt), encoding="utf-8")
+            artifact.write_bytes(b"changed")
+            changed = run(
+                "finalize",
+                "--bundle-id",
+                second_payload["bundle_id"],
+                "--draft",
+                str(changed_draft),
+            )
+            self.assertEqual(changed.returncode, 2)
+            self.assertIn("artifact changed after prepare", changed.stderr)
+
+            third = run("prepare", "--intent", "inspect identity", "--path", str(artifact))
+            self.assertEqual(third.returncode, 0, third.stderr)
+            third_payload = json.loads(third.stdout)
+            manifest_path = Path(third_payload["manifest_path"])
+            tampered_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            tampered_manifest["artifacts"][0]["sha256"] = "0" * 64
+            manifest_path.write_text(json.dumps(tampered_manifest), encoding="utf-8")
+            tampered = run("show", "--bundle-id", third_payload["bundle_id"])
+            self.assertEqual(tampered.returncode, 2)
+            self.assertIn("manifest content identity does not match", tampered.stderr)
 
     def test_common_package_has_no_host_specific_forks(self) -> None:
         forbidden = (
@@ -290,17 +519,6 @@ class PortablePluginTests(unittest.TestCase):
                         resolved.is_file(),
                         f"missing skill resource: {markdown}: {raw_target}",
                     )
-
-    def test_skills_only_fallbacks_are_explicit(self) -> None:
-        change_root = PORTABLE_ROOT / "skills" / "operating-coding-change"
-        evidence = (change_root / "references" / "evidence-mode.md").read_text(
-            encoding="utf-8"
-        )
-        governed = (change_root / "references" / "governed-change.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("Evidence Mode as unavailable", evidence)
-        self.assertIn("A Skills-only package may omit that template", governed)
 
     def test_skill_frontmatter_rejects_non_string_and_optional_shapes(self) -> None:
         with tempfile.TemporaryDirectory(

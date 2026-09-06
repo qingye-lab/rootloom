@@ -540,11 +540,6 @@ def frontmatter_fields(path: Path) -> dict[str, str] | None:
     return fields
 
 
-def frontmatter_name(path: Path) -> str | None:
-    fields = frontmatter_fields(path)
-    return fields.get("name") if fields else None
-
-
 def validate_agent_skill(path: Path, errors: list[str]) -> None:
     fields = frontmatter_fields(path)
     relative = path.relative_to(ROOT)
@@ -605,13 +600,9 @@ def validate_skills(errors: list[str]) -> None:
         path = PORTABLE_SKILLS / name / "SKILL.md"
         if path.is_file():
             validate_agent_skill(path, errors)
-    change_lines = len(
-        (SKILLS / "operating-coding-change" / "SKILL.md")
-        .read_text(encoding="utf-8")
-        .splitlines()
-    )
-    if not 60 <= change_lines <= 90:
-        errors.append("operating-coding-change must remain approximately 60-90 lines")
+    for name in actual:
+        if (SKILLS / name / "SKILL.md").stat().st_size > 24 * 1024:
+            errors.append(f"Skill exceeds the 24 KiB context budget: {name}")
     if any(EVIDENCE.rglob("SKILL.md")):
         errors.append("Evidence resources must not expose a discoverable Skill")
     forbidden = (
@@ -743,7 +734,6 @@ def validate_core_reset_eval(errors: list[str]) -> None:
     for marker in (
         "EXPECTED_SKILLS",
         "ordinary_change_context_reduction",
-        "reduction < 0.30",
         "--require-behavioral",
         "--minimum-repetitions",
         "uncached_input_tokens",
@@ -944,15 +934,39 @@ def validate_hooks(errors: list[str]) -> None:
         errors.append("SessionStart must route through the managed component gate")
 
 
+def validate_guidance_structure(
+    path: Path, errors: list[str], *, maximum_bytes: int = 24 * 1024
+) -> None:
+    """Check document integrity without prescribing workflow wording or minimum length."""
+    if path.is_symlink() or not path.is_file():
+        errors.append(f"guidance must be a regular non-symlink file: {path}")
+        return
+    data = path.read_bytes()
+    if len(data) > maximum_bytes:
+        errors.append(f"guidance exceeds its context budget: {path}")
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        errors.append(f"guidance must be UTF-8: {path}")
+        return
+    if not re.search(r"(?m)^#\s+\S", text):
+        errors.append(f"guidance must have a title: {path}")
+    start = "<!-- rootloom:managed-start"
+    end = "<!-- rootloom:managed-end -->"
+    if start in text or end in text:
+        if (
+            text.count(start) != 1
+            or text.count(end) != 1
+            or text.find(end) < text.find(start)
+            or not re.search(r"<!-- rootloom:managed-start version=\S+(?: [^\n]*?)? -->", text)
+        ):
+            errors.append(f"malformed guidance managed markers: {path}")
+
+
 def validate_personal_contracts(errors: list[str]) -> None:
     global_guidance = SYSTEM / "AGENTS.md"
     global_text = global_guidance.read_text(encoding="utf-8")
-    global_lines = len(global_text.splitlines())
-    global_bytes = len(global_text.encode("utf-8"))
-    if not 30 <= global_lines <= 45 or not 3_000 <= global_bytes <= 4_096:
-        errors.append(
-            "global AGENTS.md must remain approximately 3-4 KiB and 30-45 lines"
-        )
+    validate_guidance_structure(global_guidance, errors, maximum_bytes=4096)
     seeder_text = (
         SKILLS / "project-guidance" / "scripts" / "seed_project_guidance.py"
     ).read_text(encoding="utf-8")
@@ -984,10 +998,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             errors.append(f"{label} must not expose Core Project Memory opt-in")
     if (PLUGIN / "lib" / "rootloom_memory.py").exists():
         errors.append("Rootloom Core must not ship the Project Memory reader")
-    root_guidance = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-    root_rules = [line for line in root_guidance.splitlines() if line.startswith("- ")]
-    if not 5 <= len(root_rules) <= 8:
-        errors.append("root AGENTS.md must contain only 5-8 repository-wide rules")
+    validate_guidance_structure(ROOT / "AGENTS.md", errors)
     for directory, label in (
         (ROOT / ".codex" / "plans", "one-time task plans"),
         (ROOT / "docs" / "releases", "repository publication records"),
@@ -1001,6 +1012,9 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "version != 1",
             "component policy version must be the integer 1",
         ),
+        PLUGIN / ".codex-plugin" / "plugin.json": (
+            "bounded artifact context",
+        ),
         SKILLS / "project-guidance" / "scripts" / "seed_project_guidance.py": (
             "temporary_project_context",
             "MAX_SESSION_CONTEXT_BYTES",
@@ -1008,37 +1022,15 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "_render_session_context",
             'permission_mode == "plan"',
             "creating or updating AGENTS.md",
-            "guidance only when the user explicitly asks to use",
-            "`project-guidance` Skill",
         ),
-        SKILLS / "operating-coding-change" / "SKILL.md": (
-            "This Skill owns every",
-            "`direct`",
-            "`scoped`",
-            "`governed`",
-            "`evidence`",
-            "Use this Skill's verification and challenge steps; load no Reference.",
-            "Batch target, focused caller/test",
-            "Use one post-check challenge pass",
-            "Default to impact-scoped checks",
-            "Use a full suite or matrix only",
-            "Before the first edit in Governed or Evidence mode",
-            "stop instead of proceeding",
-            "local callable/signature shape, file count, version number, serialized artifact",
-            "Regenerable internal artifacts remain",
-            "material root-cause uncertainty remaining after bounded",
-            "Initial cause uncertainty routes through bounded diagnosis",
-            "symptom → trigger/state → owning boundary",
-            "ROOT_CAUSE_ALIGNMENT",
-            "Cause",
-            "Verification",
-        ),
-        SKILLS / "operating-coding-change" / "references" / "verification-contract.md": (
-            "Impact-scoped verification is the default",
-            "each lane proves a distinct",
-            "full suite or matrix only",
-            "unclassified executable path must fail closed",
-            "documentation-only change may stop",
+        SKILLS / "operating-coding-change" / "scripts" / "artifact_context.py": (
+            'RECEIPT_FORMAT = "rootloom-artifact-context-v1"',
+            "MAX_ARTIFACTS = 16",
+            "MAX_RECEIPT_BYTES = 24 * 1024",
+            "hashlib.sha256",
+            '"status": "cached" if cached is not None else "needs-analysis"',
+            "artifact changed after prepare",
+            "must not embed raw artifact data",
         ),
         SKILLS / "operating-coding-change" / "references" / "evidence-mode.md": (
             "resources/evidence/analyze_change.py",
@@ -1060,41 +1052,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "REVIEW_EVIDENCE_COMPLETE",
             "REVIEW_REQUIRED_WITH_REDACTIONS",
             "--reviewable-path",
-        ),
-        SKILLS / "operating-coding-change" / "references" / "governed-change.md": (
-            "Compatibility",
-            "Migration / Coexistence",
-            "Rollback / Replay",
-            "Verification",
-            "Residual Risk",
-            "A Skills-only package may omit that template",
-            "Rollback, historical replay, and runtime compatibility are independent",
-            "Do not add an old-format reader",
-        ),
-        SKILLS / "project-guidance" / "SKILL.md": (
-            "seed",
-            "refresh",
-            "refine",
-            "validate",
-            "<!-- rootloom:refine-once version=1 -->",
-            "Natural-language guidance alone never authorizes",
-            "semantic-refinement.md",
-            "seed_project_guidance.py",
-            "Verification must not leave caches",
-            "remove only artifacts created by this",
-        ),
-        SKILLS / "operating-code-review" / "SKILL.md": (
-            "ROOT_CAUSE_ALIGNMENT",
-            "cleared surfaces",
-            "unreviewed evidence",
-            "security-review.md",
-            "data-and-migration-review.md",
-        ),
-        PLUGIN / "assets" / "system" / "AGENTS.md": (
-            "After exact Single action authorization",
-            "pre-launch platform refusal is a platform blocker",
-            "not missing user authorization",
-            "regenerable internal artifacts use the current contract",
         ),
         EVIDENCE / "analyze_change.py": (
             "analyze_change",
@@ -1310,36 +1267,9 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "drifted_paths",
             'selected.add("global-policy")',
         ),
-        SKILLS / "setup-rootloom" / "SKILL.md": (
-            "Rootloom setup plan",
-            "status",
-            "rollback",
-            "three authorization modes",
-            "persistent cross-task default",
-            "Full covers high-risk steps only in the current task",
-            "Rules avoid duplicating that semantic decision",
-            "transaction journal",
-            "resumes interrupted staged work",
-            "managed-block target",
-            "preserves everything outside them",
-        ),
         SKILLS / "setup-rootloom" / "agents" / "openai.yaml": (
             "plan, install, inspect, update, or roll back Rootloom",
             "allow_implicit_invocation: true",
-        ),
-        SYSTEM / "AGENTS.md": (
-            "Diagnose the observable path",
-            "Preserve unrelated user changes",
-            "Tier 0 Direct",
-            "proportional evidence",
-            "Default to impact-scoped checks",
-            "full suite or matrix only",
-            "Use `operating-coding-change`",
-            "Project Memory is a separate optional plugin",
-            "Single action",
-            "Standard",
-            "Full",
-            "Never infer Full",
         ),
         IMPACT_TESTS: (
             "GROUP_MODULES",
@@ -1350,7 +1280,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "canonical_full",
             "full_matrix",
             "include_untracked",
-            'choices=("primary", "python", "portable")',
         ),
         SYSTEM / "rules" / "rootloom.rules": (
             "never grants task authority",
@@ -1413,6 +1342,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "Agent Plugins 1.0.0",
             "duplicate-Skill precedence",
             "Runtime compatibility requires evidence of a real post-cutover consumer",
+            "Artifact Context Lane",
             "make check-changed BASE=origin/main",
         ),
         ROOT / "README.zh-CN.md": (
@@ -1455,6 +1385,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "portable/rootloom/",
             "Agent Plugins 1.0.0",
             "同名 Skill 的优先级",
+            "Artifact Context Lane",
             "make check-changed BASE=origin/main",
         ),
         ROOT / "index.html": (
@@ -1501,8 +1432,9 @@ def validate_personal_contracts(errors: list[str]) -> None:
         ROOT / ".github" / "workflows" / "release-evidence.yml": (
             '      - "v*"',
             "make telemetry-check",
-            "make core-reset-release-eval",
-            "CORE_RESET_RESULTS=evals/core-reset/results-4.3.0.json",
+            "make validate",
+            "tests.test_setup_rootloom",
+            "tests.test_portable_plugin",
         ),
         ROOT / "PRODUCT.md": (
             "## Register",
@@ -1568,56 +1500,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "完整支持 Python 矩阵",
             "按路径触发的固定版本 Codex 兼容任务",
         ),
-        ROOT / "docs" / "architecture.md": (
-            "intelligence.py",
-            "risk_assessment",
-            "Core never reads",
-            "separately installed `rootloom-memory`",
-            "rootloom-change-baseline-v3",
-            "rootloom-change-baseline-v4",
-            "schema_revision: 5",
-            "is_sensitive_material_path",
-            "--max-capture-seconds",
-            "strict_json.py",
-            "symbolic HEAD ref",
-            "Git common directory",
-            "tiered authorization decision",
-            "reviewability_policy",
-            "policy_provenance",
-            "reintake-required",
-            "skip-worktree",
-            "orchestrate_evidence.py",
-            "Direct is a bounded fast",
-            "recovery-journal replay",
-            "portable/rootloom/",
-            "sync_portable_plugin.py",
-            "fails closed for Evidence Mode",
-        ),
-        ROOT / "docs" / "architecture.zh-CN.md": (
-            "intelligence.py",
-            "risk_assessment",
-            "Rootloom Core 永远不读取",
-            "单独安装的 `rootloom-memory`",
-            "rootloom-change-baseline-v3",
-            "rootloom-change-baseline-v4",
-            "schema_revision: 5",
-            "is_sensitive_material_path",
-            "--max-capture-seconds",
-            "strict_json.py",
-            "符号 HEAD Ref",
-            "Git Common Directory",
-            "分级授权决策",
-            "reviewability_policy",
-            "policy_provenance",
-            "reintake-required",
-            "skip-worktree",
-            "orchestrate_evidence.py",
-            "Direct 是有边界的快速路径",
-            "暂存恢复日志重放",
-            "portable/rootloom/",
-            "sync_portable_plugin.py",
-            "Evidence Mode 会失败关闭",
-        ),
         ROOT / "docs" / "agent-plugins.md": (
             "Agent Plugins 1.0.0 is currently a Working Draft",
             "portable/rootloom/",
@@ -1634,6 +1516,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "~/.cursor/plugins/local/rootloom",
             "codex plugin remove rootloom@rootloom",
             "Plugin removal alone",
+            "Artifact Context identity/cache/24 KiB receipt",
+            "cache-miss fixture to run in a no-history worker",
         ),
         ROOT / "docs" / "agent-plugins.zh-CN.md": (
             "Agent Plugins 1.0.0 当前仍是 Working Draft",
@@ -1651,6 +1535,8 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "~/.cursor/plugins/local/rootloom",
             "codex plugin remove rootloom@rootloom",
             "只删除",
+            "Artifact Context 身份/缓存/24 KiB 回执",
+            "缓存未命中 Fixture 在无历史 Worker 中运行",
         ),
         ROOT / "docs" / "decisions" / "2026-07-14-tiered-authorization-modes.md": (
             "Status: accepted",
@@ -1741,6 +1627,28 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "静态与合成检查",
             "运行冒烟",
             "权限执行仍由 Host 拥有",
+        ),
+        ROOT / "docs" / "decisions" / "2026-08-13-artifact-context-lane.md": (
+            "Status: accepted",
+            "Artifact Context Lane",
+            "no inherited conversation",
+            "24 KiB",
+            "Already-recorded attachments cannot be removed",
+            "## Compatibility",
+            "## Migration / Coexistence",
+            "## Rollback / Replay",
+            "## Residual Risk",
+        ),
+        ROOT / "docs" / "decisions" / "2026-08-13-artifact-context-lane.zh-CN.md": (
+            "Status: accepted",
+            "Artifact Context Lane",
+            "不继承会话历史",
+            "24 KiB",
+            "已经记录的附件不能被删除",
+            "## Compatibility",
+            "## Migration / Coexistence",
+            "## Rollback / Replay",
+            "## Residual Risk",
         ),
         ROOT / "docs" / "decisions" / "2026-08-10-regenerable-contract-compatibility-boundary.md": (
             "Status: accepted",
@@ -1868,6 +1776,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
         "scripts/impact_tests.py run",
         "needs.scope.outputs.python-edge",
         "needs.scope.outputs.full-matrix",
+        "--lane compatibility",
         "fetch-depth: 0",
         'cron: "43 2 * * 0"',
     ):
@@ -1945,7 +1854,7 @@ def validate_links(errors: list[str]) -> None:
                 errors.append(f"broken local link in {path.relative_to(ROOT)}: {raw}")
 
 
-def validate_web_telemetry(errors: list[str]) -> None:
+def validate_web_telemetry(errors: list[str], files: list[Path]) -> None:
     index = ROOT / "index.html"
     index_text = index.read_text(encoding="utf-8")
     parser = WebDocumentParser()
@@ -1969,7 +1878,6 @@ def validate_web_telemetry(errors: list[str]) -> None:
         elif hashlib.sha256(auth_key.encode()).hexdigest() != VIBELOFT_AUTH_KEY_SHA256:
             errors.append("VibeLoft browser auth key differs from the configured product credential")
 
-    files = repository_files()
     html_entries = [path for path in files if path.suffix.lower() == ".html"]
     if html_entries != [index]:
         errors.append("GitHub Pages must keep one global HTML entry with one telemetry initializer")
@@ -2078,7 +1986,7 @@ def validate_assets(errors: list[str]) -> None:
             errors.append(f"invalid WebP image: {path.relative_to(ROOT)}")
 
 
-def validate_secrets(errors: list[str]) -> None:
+def validate_secrets(errors: list[str], files: list[Path]) -> None:
     suffixes = {
         ".css",
         ".html",
@@ -2091,7 +1999,7 @@ def validate_secrets(errors: list[str]) -> None:
         ".yaml",
         ".yml",
     }
-    for path in repository_files():
+    for path in files:
         if "tests" in path.parts:
             continue
         if path.suffix.lower() not in suffixes and path.name not in {"Makefile", "AGENTS.md"}:
@@ -2106,6 +2014,47 @@ def validate_secrets(errors: list[str]) -> None:
                 break
 
 
+def validate_compatibility_cases(errors: list[str]) -> None:
+    # Inspect the registry without importing test modules or executing fixtures.
+    assignments = {
+        node.targets[0].id: node.value
+        for node in ast.parse(IMPACT_TESTS.read_text(encoding="utf-8")).body
+        if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name)
+    }
+    try:
+        groups = ast.literal_eval(assignments["GROUP_MODULES"])
+        registry = ast.literal_eval(assignments["COMPATIBILITY_TESTS"])
+    except (KeyError, ValueError, TypeError) as exc:
+        errors.append(f"invalid compatibility registry: {exc}")
+        return
+    if not isinstance(registry, dict) or set(registry) != set(groups):
+        errors.append("compatibility registry must cover every component group")
+        return
+    available: dict[str, set[str]] = {}
+    for group, cases in registry.items():
+        if not isinstance(cases, tuple) or not cases or any(not isinstance(case, str) for case in cases):
+            errors.append(f"compatibility cases must be a nonempty tuple of names: {group}")
+            continue
+        if len(cases) != len(set(cases)):
+            errors.append(f"duplicate compatibility case: {group}")
+        for case in cases:
+            module = case.rsplit(".", 2)[0]
+            if module not in groups[group]:
+                errors.append(f"compatibility case outside component {group}: {case}")
+                continue
+            if module not in available:
+                path = ROOT.joinpath(*module.split(".")).with_suffix(".py")
+                available[module] = {
+                    f"{module}.{cls.name}.{method.name}"
+                    for cls in ast.parse(path.read_text(encoding="utf-8")).body
+                    if isinstance(cls, ast.ClassDef)
+                    for method in cls.body
+                    if isinstance(method, ast.FunctionDef) and method.name.startswith("test_")
+                }
+            if case not in available[module]:
+                errors.append(f"missing compatibility case: {case}")
+
+
 def main() -> int:
     errors: list[str] = []
     validate_marketplace(errors)
@@ -2117,12 +2066,14 @@ def main() -> int:
     validate_core_reset_eval(errors)
     validate_hooks(errors)
     validate_personal_contracts(errors)
+    validate_compatibility_cases(errors)
     validate_python(errors)
     validate_links(errors)
-    validate_web_telemetry(errors)
+    files = repository_files()
+    validate_web_telemetry(errors, files)
     validate_workflows(errors)
     validate_assets(errors)
-    validate_secrets(errors)
+    validate_secrets(errors, files)
     if errors:
         for error in errors:
             print(f"ERROR: {error}")

@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "rootloom",
-  "version": "4.3.0",
-  "description": "Portable Rootloom Agent Skills for inspectable code changes and evidence-backed review with bounded project guidance.",
+  "version": "4.4.0",
+  "description": "Portable Rootloom Agent Skills for inspectable code changes and evidence-backed review with bounded project and artifact context.",
   "author": {
     "name": "liyanqing",
     "url": "https://github.com/liyanqing90"

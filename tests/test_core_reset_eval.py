@@ -12,50 +12,6 @@ ROOT = Path(__file__).resolve().parents[1]
 EVALUATOR_PATH = ROOT / "evals" / "core-reset" / "evaluate.py"
 SCORER_PATH = ROOT / "evals" / "core-reset" / "score_matrix.py"
 SCENARIOS_PATH = ROOT / "evals" / "core-reset" / "scenarios.json"
-CHANGE_SKILL_PATH = (
-    ROOT
-    / "plugins"
-    / "rootloom"
-    / "skills"
-    / "operating-coding-change"
-    / "SKILL.md"
-)
-GUIDANCE_SKILL_PATH = (
-    ROOT / "plugins" / "rootloom" / "skills" / "project-guidance" / "SKILL.md"
-)
-EVIDENCE_MODE_PATH = (
-    ROOT
-    / "plugins"
-    / "rootloom"
-    / "skills"
-    / "operating-coding-change"
-    / "references"
-    / "evidence-mode.md"
-)
-GOVERNED_CHANGE_PATH = (
-    ROOT
-    / "plugins"
-    / "rootloom"
-    / "skills"
-    / "operating-coding-change"
-    / "references"
-    / "governed-change.md"
-)
-VERIFICATION_CONTRACT_PATH = (
-    ROOT
-    / "plugins"
-    / "rootloom"
-    / "skills"
-    / "operating-coding-change"
-    / "references"
-    / "verification-contract.md"
-)
-GLOBAL_GUIDANCE_PATH = (
-    ROOT / "plugins" / "rootloom" / "assets" / "system" / "AGENTS.md"
-)
-RELEASE_EVIDENCE_WORKFLOW_PATH = (
-    ROOT / ".github" / "workflows" / "release-evidence.yml"
-)
 
 
 def load_module(name: str, path: Path) -> ModuleType:
@@ -160,56 +116,35 @@ class CoreResetEvalTests(unittest.TestCase):
                 minimum_repetitions=minimum_repetitions,
             )
 
-    def test_structural_gate_has_four_skills_and_reduces_context(self) -> None:
+    def test_structural_gate_reports_context_without_a_reduction_target(self) -> None:
         result = self.evaluator.structural_gate()
         self.assertTrue(result["passed"], result["errors"])
         self.assertEqual(result["public_skill_count"], 4)
-        self.assertGreaterEqual(result["ordinary_change_context_reduction"], 0.30)
+        self.assertIsInstance(result["ordinary_change_context_reduction"], float)
 
-    def test_direct_route_is_a_bounded_fast_path(self) -> None:
-        skill = CHANGE_SKILL_PATH.read_text(encoding="utf-8")
-
-        self.assertIn("A dirty worktree is a preservation constraint", skill)
-        self.assertIn("`direct`", skill)
-        self.assertIn("Load no Reference.", skill)
-        self.assertIn("skip broader inventory", skill)
-        self.assertIn(
-            "local callable/signature shape, file count, version number, serialized artifact",
-            skill,
-        )
-
-    def test_root_cause_uncertainty_escalates_only_after_bounded_diagnosis(self) -> None:
-        skill = CHANGE_SKILL_PATH.read_text(encoding="utf-8")
-
-        self.assertIn(
-            "material root-cause uncertainty remaining after bounded",
-            skill,
-        )
-        self.assertIn(
-            "an established local owner and repair boundary",
-            skill,
-        )
-        self.assertIn(
-            "materially different owners,",
-            skill,
-        )
-        self.assertIn(
-            "compatibility strategies, or high-risk assumptions remaining afterward",
-            skill,
-        )
-        self.assertNotIn("major dependencies, uncertain root cause", skill)
-
-    def test_verification_defaults_to_impact_scope_and_bounds_full_regression(self) -> None:
-        skill = CHANGE_SKILL_PATH.read_text(encoding="utf-8")
-        verification = VERIFICATION_CONTRACT_PATH.read_text(encoding="utf-8")
-        global_guidance = GLOBAL_GUIDANCE_PATH.read_text(encoding="utf-8")
-
-        for text in (skill, verification, global_guidance):
-            self.assertIn("impact-scoped", text.casefold())
-            self.assertIn("full suite or matrix", text)
-        self.assertIn("each lane proves a distinct", verification)
-        self.assertIn("unclassified executable path must fail closed", verification)
-        self.assertIn("explicit repository or release contract", global_guidance)
+    def test_guidance_integrity_accepts_short_rules_and_rejects_corruption(self) -> None:
+        validator = load_module("guidance_validator", ROOT / "scripts" / "validate_repo.py")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "AGENTS.md"
+            path.write_text("# Rules\n\n- Preserve stored data.\n", encoding="utf-8")
+            errors = []
+            validator.validate_guidance_structure(path, errors)
+            self.assertEqual(errors, [])
+            for content in (
+                "# Rules\n<!-- rootloom:managed-end -->\n",
+                "# Rules\n<!-- rootloom:managed-start version=1 -->\n",
+                "# Rules\n" + "x" * 4096,
+            ):
+                with self.subTest(content=content[:60]):
+                    path.write_text(content, encoding="utf-8")
+                    errors = []
+                    validator.validate_guidance_structure(path, errors, maximum_bytes=4096)
+                    self.assertTrue(errors)
+            alias = Path(directory) / "alias.md"
+            alias.symlink_to(path)
+            errors = []
+            validator.validate_guidance_structure(alias, errors)
+            self.assertTrue(errors)
 
     def test_regenerable_versioned_artifact_is_scoped_and_current_only(self) -> None:
         scenario = next(
@@ -219,18 +154,6 @@ class CoreResetEvalTests(unittest.TestCase):
         )
         self.assertEqual(scenario["mode_group"], "scoped")
         self.assertEqual(scenario["expected_route"]["references"], [])
-
-        skill = CHANGE_SKILL_PATH.read_text(encoding="utf-8")
-        governed = GOVERNED_CHANGE_PATH.read_text(encoding="utf-8")
-        global_guidance = GLOBAL_GUIDANCE_PATH.read_text(encoding="utf-8")
-        self.assertIn("version number, serialized artifact", skill)
-        self.assertIn("Regenerable internal artifacts remain", skill)
-        self.assertIn(
-            "Rollback, historical replay, and runtime compatibility are independent",
-            governed,
-        )
-        self.assertIn("Do not add an old-format reader", governed)
-        self.assertIn("regenerable internal artifacts use the current contract", global_guidance)
 
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
@@ -303,46 +226,6 @@ class CoreResetEvalTests(unittest.TestCase):
         )
         self.assertFalse(self.scorer.is_generated_python_cache("loom_eval/store.py"))
         self.assertFalse(self.scorer.is_generated_python_cache("outside/file.pyc"))
-
-    def test_guidance_persistence_requires_intent_or_exact_one_time_marker(self) -> None:
-        skill = GUIDANCE_SKILL_PATH.read_text(encoding="utf-8")
-
-        self.assertIn("requests validation", skill)
-        self.assertIn(
-            "<!-- rootloom:refine-once version=1 -->",
-            skill,
-        )
-        self.assertIn("Remove it in the same successful", skill)
-        self.assertIn(
-            "Natural-language guidance alone never authorizes",
-            skill,
-        )
-
-    def test_project_guidance_verification_must_not_pollute_worktree(self) -> None:
-        skill = GUIDANCE_SKILL_PATH.read_text(encoding="utf-8")
-
-        self.assertIn("compare the final worktree", skill)
-        self.assertIn("Verification must not leave caches", skill)
-        self.assertIn("remove only artifacts created by this", skill)
-        self.assertIn("task, never pre-existing user work", skill)
-
-    def test_evidence_orchestrator_is_single_command_convenience_only(self) -> None:
-        reference = EVIDENCE_MODE_PATH.read_text(encoding="utf-8")
-
-        self.assertIn("single-command Evidence convenience path", reference)
-        self.assertIn("heterogeneous governed evidence", reference)
-        self.assertIn("multiple specialized commands or targets", reference)
-        self.assertIn("build-plus-runtime", reference)
-
-    def test_tag_workflow_enforces_retained_behavioral_evidence(self) -> None:
-        workflow = RELEASE_EVIDENCE_WORKFLOW_PATH.read_text(encoding="utf-8")
-
-        self.assertIn('      - "v*"', workflow)
-        self.assertIn("make core-reset-release-eval", workflow)
-        self.assertIn(
-            "CORE_RESET_RESULTS=evals/core-reset/results-4.3.0.json",
-            workflow,
-        )
 
     def test_complete_behavioral_matrix_passes_release_comparisons(self) -> None:
         result = self.evaluate(
@@ -569,19 +452,6 @@ class CoreResetEvalTests(unittest.TestCase):
             [],
         )
         self.assertEqual((exact, over, under), (1, 0, 0))
-
-    def test_routine_change_contract_avoids_extra_reference_rounds(self) -> None:
-        skill = CHANGE_SKILL_PATH.read_text(encoding="utf-8")
-        self.assertIn(
-            "Use this Skill's verification and challenge steps; load no Reference.",
-            skill,
-        )
-        self.assertIn("Batch target, focused caller/test", skill)
-        self.assertIn("batch the focused check, diff check", skill)
-        self.assertIn("Use one post-check challenge pass", skill)
-        for scenario in self.scenarios:
-            if scenario["mode_group"] in {"direct", "scoped"}:
-                self.assertEqual(scenario["expected_route"]["references"], [])
 
     def test_activated_context_records_skill_relative_reference_paths(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

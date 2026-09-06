@@ -2,7 +2,7 @@
 
 - Keep runtime helpers local, bounded, network-free, and standard-library-only unless a public dependency decision explicitly changes that contract.
 - `hooks/run_component_hook.py` owns lifecycle enablement: only managed component policy with exact integer `version: 1` may enable a Hook; absent, malformed, future-version, or symlinked policy fails closed.
-- The SessionStart project-context Hook is read-only. Only an explicit `project-guidance` invocation may create or refresh repository `AGENTS.md`.
+- The SessionStart project-context Hook is read-only. A user's explicit request to create, refresh, or refine guidance may route through `project-guidance` without naming the Skill; ordinary coding requests do not authorize persistence. Preserve the Skill's exact one-file refinement-marker exception.
 - `skills/project-guidance/scripts/seed_project_guidance.py` owns the canonical bounded session-context renderer and host protocol envelopes. Consumer-repository adapters must vendor it byte-for-byte rather than fork its semantics.
 - Host adapter templates live outside the installable plugin under `adapters/rootloom/`; they are opt-in, non-installing, and must not add permission gates or host configuration to `portable/rootloom/`.
 - Portable packaging uses an explicit per-Skill file allowlist. Reject unapproved source files instead of copying local, hidden, or temporary artifacts into the generated package.

@@ -1,103 +1,71 @@
 ---
 name: project-guidance
-description: Seed, refresh, refine, or validate concise evidence-backed AGENTS.md guidance. Deterministic scripts own the managed block; model judgment may add only durable repository-specific invariants outside it.
+description: Create, refine, or validate repository guidance on explicit user request; preserve real-path scope, managed ownership, and unrelated content.
 ---
 
 # Project guidance
 
-Use when the user explicitly asks to persist, refresh, refine, or validate project
-guidance, or when active repository guidance requests validation. The SessionStart Hook
-is read-only and never invokes a writer.
+A user's explicit request to create, refresh, or refine guidance authorizes that work
+within the stated file scope; the user need not name this Skill. Review/validation requests
+are read-only. Ordinary coding tasks and natural-language repository guidance do not
+authorize persistent edits. The SessionStart Hook is always read-only.
 
-Persistent seed, refresh, or refinement requires explicit user intent. The only
-repository-authored exception is this exact standalone one-time marker in active
-guidance:
+The existing repository-authored exception is the exact standalone marker:
 
 ```text
 <!-- rootloom:refine-once version=1 -->
 ```
 
-It authorizes one refinement of that marked file only. Remove it in the same successful
-write; validation does not consume it. Natural-language guidance alone never authorizes
-persistent refinement or any other write.
+It permits one refinement of that marked file only. Remove it with the successful edit;
+validation does not consume it. Preserve any explicit independent approval requirement.
 
-## Route the mode
+## Existing guidance
 
-```text
-explicit seed request                  → seed
-explicit refresh request               → refresh
-explicit refinement or exact marker    → refine
-user/repository validation request     → validate
-```
+Resolve each target's real path and symlink chain before editing. Read its applicable
+global and root-to-target guidance and only the evidence needed for the requested change.
+An entry pointing outside the authorized repository is external content: propose its diff
+unless the user has separately authorized that real target. Preserve backups and unrelated
+edits; do not reset or overwrite user work to simplify refinement.
 
-Resolve this Skill directory and probe first:
+For wording-only refinement, read [semantic-refinement.md](references/semantic-refinement.md)
+and edit authorized unmarked content directly. No manifest/CI/module probe is needed.
+Keep model judgment outside generated managed markers. Add only durable, supported rules
+that change a real decision; remove redundant wording without dropping unique constraints.
+
+## Generate or refresh project facts
+
+Resolve this Skill directory and use its deterministic probe and writer:
 
 ```bash
 python3 <skill-dir>/scripts/seed_project_guidance.py probe --cwd "$PWD"
-```
-
-## Seed or refresh
-
-Run the deterministic writer:
-
-```bash
 python3 <skill-dir>/scripts/seed_project_guidance.py seed --cwd "$PWD"
 ```
 
-Run that command without a trust override first. If and only if it returns the exact
-`untrusted_project` skip reason and the user explicitly requested persistence in this
-exact repository, retry once with `--allow-untrusted`. The flag is scoped to that
-invocation and does not change Codex or host trust settings. Never infer this override
-from a general request to inspect, review, or change code.
+The writer owns only its generated project block. It must not overwrite unmarked guidance,
+`AGENTS.override.md`, symlinked or external targets, disabled projects, or vendor/cache trees.
+Respect its skip reasons. Only after an exact `untrusted_project` response and the user's
+explicit persistence request for this repository may it retry once with `--allow-untrusted`;
+this does not change host trust or authorize other writes.
 
-It derives observable facts from manifests, lockfiles, package scripts, Make/Just
-targets, canonical docs, CI, and bounded module discovery. It locks through the Git
-common directory, checks concurrent edits, writes atomically, and owns only its marked
-managed block.
+Either `.rootloom/disable-project-guidance` or legacy
+`.codex/disable-project-guidance-seeding` disables session context and persistent seeding.
+Use `--target path/to/module` only for a genuine manifest-backed boundary with distinct
+commands, ownership, or contracts; create at most three nested files per pass within three
+levels of the Git root. Do not mirror the directory tree.
 
-Never overwrite an unmarked existing `AGENTS.md`, `AGENTS.override.md`, symlinked
-guidance, untrusted or disabled projects, temporary paths, vendor/cache trees, or
-evidence resolved outside the repository. Respect every script skip reason.
+## Verify
 
-Either `.rootloom/disable-project-guidance` or the legacy
-`.codex/disable-project-guidance-seeding` sentinel disables both temporary session
-context and persistent seeding.
-
-## Refine
-
-Read [references/semantic-refinement.md](references/semantic-refinement.md). Keep model
-judgment outside managed markers. Add only evidence-backed statements that change a
-future implementation, review, verification, or safety decision.
-
-## Nested guidance
-
-Use `module_candidates` from the probe only when current work enters a genuine module
-with its own manifest and materially different commands, ownership, contracts, or
-invariants:
+For edited unmarked guidance or blocks generated by this project seeder:
 
 ```bash
-python3 <skill-dir>/scripts/seed_project_guidance.py seed \
-  --cwd "$PWD" \
-  --target path/to/module
+python3 <skill-dir>/scripts/seed_project_guidance.py validate --file path/to/AGENTS.md
 ```
 
-Create at most three nested files per pass and do not go deeper than three directories
-from the Git root. Never mirror the directory tree.
+The global working-agreement block belongs to Setup, even though it shares the marker
+prefix. Compare that block with the Setup-owned template and use Setup's plan/status for
+installation state; do not treat it as a generated project block or refresh it with this writer.
 
-## Validate
-
-Run this for every created, refreshed, or inspected managed file:
-
-```bash
-python3 <skill-dir>/scripts/seed_project_guidance.py validate \
-  --file path/to/AGENTS.md
-```
-
-Inspect the effective root-to-current-directory chain for contradictions, duplication,
-stale paths, broken commands, oversized context, placeholders, secrets, and rules that
-cannot be verified. Continue the user's original task after guidance work.
-
-Before completion, compare the final worktree with the starting state and authorized
-paths. Verification must not leave caches, coverage, build output, or other generated
-artifacts. Prefer no-cache options; otherwise remove only artifacts created by this
-task, never pre-existing user work.
+Check changed rules against the inherited chain and a concrete misuse scenario. Compare the
+final diff with the authorized paths and preserve unrelated content. Report actual checks and
+remaining gaps. Use no-cache verification where practical; remove only temporary artifacts
+created by this task. Continue any independent authorized work after guidance verification.
