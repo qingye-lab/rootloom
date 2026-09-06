@@ -114,15 +114,23 @@ python3 scripts/impact_tests.py select --base origin/main --json
 python3 scripts/impact_tests.py select --path plugins/rootloom/skills/project-guidance/SKILL.md
 ```
 
-Preview and execution use the same command selection. Choose `--lane primary`, `python`,
-or `portable` when inspecting a specific CI lane. `--github-output` remains available for
+Preview and execution use the same command selection. Choose `--lane primary`,
+`compatibility`, or `portable` for CI; `python` keeps the complete local component target.
+`--github-output` remains available for
 CI. Renames include both their source and destination components; execution prints each
 command before starting it and stops at the first failed check.
 
-CI runs focused pull-request checks, one canonical full suite on `main`, affected tests
-on the newest supported Python, and only relevant portable contracts on macOS/Windows.
+CI runs complete affected modules in the primary pull-request lane and one canonical full
+suite on `main`. Additional Python and macOS/Windows lanes repeat only named compatibility
+cases in `scripts/impact_tests.py::COMPATIBILITY_TESTS`, filtered by affected component.
+Each entry documents a runtime or OS risk: file modes and recovery, links and path spelling,
+locking, subprocess handling, packaged shell commands, or standard-library parsing.
+Pure policy/schema assertions stay in the primary lane. Unknown paths or shared selection
+changes run the full primary suite plus all named compatibility cases. The validator
+rejects stale names, duplicate cases, missing groups, and cases owned by another component.
 The full supported-Python matrix is scheduled weekly and available through manual
-workflow dispatch. Do not add another platform or runtime lane unless it proves a
+workflow dispatch; those explicit runs retain the full portable component subset.
+Do not add another platform or runtime lane unless it proves a
 distinct risk.
 
 The manual live smoke test requires a logged-in local Codex session. It installs the current checkout into a disposable `CODEX_HOME` and does not mutate the user's main Codex configuration. It checks that SessionStart supplies the project name without writing repository guidance or changing the sample project; setup failure stops before a model call:

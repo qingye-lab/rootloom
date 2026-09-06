@@ -10,6 +10,9 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Reduce routine CI repetitions to named runtime/platform compatibility cases; keep full
+  affected modules in the primary lane and full matrices on explicit scheduled/manual runs.
+  Validate case ownership and existence so renamed tests cannot silently drop coverage.
 - Reduce redundant test setup by copying isolated Git fixtures and testing filename aliases
   at their shared policy boundary. Consolidate duplicated website assertions around the
   repository validator, retain negative cases, and remove prose-only checks.

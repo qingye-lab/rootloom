@@ -364,7 +364,8 @@ across committed, staged, and unstaged tracked work, while excluding unrelated u
 files. Use `INCLUDE_UNTRACKED=1` only when they all belong to the task. Unknown executable
 paths or shared test-selection infrastructure fall back to the full suite. `test` and
 `check` are explicit full-suite targets. CI keeps one canonical full run on `main`;
-broad version matrices are scheduled or manually invoked.
+routine additional environments repeat named compatibility cases, while broad version
+matrices and full portable subsets are scheduled or manually invoked.
 
 ## License
 

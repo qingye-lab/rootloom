@@ -76,7 +76,7 @@ jobs:
           --canonical-full "$IMPACT_CANONICAL_FULL"
 
   python-edge:
-    name: Impact scope (Python 3.14)
+    name: Runtime compatibility (Python 3.14)
     needs: scope
     if: needs.scope.outputs.python-edge == 'true'
     runs-on: ubuntu-latest
@@ -93,14 +93,14 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Run affected tests on the newest supported Python
+      - name: Run affected runtime compatibility cases
         env:
           IMPACT_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: >-
           python scripts/impact_tests.py run
           --base "$IMPACT_BASE_SHA"
           --head "$GITHUB_SHA"
-          --lane python
+          --lane compatibility
 
   full-python-matrix:
     name: Scheduled full suite (Python ${{ matrix.python-version }})

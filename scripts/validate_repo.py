@@ -1280,7 +1280,6 @@ def validate_personal_contracts(errors: list[str]) -> None:
             "canonical_full",
             "full_matrix",
             "include_untracked",
-            'choices=("primary", "python", "portable")',
         ),
         SYSTEM / "rules" / "rootloom.rules": (
             "never grants task authority",
@@ -1777,6 +1776,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
         "scripts/impact_tests.py run",
         "needs.scope.outputs.python-edge",
         "needs.scope.outputs.full-matrix",
+        "--lane compatibility",
         "fetch-depth: 0",
         'cron: "43 2 * * 0"',
     ):
@@ -2014,6 +2014,47 @@ def validate_secrets(errors: list[str], files: list[Path]) -> None:
                 break
 
 
+def validate_compatibility_cases(errors: list[str]) -> None:
+    # Inspect the registry without importing test modules or executing fixtures.
+    assignments = {
+        node.targets[0].id: node.value
+        for node in ast.parse(IMPACT_TESTS.read_text(encoding="utf-8")).body
+        if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name)
+    }
+    try:
+        groups = ast.literal_eval(assignments["GROUP_MODULES"])
+        registry = ast.literal_eval(assignments["COMPATIBILITY_TESTS"])
+    except (KeyError, ValueError, TypeError) as exc:
+        errors.append(f"invalid compatibility registry: {exc}")
+        return
+    if not isinstance(registry, dict) or set(registry) != set(groups):
+        errors.append("compatibility registry must cover every component group")
+        return
+    available: dict[str, set[str]] = {}
+    for group, cases in registry.items():
+        if not isinstance(cases, tuple) or not cases or any(not isinstance(case, str) for case in cases):
+            errors.append(f"compatibility cases must be a nonempty tuple of names: {group}")
+            continue
+        if len(cases) != len(set(cases)):
+            errors.append(f"duplicate compatibility case: {group}")
+        for case in cases:
+            module = case.rsplit(".", 2)[0]
+            if module not in groups[group]:
+                errors.append(f"compatibility case outside component {group}: {case}")
+                continue
+            if module not in available:
+                path = ROOT.joinpath(*module.split(".")).with_suffix(".py")
+                available[module] = {
+                    f"{module}.{cls.name}.{method.name}"
+                    for cls in ast.parse(path.read_text(encoding="utf-8")).body
+                    if isinstance(cls, ast.ClassDef)
+                    for method in cls.body
+                    if isinstance(method, ast.FunctionDef) and method.name.startswith("test_")
+                }
+            if case not in available[module]:
+                errors.append(f"missing compatibility case: {case}")
+
+
 def main() -> int:
     errors: list[str] = []
     validate_marketplace(errors)
@@ -2025,6 +2066,7 @@ def main() -> int:
     validate_core_reset_eval(errors)
     validate_hooks(errors)
     validate_personal_contracts(errors)
+    validate_compatibility_cases(errors)
     validate_python(errors)
     validate_links(errors)
     files = repository_files()

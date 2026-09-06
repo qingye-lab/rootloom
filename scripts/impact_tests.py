@@ -28,6 +28,67 @@ GROUP_MODULES = {
 GROUP_ORDER = tuple(GROUP_MODULES)
 PORTABLE_GROUPS = {"setup", "guidance", "packaging", "evidence", "memory"}
 
+# Additional environments prove runtime/OS integration, not every business assertion.
+# Primary keeps the complete affected modules. Keep named cases here so both previews
+# and CI expose the exact repeat budget; validate_repo checks names and group ownership.
+COMPATIBILITY_TESTS = {
+    "setup": (
+        # File modes, atomic replacement/recovery, link refusal, and real file locking.
+        "tests.test_setup_rootloom.SetupRootloomTests.test_install_merges_user_owned_agents_and_rollback_restores_mode",
+        "tests.test_setup_rootloom.SetupRootloomTests.test_interrupted_apply_is_completed_from_transaction_journal",
+        "tests.test_setup_rootloom.SetupRootloomTests.test_symlinked_target_is_refused",
+        "tests.test_simple_lock.SimpleLockTests.test_lock_is_exclusive_and_removed_on_exit",
+    ),
+    "guidance": (
+        # Git discovery/write round trip, concurrent replacement, and CLI link identity.
+        "tests.test_seed_project_guidance.ProjectGuidanceSeederTests.test_seed_is_evidence_backed_and_idempotent",
+        "tests.test_seed_project_guidance.ProjectGuidanceSeederTests.test_refresh_refuses_concurrent_guidance_edit",
+        "tests.test_seed_project_guidance.ProjectGuidanceSeederTests.test_validation_rejects_duplicate_markers_and_cli_symlinks",
+        # Native hook process entry point and environment forwarding.
+        "tests.test_component_hook.ComponentHookTests.test_disabled_hook_exits_without_invoking_handler",
+    ),
+    "packaging": (
+        # Filesystem generation, symlink containment, and cache replacement/readback.
+        "tests.test_portable_plugin.PortablePluginTests.test_generator_builds_an_isolated_package",
+        "tests.test_portable_plugin.PortablePluginTests.test_generator_rejects_symlinked_output_and_source",
+        "tests.test_portable_plugin.PortablePluginTests.test_artifact_context_receipt_cache_and_validation",
+        # Execute packaged host shell commands, including spaces and missing Python.
+        "tests.test_host_adapters.HostAdapterTests.test_adapter_commands_are_read_only_and_share_identical_context",
+        "tests.test_host_adapters.HostAdapterTests.test_malformed_oversize_plan_and_missing_interpreter_are_non_destructive",
+    ),
+    "change": (
+        # Python AST/event decoding and subprocess/environment isolation in eval tooling.
+        "tests.test_core_reset_eval.CoreResetEvalTests.test_activated_context_resolves_quoted_paths_with_spaces",
+        "tests.test_core_reset_runner.CoreResetRunnerTests.test_execute_run_isolates_runtime_and_setup_homes",
+    ),
+    "evidence": (
+        # Real Git + subprocess + file publication round trip, then distinct OS edges.
+        "tests.test_engineering_change.EngineeringChangeTests.test_writes_compact_summary_and_verification_bundle",
+        "tests.test_engineering_change.EngineeringChangeTests.test_begin_review_seals_repository_actual_reviewable_path_spelling",
+        "tests.test_engineering_change.EngineeringChangeTests.test_reviewable_paths_reject_hardlinks_at_intake_and_capture",
+        "tests.test_engineering_change.EngineeringChangeTests.test_review_directory_publication_never_replaces_an_empty_destination",
+        "tests.test_engineering_change.EngineeringChangeTests.test_evidence_entry_points_reject_linked_worktree_git_common_directory",
+        "tests.test_engineering_change.EngineeringChangeTests.test_review_and_bundle_outputs_reject_symlinked_parent_components",
+        "tests.test_engineering_change.EngineeringChangeTests.test_ignored_sensitive_baseline_is_metadata_only_and_guards_deletion",
+        "tests.test_engineering_change.EngineeringChangeTests.test_non_utf8_git_path_is_serialized_with_ascii_escapes",
+        "tests.test_engineering_change.EngineeringChangeTests.test_untracked_text_patches_apply_for_empty_and_nonempty_files",
+        "tests.test_engineering_change.EngineeringChangeTests.test_verification_terminates_a_leaked_descendant_process_group",
+        "tests.test_engineering_change.EngineeringChangeTests.test_missing_verification_executable_is_a_bounded_failed_result",
+        "tests.test_engineering_change.EngineeringChangeTests.test_verification_output_budget_is_aggregate_and_strict",
+        "tests.test_engineering_change.EngineeringChangeTests.test_unborn_repository_git_capture_closes_inherited_stdin",
+    ),
+    "memory": (
+        # CLI persistence and actual concurrent locked writers, plus path containment.
+        "tests.test_project_memory.ProjectMemoryTests.test_init_and_record_failure",
+        "tests.test_project_memory.ProjectMemoryTests.test_concurrent_writers_reload_under_lock_without_lost_updates",
+        "tests.test_project_memory.ProjectMemoryTests.test_symlinked_memory_directory_is_refused",
+    ),
+    "web": (
+        # Standard-library HTML parser compatibility; collector hash policy runs once.
+        "tests.test_web_telemetry.WebTelemetryIntegrationTests.test_shared_validator_rejects_document_and_collector_drift",
+    ),
+}
+
 TEST_GROUPS = {
     "tests/test_setup_rootloom.py": {"setup"},
     "tests/test_simple_lock.py": {"setup"},
@@ -83,15 +144,6 @@ class Selection:
         return tuple(
             module
             for group in self.groups
-            for module in GROUP_MODULES[group]
-        )
-
-    @property
-    def portable_modules(self) -> tuple[str, ...]:
-        return tuple(
-            module
-            for group in self.groups
-            if group in PORTABLE_GROUPS
             for module in GROUP_MODULES[group]
         )
 
@@ -341,17 +393,22 @@ def test_commands(selection: Selection, args: argparse.Namespace) -> list[list[s
     elif args.lane == "python":
         discover = selection.fallback_full
         modules = selection.modules
+    elif args.lane == "portable" and args.full_matrix:
+        discover = False
+        modules = tuple(
+            module
+            for group in GROUP_ORDER
+            if group in PORTABLE_GROUPS
+            for module in GROUP_MODULES[group]
+        )
     else:
         discover = False
-        modules = (
-            tuple(
-                module
-                for group in GROUP_ORDER
-                if group in PORTABLE_GROUPS
-                for module in GROUP_MODULES[group]
-            )
-            if args.full_matrix or selection.fallback_full
-            else selection.portable_modules
+        groups = GROUP_ORDER if selection.fallback_full else selection.groups
+        modules = tuple(
+            case
+            for group in groups
+            if args.lane != "portable" or group in PORTABLE_GROUPS
+            for case in COMPATIBILITY_TESTS[group]
         )
     if discover:
         commands.append(
@@ -426,7 +483,7 @@ def parser() -> argparse.ArgumentParser:
         subparser.add_argument("--canonical-full", type=boolean, default=False)
         subparser.add_argument("--full-matrix", type=boolean, default=False)
         subparser.add_argument(
-            "--lane", choices=("primary", "python", "portable"), default="primary"
+            "--lane", choices=("primary", "python", "compatibility", "portable"), default="primary"
         )
         if command == "select":
             subparser.add_argument("--github-output", type=Path)
