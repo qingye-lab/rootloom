@@ -151,8 +151,9 @@ class ImpactTestSelectionTests(unittest.TestCase):
                     (None, True, {"README.md", "staged.py", "worktree.py", "unrelated.py"}),
                 ):
                     with self.subTest(head=head, include_untracked=include_untracked):
+                        options = {"include_untracked": True} if include_untracked else {}
                         paths, error = self.selector.changed_paths(
-                            "HEAD^", head, include_untracked=include_untracked
+                            "HEAD^", head, **options
                         )
                         self.assertIsNone(error)
                         self.assertEqual(set(paths), expected)
