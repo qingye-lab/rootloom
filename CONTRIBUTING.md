@@ -82,9 +82,21 @@ Commit messages should be short and imperative, for example:
 Handle Cargo workspace module boundaries
 ```
 
+Release acceptance uses the checks justified by the change plus existing CI. The historical
+135-cell Core Reset matrix remains an optional research tool, not a standing release gate.
+Workflow changes should use a bounded, explicitly selected behavioral comparison and report
+failures and limitations honestly. Do not enforce minimum prose size, a shrink percentage,
+or exact procedural wording as a substitute for executable behavior tests.
+
 ## Testing guidance
 
 Prefer real temporary Git repositories and behavioral assertions. Avoid network calls, arbitrary sleeps, fixture snapshots tied to incidental whitespace, and mocks when a small filesystem fixture can prove behavior directly.
+
+Keep one owner for static repository contracts; test the validator with valid and mutated
+fixtures instead of maintaining another parser or credential catalog in tests. Keep real
+CLI coverage for integration boundaries, while filename aliases can exercise their shared
+policy function directly. The Evidence suite copies one initialized Git seed into separate
+repositories; mutable worktrees, indexes, configuration, and history are never shared.
 
 Impact-scoped verification is the default. `make check-changed BASE=<ref>` always runs
 repository validation and maps committed, staged, and unstaged tracked changes to their
@@ -95,13 +107,33 @@ selector, validator, Makefile, or CI workflow fail closed to the full suite. Com
 targets are `make test-setup`, `test-guidance`, `test-packaging`, `test-change`,
 `test-evidence`, `test-memory`, and `test-web`.
 
-CI runs focused pull-request checks, one canonical full suite on `main`, affected tests
-on the newest supported Python, and only relevant portable contracts on macOS/Windows.
+Preview the exact check commands without running them or writing a GitHub output file:
+
+```bash
+python3 scripts/impact_tests.py select --base origin/main --json
+python3 scripts/impact_tests.py select --path plugins/rootloom/skills/project-guidance/SKILL.md
+```
+
+Preview and execution use the same command selection. Choose `--lane primary`,
+`compatibility`, or `portable` for CI; `python` keeps the complete local component target.
+`--github-output` remains available for
+CI. Renames include both their source and destination components; execution prints each
+command before starting it and stops at the first failed check.
+
+CI runs complete affected modules in the primary pull-request lane and one canonical full
+suite on `main`. Additional Python and macOS/Windows lanes repeat only named compatibility
+cases in `scripts/impact_tests.py::COMPATIBILITY_TESTS`, filtered by affected component.
+Each entry documents a runtime or OS risk: file modes and recovery, links and path spelling,
+locking, subprocess handling, packaged shell commands, or standard-library parsing.
+Pure policy/schema assertions stay in the primary lane. Unknown paths or shared selection
+changes run the full primary suite plus all named compatibility cases. The validator
+rejects stale names, duplicate cases, missing groups, and cases owned by another component.
 The full supported-Python matrix is scheduled weekly and available through manual
-workflow dispatch. Do not add another platform or runtime lane unless it proves a
+workflow dispatch; those explicit runs retain the full portable component subset.
+Do not add another platform or runtime lane unless it proves a
 distinct risk.
 
-The manual live smoke test requires a logged-in local Codex session. It installs the current checkout into a disposable `CODEX_HOME` and does not mutate the user's main Codex configuration:
+The manual live smoke test requires a logged-in local Codex session. It installs the current checkout into a disposable `CODEX_HOME` and does not mutate the user's main Codex configuration. It checks that SessionStart supplies the project name without writing repository guidance or changing the sample project; setup failure stops before a model call:
 
 ```bash
 make smoke

@@ -24,11 +24,13 @@ PORTABLE_SKILL_FILES = {
     ),
     "operating-coding-change": (
         Path("SKILL.md"),
+        Path("references/artifact-context.md"),
         Path("references/evidence-contract.md"),
         Path("references/evidence-mode.md"),
         Path("references/external-actions.md"),
         Path("references/governed-change.md"),
         Path("references/verification-contract.md"),
+        Path("scripts/artifact_context.py"),
     ),
     "project-guidance": (
         Path("SKILL.md"),
@@ -82,7 +84,7 @@ def portable_manifest() -> dict[str, object]:
         "version": source["version"],
         "description": (
             "Portable Rootloom Agent Skills for inspectable code changes and "
-            "evidence-backed review with bounded project guidance."
+            "evidence-backed review with bounded project and artifact context."
         ),
         "author": source["author"],
         "homepage": source["homepage"],

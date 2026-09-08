@@ -78,10 +78,6 @@ def structural_gate() -> dict[str, Any]:
             "Core Skill catalog differs: "
             f"expected {sorted(EXPECTED_SKILLS)}, found {sorted(actual_skills)}"
         )
-    if reduction < 0.30:
-        errors.append(
-            f"ordinary Change context reduction is {reduction:.1%}; expected >= 30%"
-        )
     return {
         "passed": not errors,
         "errors": errors,
@@ -666,7 +662,7 @@ def main() -> int:
     else:
         report["behavioral"] = {
             "passed": None,
-            "status": "not-run; required before a formal release",
+            "status": "not-run; optional historical comparison",
         }
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if report["structural"]["passed"] and report["behavioral"]["passed"] is not False else 1

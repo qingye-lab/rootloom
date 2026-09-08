@@ -39,7 +39,11 @@ repository:
    executable paths and changes to the selector, validator, Makefile, or CI workflow
    fail closed to the full suite.
 3. Pull requests run selected tests. `main` runs one canonical full suite on Python
-   3.11, while Python 3.14 and macOS/Windows repeat only relevant tests. A scheduled or
+   3.11. Python 3.14 and macOS/Windows select named compatibility cases from
+   `COMPATIBILITY_TESTS`, filtered by component; each entry states its runtime or OS risk.
+   Primary retains all affected assertions. Unknown/shared changes select the full primary
+   suite and all named compatibility cases. Repository validation rejects missing groups,
+   stale names, duplicates, and incorrect case ownership. A scheduled or
    manually requested run covers the full supported-Python matrix and complete portable
    contract subset.
 4. Pinned Codex installation smokes run only when installation or package-loading paths
@@ -66,6 +70,8 @@ repository:
   full-suite fallback.
 - Negative: the static map must be updated when a new executable component or test owner
   is added.
+- Tradeoff: routine extra environments sample integration boundaries rather than repeat
+  every policy/schema permutation. The scheduled full matrix remains the wider backstop.
 - Operational: local branch comparison includes tracked worktree changes and excludes
   unrelated untracked files by default; untracked inclusion is explicit.
 - Operational: existing installations adopt the governance wording on normal Rootloom

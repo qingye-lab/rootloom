@@ -1,4 +1,4 @@
-name: Release evidence
+name: Release validation
 
 on:
   push:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   core-reset:
-    name: Rootloom 4.3.0 behavioral gate
+    name: Release artifact and installation checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -31,7 +31,20 @@ jobs:
       - name: Verify reviewed website telemetry runtime
         run: make telemetry-check
 
-      - name: Verify retained Rootloom 4.3.0 behavior evidence
+      - name: Validate release source and synchronized packages
+        run: make validate
+
+      - name: Verify package isolation and setup rollback
         run: >-
-          make core-reset-release-eval
-          CORE_RESET_RESULTS=evals/core-reset/results-4.3.0.json
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest
+          tests.test_portable_plugin tests.test_setup_rootloom
+
+      - name: Match release tag to plugin version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          version = json.loads(Path("plugins/rootloom/.codex-plugin/plugin.json").read_text())["version"]
+          assert os.environ["GITHUB_REF_NAME"] == f"v{version}", "release tag/version mismatch"
+          PYTHON

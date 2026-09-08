@@ -8,6 +8,12 @@ security audit or fuzzing report.
 
 Release `v2.0.0` passed the repository's Linux Python 3.11–3.14, macOS, Windows, and pinned Codex CLI contract matrix. That proves the checked mechanics on those environments, not model-level engineering quality.
 
+The 4.4 workflow policy replaces a fixed historical model matrix with change-scoped
+acceptance. Its six paired scenarios are a focused regression sample, not proof of general
+speed or defect reduction. Historical 4.1–4.3 reports remain evidence for those versions.
+Artifact Context is optional; ordinary bounded reads remain available without a worker.
+See the [workflow decision](decisions/2026-09-05-rootloom-4.4-workflow.md).
+
 ## What is executable
 
 - deterministic, network-free project-context scanning with a 4 KiB SessionStart cap, Plan-session skip, and repository writes reserved for explicit seeding;

@@ -112,6 +112,12 @@ codex execpolicy check --pretty --rules ~/.codex/rules/rootloom.rules -- git res
 codex execpolicy check --pretty --rules ~/.codex/rules/rootloom.rules -- rm -rf /
 ```
 
+The 4.4 guidance refresh preserves the existing authorization meanings. An exact current
+request for one high-risk action supplies Single action authorization; do not require the
+user to choose the same permission again. A genuinely missing authorization or independent
+approval still blocks that action. No change to model, provider, sandbox, or other plugins
+is part of this guidance upgrade.
+
 Expected decisions are ten `allow`, followed by `forbidden`. The installed global guidance—not argv Rules—owns authorization state: Single action applies once, Standard persists across tasks for all non-high-risk steps of each explicit goal, and Full covers high-risk steps only in the current task and scope. The Rules avoid a second prompt after that semantic decision and retain only the catastrophic recursive-deletion hard deny. A more restrictive active Rule or platform policy can still prompt.
 If the host still classifies an exact authorized action as approval-requiring while the
 active task or organization profile forbids asking (for example

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import io
+import json
+from contextlib import redirect_stdout
 from pathlib import Path
 import subprocess
 import sys
@@ -124,99 +127,36 @@ class ImpactTestSelectionTests(unittest.TestCase):
         self.assertEqual(selection.mode, "full")
         self.assertIn("unclassified automation path", selection.reasons[0])
 
-    def test_explicit_worktree_comparison_includes_tracked_and_untracked_changes(self) -> None:
+    def test_git_comparison_separates_committed_staged_worktree_and_untracked_paths(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            repository = Path(directory)
-            subprocess.run(["git", "init", "-q", str(repository)], check=True)
-            subprocess.run(
-                ["git", "-C", str(repository), "config", "user.name", "Rootloom Test"],
-                check=True,
-            )
-            subprocess.run(
-                ["git", "-C", str(repository), "config", "user.email", "test@example.invalid"],
-                check=True,
-            )
-            tracked = repository / "README.md"
-            tracked.write_text("before\n", encoding="utf-8")
-            subprocess.run(["git", "-C", str(repository), "add", "README.md"], check=True)
-            subprocess.run(
-                ["git", "-C", str(repository), "commit", "-qm", "initial"],
-                check=True,
-            )
-            tracked.write_text("after\n", encoding="utf-8")
-            (repository / "new.py").write_text("pass\n", encoding="utf-8")
-
-            with mock.patch.object(self.selector, "ROOT", repository):
-                paths, error = self.selector.changed_paths(
-                    "HEAD",
-                    None,
-                    include_untracked=True,
-                )
-
-        self.assertIsNone(error)
-        self.assertEqual(paths, ["README.md", "new.py"])
-
-    def test_default_worktree_comparison_excludes_untracked_changes(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            repository = Path(directory)
-            subprocess.run(["git", "init", "-q", str(repository)], check=True)
-            subprocess.run(
-                ["git", "-C", str(repository), "config", "user.name", "Rootloom Test"],
-                check=True,
-            )
-            subprocess.run(
-                ["git", "-C", str(repository), "config", "user.email", "test@example.invalid"],
-                check=True,
-            )
-            tracked = repository / "README.md"
-            tracked.write_text("before\n", encoding="utf-8")
-            subprocess.run(["git", "-C", str(repository), "add", "README.md"], check=True)
-            subprocess.run(
-                ["git", "-C", str(repository), "commit", "-qm", "initial"],
-                check=True,
-            )
-            tracked.write_text("after\n", encoding="utf-8")
-            (repository / "unrelated.py").write_text("pass\n", encoding="utf-8")
-
-            with mock.patch.object(self.selector, "ROOT", repository):
-                paths, error = self.selector.changed_paths("HEAD", None)
-
-        self.assertIsNone(error)
-        self.assertEqual(paths, ["README.md"])
-
-    def test_head_comparison_excludes_unrelated_worktree_changes(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            repository = Path(directory)
-            subprocess.run(["git", "init", "-q", str(repository)], check=True)
-            subprocess.run(
-                ["git", "-C", str(repository), "config", "user.name", "Rootloom Test"],
-                check=True,
-            )
-            subprocess.run(
-                ["git", "-C", str(repository), "config", "user.email", "test@example.invalid"],
-                check=True,
-            )
-            tracked = repository / "README.md"
-            tracked.write_text("before\n", encoding="utf-8")
-            subprocess.run(["git", "-C", str(repository), "add", "README.md"], check=True)
-            subprocess.run(
-                ["git", "-C", str(repository), "commit", "-qm", "initial"],
-                check=True,
-            )
-            tracked.write_text("committed\n", encoding="utf-8")
-            subprocess.run(["git", "-C", str(repository), "add", "README.md"], check=True)
-            subprocess.run(
-                ["git", "-C", str(repository), "commit", "-qm", "change"],
-                check=True,
-            )
-            tracked.write_text("uncommitted\n", encoding="utf-8")
-            (repository / "unrelated.py").write_text("pass\n", encoding="utf-8")
-
-            with mock.patch.object(self.selector, "ROOT", repository):
-                paths, error = self.selector.changed_paths("HEAD^", "HEAD")
-
-        self.assertIsNone(error)
-        self.assertEqual(paths, ["README.md"])
+            repo = Path(directory)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            for name in ("README.md", "staged.py", "worktree.py"):
+                (repo / name).write_text("before\n", encoding="utf-8")
+            commit = ["git", "-C", str(repo), "-c", "user.name=Test", "-c",
+                      "user.email=test@example.invalid", "commit", "-qm"]
+            subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+            subprocess.run([*commit, "initial"], check=True)
+            (repo / "README.md").write_text("committed\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "README.md"], check=True)
+            subprocess.run([*commit, "change"], check=True)
+            (repo / "staged.py").write_text("staged\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "staged.py"], check=True)
+            (repo / "worktree.py").write_text("unstaged\n", encoding="utf-8")
+            (repo / "unrelated.py").write_text("untracked\n", encoding="utf-8")
+            with mock.patch.object(self.selector, "ROOT", repo):
+                for head, include_untracked, expected in (
+                    ("HEAD", True, {"README.md"}),
+                    (None, False, {"README.md", "staged.py", "worktree.py"}),
+                    (None, True, {"README.md", "staged.py", "worktree.py", "unrelated.py"}),
+                ):
+                    with self.subTest(head=head, include_untracked=include_untracked):
+                        options = {"include_untracked": True} if include_untracked else {}
+                        paths, error = self.selector.changed_paths(
+                            "HEAD^", head, **options
+                        )
+                        self.assertIsNone(error)
+                        self.assertEqual(set(paths), expected)
 
     def test_explicit_group_uses_selector_owned_modules(self) -> None:
         selection = self.selector.select_groups(("change", "setup", "change"))
@@ -237,6 +177,119 @@ class ImpactTestSelectionTests(unittest.TestCase):
 
         self.assertEqual(selection.mode, "full")
         self.assertIn("unsafe or empty changed path", selection.reasons[0])
+
+    def test_cross_component_rename_keeps_source_and_destination_checks(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            original = "plugins/rootloom/lib/rootloom_paths.py"
+            destination = "docs/moved.md"
+            source = repo / original
+            source.parent.mkdir(parents=True)
+            source.write_text("value = 1\n" * 80, encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+            commit = ["git", "-C", str(repo), "-c", "user.name=Test", "-c",
+                      "user.email=test@example.invalid", "commit", "-qm"]
+            subprocess.run([*commit, "initial"], check=True)
+            (repo / "docs").mkdir()
+            subprocess.run(["git", "-C", str(repo), "mv", original, destination], check=True)
+            for committed in (False, True):
+                if committed:
+                    subprocess.run([*commit, "move"], check=True)
+                with self.subTest(committed=committed), mock.patch.object(self.selector, "ROOT", repo):
+                    paths, error = self.selector.changed_paths(
+                        "HEAD~1" if committed else "HEAD", "HEAD" if committed else None
+                    )
+                self.assertIsNone(error)
+                self.assertEqual(set(paths), {original, destination})
+                self.assertEqual(self.selector.select_paths(paths).groups, ("setup", "evidence"))
+
+    def test_json_preview_needs_no_output_file_and_executes_no_checks(self) -> None:
+        output = io.StringIO()
+        with mock.patch.object(sys, "argv", [str(SELECTOR_PATH), "select", "--path", "README.md", "--json"]), \
+             mock.patch.object(self.selector, "run_command") as run, redirect_stdout(output):
+            self.assertEqual(self.selector.main(), 0)
+        run.assert_not_called()
+        preview = json.loads(output.getvalue())
+        self.assertEqual(preview["mode"], "validate")
+        self.assertEqual(preview["groups"], [])
+        self.assertEqual(preview["commands"], [[sys.executable, "scripts/validate_repo.py"]])
+
+    def test_preview_distinguishes_canonical_and_portable_lanes(self) -> None:
+        selection = self.select("README.md")
+        args = self.selector.parser().parse_args([
+            "select", "--path", "README.md", "--canonical-full", "true"
+        ])
+        commands = self.selector.test_commands(selection, args)
+        self.assertEqual(commands[0], [sys.executable, "scripts/validate_repo.py"])
+        self.assertIn("discover", commands[1])
+        args.lane = "portable"
+        self.assertEqual(self.selector.test_commands(selection, args), [])
+        args.full_matrix = True
+        commands = self.selector.test_commands(selection, args)
+        self.assertEqual(len(commands), 1)
+        self.assertIn("tests.test_setup_rootloom", commands[0])
+        self.assertNotIn("tests.test_core_reset_eval", commands[0])
+        args.json = True
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.selector.report_selection(selection, args)
+        self.assertTrue(json.loads(output.getvalue())["portable"])
+
+        # Ordinary additional environments select named cases, never whole modules.
+        args.full_matrix = False
+        args.canonical_full = False
+        selection = self.select("tests/test_engineering_change.py")
+        for lane in ("compatibility", "portable"):
+            args.lane = lane
+            commands = self.selector.test_commands(selection, args)
+            self.assertEqual(len(commands), 1)
+            self.assertTrue(all(len(name.split(".")) == 4 and name.rsplit(".", 1)[-1].startswith("test_") for name in commands[0][4:]))
+            self.assertIn(
+                "tests.test_engineering_change.EngineeringChangeTests.test_writes_compact_summary_and_verification_bundle",
+                commands[0],
+            )
+            # Unknown/shared changes retain full primary coverage and every compatible owner.
+            fallback = self.select("scripts/new_shared_tool.py")
+            names = self.selector.test_commands(fallback, args)[0][4:]
+            self.assertNotIn("discover", names)
+            self.assertTrue(any("SetupRootloomTests" in name for name in names))
+            self.assertEqual(any("CoreReset" in name for name in names), lane == "compatibility")
+        args.lane = "primary"
+        self.assertIn("discover", self.selector.test_commands(fallback, args)[1])
+        # Local component targets keep their full modules, independent of CI sampling.
+        args.lane = "python"
+        self.assertIn("tests.test_engineering_change", self.selector.test_commands(selection, args)[0])
+
+    def test_compatibility_registry_rejects_stale_duplicate_and_misowned_cases(self) -> None:
+        validator = load_module("rootloom_impact_validator", ROOT / "scripts" / "validate_repo.py")
+        errors = []
+        validator.validate_compatibility_cases(errors)
+        self.assertEqual(errors, [])
+        case = "tests.test_setup_rootloom.SetupRootloomTests.test_symlinked_target_is_refused"
+        source = SELECTOR_PATH.read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "selector.py"
+            for changed, expected in (
+                (source.replace(case, case + "_missing"), "missing compatibility case"),
+                (source.replace(f'"{case}",', f'"{case}", "{case}",'), "duplicate compatibility case"),
+                (source.replace(case, "tests.test_project_memory.ProjectMemoryTests.test_init_and_record_failure"), "outside component"),
+                (source.replace('    "web": (\n', '    "renamed": (\n'), "every component group"),
+            ):
+                with self.subTest(expected=expected):
+                    self.assertNotEqual(changed, source)
+                    path.write_text(changed, encoding="utf-8")
+                    errors = []
+                    with mock.patch.object(validator, "IMPACT_TESTS", path):
+                        validator.validate_compatibility_cases(errors)
+                    self.assertTrue(any(expected in error for error in errors), errors)
+
+    def test_validation_failure_stops_before_selected_tests(self) -> None:
+        selection = self.select("plugins/rootloom/skills/project-guidance/SKILL.md")
+        args = self.selector.parser().parse_args(["run", "--group", "guidance"])
+        with mock.patch.object(self.selector, "run_command", return_value=7) as run, redirect_stdout(io.StringIO()):
+            self.assertEqual(self.selector.run_tests(selection, args), 7)
+        run.assert_called_once_with([sys.executable, "scripts/validate_repo.py"])
 
     def test_github_outputs_keep_canonical_full_separate_from_other_lanes(self) -> None:
         selection = self.select("README.md")
@@ -275,6 +328,7 @@ class ImpactTestSelectionTests(unittest.TestCase):
 
         self.assertEqual(values["portable"], "true")
         self.assertEqual(values["full-matrix"], "true")
+        self.assertEqual(values["python-edge"], "false")
 
 
 if __name__ == "__main__":

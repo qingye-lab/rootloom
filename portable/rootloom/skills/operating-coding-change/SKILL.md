@@ -1,90 +1,68 @@
 ---
 name: operating-coding-change
-description: The single Rootloom entry for code changes. Route Direct, Scoped, Governed, Evidence, and external-action work; repair owning invariants, preserve unrelated work, and report only verification that ran.
+description: Complete scoped code changes with proportional verification; load governed, Evidence, and external-action procedures only when needed.
 ---
 
 # Coding change
 
-Deliver the smallest complete result. This Skill owns every implementation tier; never ask
-the user to choose another Rootloom change workflow.
+Implement the user's requested outcome within the active repository guidance and authorized
+scope. A question or review alone does not authorize a repair. Preserve unrelated changes;
+a dirty worktree is a preservation constraint, not a reason to stop or escalate.
 
-## 1. Resolve
+## Diagnose and route
 
-Identify the outcome, repository and scope, constraints, non-goals, and proof. Read the host's
-active project-instruction chain (for example, `AGENTS.md`) and the smallest evidence needed to route.
-A dirty worktree is a preservation constraint, not an escalation signal. Preserve unrelated
-user work and record relevant pre-existing failures.
+Read the smallest evidence needed to identify the owner and verification boundary. For a
+defect, connect the observed trigger, violated invariant, root cause, and proposed repair.
+Initial uncertainty calls for bounded diagnosis; escalate only when materially different
+owners, compatibility choices, or high-risk assumptions remain. Label an unproved workaround
+as mitigation and explain its limitation and removal condition.
 
-For a defect, establish:
+Choose the route internally; do not ask the user to choose a workflow:
 
-```text
-symptom → trigger/state → owning boundary → violated invariant → root cause
-```
+- `direct`: mechanical, local, reversible work. Inspect, edit, and check the target; no
+  Reference or separate challenge pass is required.
+- `scoped`: bounded defects, features, tests, refactors, and documentation. Use the checks
+  below without loading additional References by default.
+- `governed`: changes affecting security, production, infrastructure, destructive effects,
+  major dependencies, established public APIs, irreplaceable persisted contracts, or a
+  materially uncertain blast radius. Read [governed-change.md](references/governed-change.md)
+  and [verification-contract.md](references/verification-contract.md) before dependent edits.
+  Regenerable internal artifacts, file count, and keyword mentions alone do not trigger this
+  route; identify real consumers and changed behavior.
+- `evidence`: only on explicit request or an applicable repository requirement. Read
+  [evidence-mode.md](references/evidence-mode.md), [evidence-contract.md](references/evidence-contract.md),
+  and [verification-contract.md](references/verification-contract.md). Evidence records proof;
+  it does not grant authority or replace diagnosis.
 
-If the cause is external or unproved, label a reversible workaround `MITIGATION` with its
-gap, residual risk, and removal condition. Never call symptom suppression a fix.
+For deployment, release, infrastructure, production data, or other external execution, read
+[external-actions.md](references/external-actions.md). Verify exact authorization; preserve
+explicit approval gates and do not infer permission for destructive actions, purchases,
+credential/permission changes, incompatible contracts, or scope expansion. If a required
+procedure or authorization is unavailable, stop only the dependent action and continue
+independent authorized work. Platform and hard-deny controls remain authoritative.
 
-## 2. Route
+## Implement and verify
 
-- `direct`: mechanical, local, reversible work with an unambiguous target and no
-  behavior or contract decision. Load no Reference. Inspect the target, edit, run the
-  smallest relevant check, inspect its diff, and report; skip broader inventory and
-  challenge work unless target evidence is ambiguous.
-- `scoped`: ordinary defects, feature slices, tests, refactors, or bounded multi-file
-  work. Use this Skill's verification and challenge steps; load no Reference.
-- `governed`: established shared/external public APIs or schemas, irreplaceable
-  persisted contracts, migrations, security, infrastructure, deployment/release,
-  destructive effects, major
-  dependencies, material root-cause uncertainty remaining after bounded diagnosis,
-  failed repairs, or substantial blast radius. A
-  local callable/signature shape, file count, version number, serialized artifact, or
-  dirty worktree alone is not public-contract evidence. Before routing schema or format
-  work, establish whether the artifact is authoritative or irreplaceable and whether the
-  new runtime must encounter old instances. Regenerable internal artifacts remain
-  `scoped` unless another governed signal applies. Read
-  [references/governed-change.md](references/governed-change.md) and
-  [references/verification-contract.md](references/verification-contract.md).
-- `evidence`: only when explicitly requested, repository-required, or needed for a
-  release/governed decision. Read [references/evidence-mode.md](references/evidence-mode.md),
-  [references/evidence-contract.md](references/evidence-contract.md), and
-  [references/verification-contract.md](references/verification-contract.md).
-Before the first edit in Governed or Evidence mode, load every required Reference relative
-to this `SKILL.md`. If any required Reference cannot be loaded, stop instead of proceeding.
-Modes compose. Governed external operations also read [references/external-actions.md](references/external-actions.md);
-Evidence Mode records proof, never a replacement for diagnosis, discipline, or approval.
-Initial cause uncertainty routes through bounded diagnosis, not directly to Governed:
-an established local owner and repair boundary → `scoped`; materially different owners,
-compatibility strategies, or high-risk assumptions remaining afterward → `governed`.
+Repair at the owning boundary with existing architecture and dependencies. Avoid unrelated
+cleanup, speculative abstractions, silent fallback, and weakened tests or security. Protect
+established external contracts and irreplaceable state; do not add compatibility paths
+without evidence of a consumer that needs them.
 
-## 3. Change
+Check the requested behavior and owning invariant. Exercise a failure or alternate path,
+or inspect an analogous caller, when it addresses a concrete risk. For documentation,
+check a plausible misinterpretation instead of inventing runtime tests. Use the smallest
+relevant test, type/lint, build, runtime, or rendered-UI evidence; a full suite or matrix is
+needed only for unbounded impact, shared test infrastructure, or an explicit applicable gate.
+After checks pass, expand only for new changes, failures, or unresolved concerns.
 
-Repair the invariant at its owner. Prefer one source of truth, normalized inputs, explicit
-outputs and errors, existing architecture and dependencies, and native tests. Keep the diff
-focused; reject speculative abstraction, unrelated cleanup, silent fallbacks, generated
-churn, dependency refreshes, and weakened tests, types, security, observability, or errors.
+Review the final diff for scope and preservation of user work. Report the result, relevant
+verification actually observed, and material limitations. Never claim an unrun or failed
+check passed. For defect repair, explain whether the change fixes the root cause; use
+`ROOT_CAUSE_ALIGNMENT: PASS | FAIL` only when a formal reporting contract requests it.
 
-Batch target, focused caller/test, and exact-scope status reads in one shell turn; after editing,
-batch the focused check, diff check, final diff, and status unless a failure needs diagnosis.
+## Large artifacts
 
-## 4. Verify and challenge
-
-Before choosing commands, map the primary path, owning invariant, and one adjacent negative
-or alternate path. Default to impact-scoped checks, then affected type/lint, build/package,
-runtime, or rendered UI evidence. Use a full suite or matrix only for unbounded impact,
-shared test infrastructure, or an explicit repository/release gate; never claim unrun checks.
-
-Use one post-check challenge pass: test the strongest counterexample, inspect one
-analogous caller or sibling, review the final diff and worktree, and remove mechanisms
-that do not change a real decision.
-
-## 5. Report
-
-Lead with the observable outcome:
-```text
-Cause         Root cause or key design decision
-Change        Files, behavior, compatibility, and external effects
-Verification  Exact checks run, outcomes, and what each proves
-Risk          Remaining gaps, rollback state, or unverified surfaces
-```
-For defect repair include `ROOT_CAUSE_ALIGNMENT: PASS | FAIL`; use `NOT_APPLICABLE` for
-features, documentation, and mechanical work.
+Start with bounded reads sufficient for the task. Use [artifact-context.md](references/artifact-context.md)
+when repeated access or substantial context cost makes receipt reuse worthwhile, or when the
+user requests isolation. Worker availability is not a prerequisite for ordinary bounded
+analysis. Respect explicit isolation, file-access, retention, and upload restrictions.

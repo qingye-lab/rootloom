@@ -9,10 +9,12 @@ other external execution.
    where available.
 3. Verify credentials and permissions without printing or copying secrets.
 4. Define the signal that stops rollout and the exact rollback or compensation action.
-5. If the current authority does not cover the next action, offer exactly:
-   **Single action** for the displayed action once; **Standard** for non-high-risk
-   actions across explicit tasks; **Full** for routine and high-risk actions only in
-   this task's stated operation type and scope. Never infer Full.
+5. If current authority does not cover the next action, finish independent preparation
+   already authorized, then request **Single action** for the concrete displayed action.
+   Explain **Standard** or **Full** when the user asks to change modes. Standard remains
+   cross-task authority for non-high-risk steps of explicit goals; Full remains limited
+   to the current task's operation type and scope. Never infer Full or repeat an approval
+   already granted. Preserve explicit independent approvals and stage acceptance.
 6. Re-read the target before a destructive operation and verify resulting external
    state afterward. A submitted command is not proof of success.
 

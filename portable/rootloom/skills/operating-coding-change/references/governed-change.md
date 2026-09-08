@@ -24,8 +24,8 @@ An initially unknown cause is normal investigation, not automatic Tier 2 evidenc
 Escalate for uncertainty only after bounded diagnosis still leaves materially different
 owning boundaries, compatibility choices, risk assumptions, or repair scopes.
 
-Stop as `NO_GO` when cause, safe scope, compatibility, recovery, or required authority
-cannot be established. A reversible `MITIGATION` must name observability, rollback,
+Stop the dependent high-risk action when cause, safe scope, compatibility, recovery,
+or required authority cannot be established; continue independent authorized work. A reversible `MITIGATION` must name observability, rollback,
 residual risk, and its removal or follow-up condition.
 
 ## Compatibility
@@ -82,19 +82,11 @@ headings directly: title and status metadata, Context, Evidence, Decision, Alter
 considered, Consequences, Verification, and Revisit when. Do not skip the decision or
 invent a different contract merely because the template file is absent.
 
-## Completion gate
+## Completion
 
-Require contract/migration or mixed-version checks where applicable, the verification
-contract, an adversarial challenge pass, rollback readiness, and an explicit residual
-risk statement. For governed defect repair require `ROOT_CAUSE_ALIGNMENT: PASS`.
-
-Report governed completion compactly:
-
-```text
-Contract / Consumer     Artifact authority and post-cutover consumer evidence
-Compatibility           Old/new contract or NOT_APPLICABLE
-Migration / Coexistence  Transition window or NOT_APPLICABLE
-Rollback / Replay        Complete-release recovery and historical-runtime path
-Verification             Executed checks and behavior proved
-Residual Risk            Remaining gaps or NONE_OBSERVED
-```
+Verify the affected contracts, migration or coexistence behavior, and recovery path where
+applicable. Challenge the material completion claim and disclose remaining gaps. Keep the
+report proportional: describe the outcome, actual verification, external effects, and any
+compatibility or rollback conditions the user needs. Omit inapplicable checklist fields.
+A formal Evidence defect report may require `ROOT_CAUSE_ALIGNMENT: PASS`; ordinary reports
+can explain the same conclusion in prose.

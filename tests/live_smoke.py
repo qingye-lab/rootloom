@@ -37,7 +37,8 @@ def main() -> int:
         repo = root / "sample"
         repo.mkdir()
         run(["git", "init", "-q"], env=os.environ.copy(), cwd=repo)
-        (repo / "README.md").write_text("# Live sample\n", encoding="utf-8")
+        readme = repo / "README.md"
+        readme.write_text("# Live sample\n", encoding="utf-8")
 
         env = os.environ.copy()
         env["CODEX_HOME"] = str(codex_home)
@@ -67,32 +68,45 @@ def main() -> int:
         )
         base = ["python3", str(setup), "--codex-home", str(codex_home), "--json"]
         applied = run([*base, "apply", "--preset", "personal"], env=env, cwd=REPO_ROOT)
+        prerequisites = {
+            "marketplace": marketplace.returncode,
+            "install": install.returncode,
+            "plugin_list": plugin_list.returncode,
+            "setup": applied.returncode,
+        }
+        if plugin_path is None or any(prerequisites.values()):
+            print(json.dumps({"passed": False, "prerequisite_exit_codes": prerequisites}))
+            return 1
+        last_message = root / "last-message.txt"
         model = run(
             [
                 "codex",
                 "exec",
                 "--dangerously-bypass-hook-trust",
                 "--ephemeral",
+                "--output-last-message",
+                str(last_message),
                 "-C",
                 str(repo),
-                "Read AGENTS.md without editing files and reply exactly SEEDED_OK when it contains rootloom:managed-start.",
+                "Using only the Rootloom SessionStart context already supplied, reply exactly "
+                "CONTEXT_OK: <project name>, replacing <project name> with the detected project name. "
+                "Do not call tools or create or edit files.",
             ],
             env=env,
             cwd=repo,
             timeout=180,
         )
-        seeded = repo / "AGENTS.md"
+        reply = last_message.read_text(encoding="utf-8").strip() if last_message.is_file() else ""
+        repository_unchanged = (
+            {path.name for path in repo.iterdir()} == {".git", "README.md"}
+            and not readme.is_symlink()
+            and readme.read_text(encoding="utf-8") == "# Live sample\n"
+        )
         rolled_back = run([*base, "rollback"], env=env, cwd=REPO_ROOT)
         passed = (
-            marketplace.returncode == 0
-            and install.returncode == 0
-            and plugin_list.returncode == 0
-            and plugin_path is not None
-            and applied.returncode == 0
-            and model.returncode == 0
-            and seeded.is_file()
-            and "rootloom:managed-start" in seeded.read_text(encoding="utf-8")
-            and "SEEDED_OK" in model.stdout
+            model.returncode == 0
+            and repository_unchanged
+            and reply == "CONTEXT_OK: Live sample"
             and rolled_back.returncode == 0
             and not (codex_home / "AGENTS.md").exists()
         )
@@ -102,6 +116,8 @@ def main() -> int:
                     "passed": passed,
                     "plugin_path": str(plugin_path) if plugin_path else None,
                     "model_returncode": model.returncode,
+                    "repository_unchanged": repository_unchanged,
+                    "context_reply": reply,
                     "model_stdout_tail": model.stdout[-500:],
                     "model_stderr_tail": model.stderr[-500:],
                 },

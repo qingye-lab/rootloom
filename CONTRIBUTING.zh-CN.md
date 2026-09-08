@@ -81,9 +81,17 @@ assets/                                README 配图
 Handle Cargo workspace module boundaries
 ```
 
+发布验收采用实际变更所需检查与既有 CI。历史 135 个 Cell 的 Core Reset 矩阵保留为
+可选研究工具，不再是固定发布门禁。工作流变更采用明确选定的有界行为对比，如实报告
+失败与限制；不以最低篇幅、删减比例或固定流程措辞替代可执行行为测试。
+
 ## 测试原则
 
 优先使用真实临时 Git 仓库和行为断言。避免网络请求、任意 sleep、依赖偶然空白的快照，以及能够用小型文件系统样例替代的 Mock。
+
+静态仓库契约保持单一维护位置；用合法和变异样例测试校验器，不在测试中再维护一套解析器或
+凭据目录。集成边界保留真实 CLI 覆盖，文件名别名可直接测试共用策略函数。Evidence 套件将
+初始化一次的 Git 样例复制到各自独立的仓库，绝不共享可变工作区、索引、配置或历史。
 
 默认使用影响范围内的精准验证。`make check-changed BASE=<ref>` 始终执行仓库校验，并把
 已提交、已暂存及未暂存的受跟踪变更映射到对应组件测试；默认排除无关未跟踪文件。只有
@@ -92,12 +100,30 @@ Handle Cargo workspace module boundaries
 时，失败关闭到全量套件。组件 Target 包括 `make test-setup`、`test-guidance`、
 `test-packaging`、`test-change`、`test-evidence`、`test-memory`、`test-web`。
 
-CI 对 Pull Request 运行精准测试，在 `main` 保留一次规范性全量套件，在最新支持的
-Python 上只重跑受影响模块，并仅在 macOS/Windows 运行相关可移植契约。完整 Python
-版本矩阵每周定时运行，也可手动触发。除非新增平台或运行时能证明一种独立风险，
-否则不要重复运行相同测试。
+无需执行检查或写 GitHub 输出文件，即可预览实际命令：
 
-手动真实冒烟测试要求本机 Codex 已登录。它会把当前 checkout 安装进可丢弃的 `CODEX_HOME`，不会修改用户主配置：
+```bash
+python3 scripts/impact_tests.py select --base origin/main --json
+python3 scripts/impact_tests.py select --path plugins/rootloom/skills/project-guidance/SKILL.md
+```
+
+预览与执行共用命令选择逻辑；可用 `--lane primary`、`compatibility` 或 `portable`
+查看 CI 通道；`python` 保留本地完整组件测试。CI 继续支持 `--github-output`。
+重命名同时覆盖原组件和目标组件；执行前立即
+显示当前命令，首个检查失败后停止。
+
+CI 的主通道运行 Pull Request 受影响的完整模块，在 `main` 保留一次规范性全量套件。
+附加 Python、macOS/Windows 通道只按受影响组件复跑
+`scripts/impact_tests.py::COMPATIBILITY_TESTS` 中逐项列出的兼容性场景。每项说明运行时或
+操作系统风险，包括文件权限与恢复、链接与路径大小写、锁、子进程、打包后的 Shell 命令
+或标准库解析。纯策略和 Schema 断言只在主通道执行。未知路径或共享选择基础设施变化时，
+主通道跑全量，并在附加环境运行全部具名兼容场景。校验器拒绝失效名称、重复项、缺失分组
+和跨组件归属错误。完整 Python 矩阵每周定时运行，也可手动触发；这些显式运行保留完整
+可移植组件子集。除非新增平台或运行时能证明一种独立风险，否则不要重复运行相同测试。
+
+手动真实冒烟测试要求本机 Codex 已登录。它会把当前 checkout 安装进可丢弃的 `CODEX_HOME`，
+不会修改用户主配置。测试核对 SessionStart 能提供项目名，同时不生成仓库指导、不修改样例
+项目；Setup 失败时在模型调用前停止：
 
 ```bash
 make smoke

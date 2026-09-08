@@ -8,7 +8,7 @@ import subprocess
 import stat
 import tempfile
 import unittest
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest import mock
 
@@ -306,7 +306,6 @@ class ProjectGuidanceSeederTests(unittest.TestCase):
     def test_all_protocols_wrap_one_identical_advisory_context(self) -> None:
         content = "# Temporary project facts\n\n- Project: sample-app."
         expected = seeder._advisory_context(content)
-        self.assertIn("`project-guidance` Skill", expected)
         self.assertNotIn("$project-guidance", expected)
         event = {"cwd": str(self.root), "source": "startup"}
         with mock.patch.object(
@@ -507,7 +506,6 @@ class ProjectGuidanceSeederTests(unittest.TestCase):
         self.assertNotIn("Repository map", context)
         self.assertNotIn("Independent module candidates", context)
         self.assertNotIn("Verification contract", context)
-        self.assertIn("`project-guidance` Skill", context)
         self.assertNotIn("$project-guidance", context)
 
     def test_temporary_context_omits_commands_when_guidance_exists(self) -> None:
@@ -570,6 +568,36 @@ class ProjectGuidanceSeederTests(unittest.TestCase):
         self.assertEqual(result["status"], "context-ready")
         self.assertIn("`packages/api/AGENTS.md`", result["context"])
         self.assertNotIn("`pnpm run test`", result["context"])
+
+    def test_validation_rejects_non_project_blocks_without_probing(self) -> None:
+        path = self.root / "AGENTS.md"
+        path.write_text(
+            "<!-- rootloom:managed-start version=1 -->\n"
+            "# Global Codex Working Agreement\n"
+            "<!-- rootloom:managed-end -->\n",
+            encoding="utf-8",
+        )
+        with mock.patch.object(seeder, "probe") as probe:
+            result = seeder.validate(path)
+        self.assertFalse(result["valid"])
+        self.assertIn("not_project_managed_guidance", result["errors"])
+        probe.assert_not_called()
+
+    def test_validation_rejects_duplicate_markers_and_cli_symlinks(self) -> None:
+        path = self.root / "AGENTS.md"
+        path.write_text(
+            "# Guidance\n<!-- rootloom:managed-start version=1 -->\n"
+            "<!-- rootloom:managed-end -->\n<!-- rootloom:managed-end -->\n",
+            encoding="utf-8",
+        )
+        self.assertIn("malformed_managed_block", seeder.validate(path)["errors"])
+        alias = self.root / "alias.md"
+        alias.symlink_to(path)
+        output = io.StringIO()
+        with redirect_stdout(output):
+            code = seeder.main(["validate", "--file", str(alias)])
+        self.assertEqual(code, 1)
+        self.assertIn("guidance_file_missing_or_symlinked", output.getvalue())
 
     def test_validation_detects_managed_drift_and_secrets(self) -> None:
         self.init_repo()

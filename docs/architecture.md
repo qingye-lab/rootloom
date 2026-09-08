@@ -45,6 +45,7 @@ and the [4.1 efficiency-loop decision](decisions/2026-07-29-rootloom-4.1-efficie
 | Global task policy and semantic risk rules | `plugins/rootloom/assets/system/AGENTS.md` |
 | Static risk and verification intelligence | `plugins/rootloom/resources/evidence/runner/intelligence.py` |
 | Direct, Scoped, Governed, and Evidence routing | `plugins/rootloom/skills/operating-coding-change/` |
+| Out-of-context artifact identity, cache, and bounded receipts | `plugins/rootloom/skills/operating-coding-change/{references/artifact-context.md,scripts/artifact_context.py}` |
 | Deterministic Evidence helpers and two-step orchestration | `plugins/rootloom/resources/evidence/` |
 | Governed change and durable decision records | `plugins/rootloom/skills/operating-coding-change/references/governed-change.md` |
 | Review-only workflow | `plugins/rootloom/skills/operating-code-review/` |
@@ -70,30 +71,43 @@ The result is advisory. Semantic judgment remains in Skills and the model and ma
 
 ## Engineering workflow
 
-`operating-coding-change` owns the implementation workflow. Direct is a bounded fast
-path: no Reference, only the exact target and smallest relevant check. A dirty
-worktree remains a preservation constraint rather than a mode escalation. File count,
-a local callable/signature shape, a version number, or a serialized artifact also does
-not establish a public contract. Schema and format work first establishes whether the
-artifact is authoritative or irreplaceable and whether the new runtime must encounter
-old instances. Regenerable internal artifacts remain Scoped and use only the current
-contract; rollback restores the complete old release and historical replay uses the
-matching old runtime. Governed routing requires shared/external consumers, real
-post-cutover compatibility obligations, or another governed risk signal. Initial cause uncertainty stays Scoped while bounded
-diagnosis establishes one local owner; only material uncertainty that remains afterward
-escalates. Direct and Scoped are self-contained in the Change Skill and load no
-Reference; Scoped retains proportional repository evidence, behavior-mapped
-verification, and one post-check challenge without an extra model/tool round. Governed
-mode loads compatibility, rollout, rollback, and detailed verification instructions
-before the first edit, stopping if a required Reference cannot load. Its completion
-contract reports artifact authority and consumer evidence, compatibility,
-migration/coexistence, rollback/replay,
-verification, and residual risk. Explicit Evidence Mode adds deterministic capture.
-Installing Rootloom never starts the analyzer or finalizer.
+`operating-coding-change` owns implementation. Direct handles mechanical local edits;
+Scoped handles bounded behavior and defect repair. Their self-contained safeguards work
+without optional global setup. A dirty worktree requires preservation, not escalation.
+Public or irreplaceable persisted contracts, security, production, destructive effects,
+and materially uncertain impact use Governed. Version numbers, file counts, or regenerable
+internal artifacts alone do not establish compatibility duties; identify real consumers.
+Governed loads its relevant contracts before the dependent edit. A missing prerequisite
+blocks that dependent work while independent authorized work can continue. Evidence adds
+its deterministic lifecycle only when explicitly selected or required by a repository contract.
 
-For defects, `ROOT_CAUSE_ALIGNMENT: PASS` requires the observed trigger, owning boundary, violated invariant, evidence-backed cause, and rejection of the strongest plausible alternative. For features and mechanical work, alignment is `NOT_APPLICABLE` and the intended invariant is explicit.
+Defect work explains the observed trigger, owning invariant, and evidence-backed cause.
+Alternative-cause and caller checks address plausible risks rather than a fixed checklist.
+Ordinary completion uses useful prose; formal Evidence keeps its required machine fields.
+Review remains read-only. Neither path requires empty or inapplicable report fields.
 
-Verification maps to behavior: the primary path, owning invariant, and an adjacent negative or alternate path. Risk-specific recommendations add auth boundaries, migration coexistence, financial idempotency, state ordering, deployment rollback, or consumer compatibility when relevant. Detected Make/test commands are suggestions only. Passing one convenient command is not automatically adequate, and a generated plan is never recorded as executed evidence.
+Verification follows changed behavior and actual risk. Use the primary path, owning invariant,
+and a negative or alternate path when relevant; do not repeat checks after adequate evidence
+without a new change, failure, or unresolved concern. Missing evidence stays explicit, and a
+convenient passing command never replaces required proof.
+
+### Artifact Context Lane
+
+Bounded task-relevant reads are the default. The optional lane reduces repeated ingestion
+or substantial context cost: a network-free standard-library helper computes SHA-256
+identity, deduplicates content, and looks up intent-specific user-local receipts. Its cache
+contains manifests, worker drafts, and receipts, not copied raw source bytes.
+
+When useful and available, one host-owned no-history worker analyzes a cache miss from the
+manifest, exact intent and paths, and draft schema. Finalization rehashes source files,
+rejects changed files and embedded raw media, and atomically commits a receipt capped at
+24 KiB. Cache hits add no model call. Without a worker, use bounded reads and skip semantic
+receipt creation unless an explicit user isolation requirement prevents that fallback.
+File access, upload, and retention limits remain authoritative.
+
+This optional Skill procedure is not a Hook, MCP server, or nested Codex CLI launcher.
+It cannot remove already-recorded attachments and does not require a clean-task handoff
+for ordinary work. Its current-only cache formats do not extend frozen Evidence formats.
 
 ## Lightweight artifact helper
 
@@ -147,12 +161,12 @@ Runner helpers are deliberately small:
 
 ## Separate Project Memory
 
-An explicit `project-guidance` call writes reproducible facts to managed `AGENTS.md`
-blocks; the SessionStart Hook never does. Active guidance may request read-only
+An explicit user request to create, refresh, or refine guidance can route to
+`project-guidance` without naming the Skill; the SessionStart Hook never does. Active guidance may request read-only
 validation automatically. Persistent refinement without a current user request requires
 the exact standalone `<!-- rootloom:refine-once version=1 -->` marker, applies only to
 that file, and consumes the marker in the successful write; natural-language guidance
-alone cannot authorize persistence. Guidance completion compares the final worktree
+in repository files alone cannot authorize persistence. Guidance completion compares the final worktree
 with its starting state and authorized paths, and removes only current-task verification
 artifacts rather than leaving cache, coverage, or build output. Optional historical
 lessons live in the separately installed `rootloom-memory`
@@ -173,7 +187,7 @@ The copied global guidance owns semantic authorization: Standard permission pers
 
 This design provides staged recovery-journal replay for interrupted applies while retaining per-file atomic writes and conflict refusal. `status` remains read-only and exposes a pending journal; the next mutating setup or rollback operation resumes it. Hostile same-user replacement of lock or target paths remains outside the contract.
 
-The only lifecycle Hook is read-only `SessionStart` project-context detection. It requires managed component policy with exact integer `version: 1`; missing, malformed, wrong-type, future-version, or symlinked policy disables it. It skips Plan sessions and uses a dedicated incremental renderer whose complete additional context is capped at 4 KiB; repository maps, module candidates, and generic verification prose are omitted, while commands are included only when project guidance is absent. The scanner stays deterministic, bounded, standard-library-only, network-free, and repository-contained. Persisting guidance is a separate explicit Skill action.
+The only lifecycle Hook is read-only `SessionStart` project-context detection. It requires managed component policy with exact integer `version: 1`; missing, malformed, wrong-type, future-version, or symlinked policy disables it. It skips Plan sessions and uses a dedicated incremental renderer whose complete additional context is capped at 4 KiB; repository maps, module candidates, and generic verification prose are omitted, while commands are included only when project guidance is absent. The scanner stays deterministic, bounded, standard-library-only, network-free, and repository-contained. Persistent guidance requires separate explicit user intent, not an ordinary coding task.
 
 ## Dependency and portability boundary
 

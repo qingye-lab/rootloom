@@ -107,6 +107,23 @@ Risk         What remains unverified or uncertain?
 
 That is Rootloom's everyday path. You do not need an evidence bundle, global setup, or every Skill in the plugin to use it.
 
+### Read large files in proportion to the task
+
+Start with bounded reads that answer the task. When repeated reads or substantial context
+cost justify preprocessing, Change can use the optional Artifact Context Lane: a local
+standard-library helper hashes and deduplicates files and caches intent-specific receipts.
+Raw bytes stay at their source; finalized receipts are capped at 24 KiB.
+Preparation accepts up to 16 files, at most 512 MiB each and 1 GiB of unique contents.
+Once the unique total exceeds that limit, it rejects the bundle before reading later files
+or writing a manifest or draft; duplicate contents count once.
+
+A cache miss can use one host-owned worker with no inherited conversation. If that facility
+is unavailable, continue with bounded reads and skip the receipt optimization. Explicit user
+isolation, file access, upload, and retention limits still apply. The helper makes no model
+or network request; the optional worker adds a model call, while cache hits add none.
+Rootloom cannot erase already-recorded attachments or task history and does not require a
+fresh task merely because a file was already read.
+
 ## Agent Plugins portable preview
 
 `portable/rootloom/` is a separate Agent Plugins 1.0.0 package containing exactly
@@ -125,6 +142,8 @@ surface are intentionally larger than Agent Plugins v1.
 The preview includes Review, Project Guidance, and Direct, Scoped, and Governed Change.
 Persistent guidance still requires exact user intent. The package deliberately omits
 Setup, Hooks, Rules, Memory, MCP, OpenAI UI metadata, and the plugin-wide Evidence helpers.
+It includes the optional standard-library Artifact Context helper. Hosts without a
+no-history worker can use ordinary bounded reads without creating a cached semantic receipt.
 An explicit Evidence request therefore fails closed
 instead of fabricating an evidence bundle. Do not install the native and portable
 packages into the same client because duplicate-Skill precedence is not standardized.
@@ -155,9 +174,10 @@ regenerable internal records stay Scoped and current-only, while rollback restor
 complete old release and historical replay uses its matching runtime.
 Runtime compatibility requires evidence of a real post-cutover consumer.
 Project Guidance may validate when active repository guidance requests inspection, but
-persistent seed, refresh, or refinement requires explicit user intent. A repository may
+persistent seed, refresh, or refinement requires explicit user intent; natural-language
+requests naming the guidance file are sufficient and need not name the Skill. A repository may
 authorize one refinement of one file only with the exact standalone
-`<!-- rootloom:refine-once version=1 -->` marker; prose alone never authorizes a write.
+`<!-- rootloom:refine-once version=1 -->` marker; repository prose alone never authorizes a write.
 
 ## How an ordinary change works
 
@@ -231,21 +251,19 @@ field `evidence_complete`. `REVIEW_EVIDENCE_COMPLETE` means the evidence chain i
 complete, while `REVIEW_REQUIRED_WITH_REDACTIONS` means material redaction prevents
 that claim.
 
-Core Reset v2 records actual Codex completion-token usage, exact mode/Reference routes,
-and repeated isolated runs. A structural reduction is useful during development, but a
-formal 4.1 candidate needs a scored v2 matrix with at least three repetitions; see
-[the 4.1 efficiency decision](docs/decisions/2026-07-29-rootloom-4.1-efficiency-loop.md).
-Direct and Scoped are self-contained routine routes and load no Reference; Governed and
-Evidence load their detailed contracts before the first edit and stop when a required
-Reference cannot be loaded.
-Run `make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`
-to enforce that formal gate.
-Elapsed ratios compare only pairs where both variants complete the task successfully;
-task-success regression remains independently forbidden.
-The retained [4.3.0 candidate report](evals/core-reset/reports/4.3.0.md) records all
-135 cells, reusing 99 unaffected cells and replacing the 36 candidate cells that activate
-Change or Setup. Every outcome, exact-route, quality, token, command-count, and
-successful-pair elapsed gate passes. The version-tag workflow runs that retained result.
+Core Reset v2 retains historical model comparisons and the optional research command
+`make core-reset-release-eval CORE_RESET_RESULTS=/absolute/path/results-v2.json`.
+Its fixed 135-cell matrix and historical efficiency thresholds are no longer release gates.
+The retained [4.3.0 report](evals/core-reset/reports/4.3.0.md) describes that version only;
+it is not evidence for a later candidate.
+
+Current releases use checks selected from the actual change, package/Setup validation, and
+behavior comparisons when the workflow changes. The 4.4 change uses six scenarios with one
+current/candidate pair each, serially on the same model, reasoning effort, and isolation.
+Task outcomes and permission boundaries determine acceptance; latency and available usage
+are observations. This small comparison cannot establish general performance gains.
+See the [4.4 workflow decision](docs/decisions/2026-09-05-rootloom-4.4-workflow.md).
+The tag workflow checks source/package integrity, Setup behavior, and tag/version identity.
 
 Repository state is accepted only after **two consecutive bounded captures** agree. Each capture lifecycle is bounded by `--max-capture-seconds`. A **material metadata change**, including a **newly discovered ignored addition**, activates metadata-only quarantine before ordinary content capture. Classification uses `is_sensitive_material_path`; Rootloom is not a content-aware secret scanner.
 
@@ -346,7 +364,8 @@ across committed, staged, and unstaged tracked work, while excluding unrelated u
 files. Use `INCLUDE_UNTRACKED=1` only when they all belong to the task. Unknown executable
 paths or shared test-selection infrastructure fall back to the full suite. `test` and
 `check` are explicit full-suite targets. CI keeps one canonical full run on `main`;
-broad version matrices are scheduled or manually invoked.
+routine additional environments repeat named compatibility cases, while broad version
+matrices and full portable subsets are scheduled or manually invoked.
 
 ## License
 

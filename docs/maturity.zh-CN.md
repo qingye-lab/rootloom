@@ -6,6 +6,11 @@ Rootloom Core 是早期、单维护者产品。目标是在不把深度审查成
 
 `v2.0.0` 发布版已经通过 Linux Python 3.11–3.14、macOS、Windows 与固定 Codex CLI 契约矩阵。这只能证明这些环境中的已检查机制，不代表模型层面的工程质量保证。
 
+4.4 工作流策略采用按变更范围验收，替代固定历史模型矩阵。六个配对场景只作为针对性
+回归样本，不能证明普遍提速或缺陷减少；4.1–4.3 历史报告仍只描述对应版本。
+Artifact Context 为可选优化，没有 Worker 时仍可普通有界读取。
+详见[工作流决策](decisions/2026-09-05-rootloom-4.4-workflow.zh-CN.md)。
+
 ## 可执行保证
 
 - 确定性、无网络的项目 Context 扫描，SessionStart 上限为 4 KiB 且跳过 Plan Session，仓库写入只来自显式播种；
