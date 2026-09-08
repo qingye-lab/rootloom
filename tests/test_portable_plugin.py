@@ -34,6 +34,20 @@ ARTIFACT_SPEC.loader.exec_module(artifact_context)
 
 
 class PortablePluginTests(unittest.TestCase):
+    def test_command_rule_validator_rejects_missing_or_embedded_home_bindings(self) -> None:
+        text = (validator.SYSTEM / "rules/rootloom.rules").read_text(encoding="utf-8")
+        errors: list[str] = []
+        validator.validate_command_rule_home_targets(text, errors)
+        self.assertEqual(errors, [])
+        for mutated in (
+            text.replace(" + ROOTLOOM_HOME_TARGETS", "", 1),
+            text.replace("ROOTLOOM_HOME_TARGETS = []", 'ROOTLOOM_HOME_TARGETS = ["/Users/example"]'),
+            text.replace("ROOTLOOM_HOME_TARGETS = []", ""),
+        ):
+            errors = []
+            validator.validate_command_rule_home_targets(mutated, errors)
+            self.assertTrue(errors)
+
     def manifest(self) -> dict[str, object]:
         return json.loads((PORTABLE_ROOT / "plugin.json").read_text(encoding="utf-8"))
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 import os
@@ -34,6 +35,71 @@ class SetupRootloomTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.codex_home = Path(self.temporary.name) / "codex-home"
         self.codex_home.mkdir()
+
+    def test_home_rules_upgrade_is_idempotent_and_rollback_restores_static_asset(self) -> None:
+        original_desired = setup.desired_bytes
+
+        def legacy(target: setup.Target, capabilities: tuple[str, ...]) -> bytes:
+            if target.component == "command-rules":
+                return target.source.read_bytes()
+            return original_desired(target, capabilities)
+
+        with mock.patch.object(setup, "desired_bytes", side_effect=legacy):
+            setup.apply_plan(self.codex_home, replace_conflicts=False)
+        rules = self.codex_home / "rules/rootloom.rules"
+        original = rules.read_bytes()
+        plan = setup.build_plan(self.codex_home)
+        self.assertEqual(
+            [(action.path, action.action) for action in plan[2] if action.action != "unchanged"],
+            [("rules/rootloom.rules", "update")],
+        )
+        setup.apply_plan(self.codex_home, replace_conflicts=False, operation="upgrade")
+        updated = rules.read_bytes()
+        self.assertNotEqual(updated, original)
+        self.assertEqual(setup.status_payload(self.codex_home)["drifted_paths"], [])
+        self.assertEqual(
+            setup.apply_plan(self.codex_home, replace_conflicts=False, operation="upgrade")["status"],
+            "up_to_date",
+        )
+        rules.write_bytes(updated + b"\n# user edit\n")
+        with self.assertRaises(RuntimeError):
+            setup.apply_plan(self.codex_home, replace_conflicts=False, operation="upgrade")
+        with self.assertRaisesRegex(RuntimeError, "changed after setup"):
+            setup.rollback(self.codex_home)
+        rules.write_bytes(updated)
+        setup.rollback(self.codex_home)
+        self.assertEqual(rules.read_bytes(), original)
+
+    def test_home_rules_render_quoted_paths_and_resolved_aliases(self) -> None:
+        name = 'home 用户 "quoted"\\path' if os.name != "nt" else "home 用户"
+        home = Path(self.temporary.name) / name
+        resolved = Path(self.temporary.name) / "resolved home"
+        alias = mock.Mock(wraps=home)
+        alias.__str__ = mock.Mock(return_value=str(home))
+        alias.resolve.return_value = resolved
+        template = (setup.plugin_root() / "assets/system/rules/rootloom.rules").read_bytes()
+        with mock.patch.object(setup.Path, "home", return_value=alias):
+            rendered = setup.render_command_rules(template)
+            self.assertEqual(rendered, setup.render_command_rules(template))
+        assignment = next(
+            node for node in ast.parse(rendered).body
+            if isinstance(node, ast.Assign) and node.targets[0].id == "ROOTLOOM_HOME_TARGETS"
+        )
+        paths = ast.literal_eval(assignment.value)
+        for path in (home, resolved):
+            self.assertIn(str(path), paths)
+            self.assertIn(str(path) + os.sep, paths)
+            self.assertIn(path.as_posix(), paths)
+            self.assertIn(path.as_posix() + "/", paths)
+        self.assertNotIn(str(self.codex_home), paths)
+        self.assertNotIn(str(home / "reviewed-child"), paths)
+        invalid_templates = (
+            template.replace(b"ROOTLOOM_HOME_TARGETS = []", b""),
+            template + b"\nROOTLOOM_HOME_TARGETS = []",
+        )
+        for invalid in invalid_templates:
+            with self.assertRaisesRegex(ValueError, "one home-target placeholder"):
+                setup.render_command_rules(invalid)
 
     def test_personal_is_default_and_contains_only_personal_components(self) -> None:
         result = setup.apply_plan(self.codex_home, replace_conflicts=False)

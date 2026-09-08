@@ -109,6 +109,10 @@ def main() -> int:
             ("bulk_restore", ["git", "restore", "."]),
             ("reset", ["git", "reset", "--hard"]),
             ("catastrophic_delete", ["rm", "-rf", "/"]),
+            ("home_delete", ["rm", "-rf", str(Path.home())]),
+            ("resolved_home_delete", ["rm", "--recursive", "--force", str(Path.home().resolve())]),
+            ("home_trailing_delete", ["rm", "-f", "-r", str(Path.home()) + os.sep]),
+            ("home_child_delete", ["rm", "-rf", str(Path.home() / "reviewed-child")]),
         ):
             completed = run(
                 ["codex", "execpolicy", "check", "--rules", str(rules), "--", *argv],
@@ -158,6 +162,10 @@ def main() -> int:
                 "bulk_restore": "allow",
                 "reset": "allow",
                 "catastrophic_delete": "forbidden",
+                "home_delete": "forbidden",
+                "resolved_home_delete": "forbidden",
+                "home_trailing_delete": "forbidden",
+                "home_child_delete": None,
             }
             and not leftovers
             and not (codex_home / "agents").exists()

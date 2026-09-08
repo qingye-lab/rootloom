@@ -6,6 +6,12 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Render the current user's absolute and resolved home paths into installed Autonomy
+  Rules, including trailing separators, so shell-expanded home deletion matches the
+  existing hard deny. Setup upgrades and rolls back these rules through its normal backup path.
+
 ## [4.4.0] - 2026-09-08
 
 ### Changed

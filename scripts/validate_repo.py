@@ -963,6 +963,37 @@ def validate_guidance_structure(
             errors.append(f"malformed guidance managed markers: {path}")
 
 
+def validate_command_rule_home_targets(text: str, errors: list[str]) -> None:
+    """Every static rm hard deny must consume Setup's home-path binding."""
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        errors.append("command rules must have parseable home-target bindings")
+        return
+    declarations = [
+        node for node in tree.body if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "ROOTLOOM_HOME_TARGETS" for target in node.targets)
+    ]
+    if len(declarations) != 1 or not isinstance(declarations[0].value, ast.List) or declarations[0].value.elts:
+        errors.append("command rules must declare one empty ROOTLOOM_HOME_TARGETS placeholder")
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name) or node.func.id != "prefix_rule":
+            continue
+        kwargs = {item.arg: item.value for item in node.keywords}
+        decision = kwargs.get("decision")
+        if not isinstance(decision, ast.Constant) or decision.value != "forbidden":
+            continue
+        pattern = kwargs.get("pattern")
+        if not isinstance(pattern, ast.List) or not pattern.elts or not isinstance(pattern.elts[0], ast.Constant) or pattern.elts[0].value != "rm":
+            continue
+        targets = pattern.elts[-1]
+        if not (
+            isinstance(targets, ast.BinOp) and isinstance(targets.op, ast.Add)
+            and isinstance(targets.right, ast.Name) and targets.right.id == "ROOTLOOM_HOME_TARGETS"
+        ):
+            errors.append("rm hard deny must include Setup's ROOTLOOM_HOME_TARGETS binding")
+
+
 def validate_personal_contracts(errors: list[str]) -> None:
     global_guidance = SYSTEM / "AGENTS.md"
     global_text = global_guidance.read_text(encoding="utf-8")
@@ -1761,6 +1792,7 @@ def validate_personal_contracts(errors: list[str]) -> None:
             if needle not in text:
                 errors.append(f"missing contract {needle!r} in {path.relative_to(ROOT)}")
     rules_text = (SYSTEM / "rules" / "rootloom.rules").read_text(encoding="utf-8")
+    validate_command_rule_home_targets(rules_text, errors)
     if 'decision = "prompt"' in rules_text:
         errors.append("Rootloom Rules must not duplicate semantic authorization with prompt decisions")
     ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")

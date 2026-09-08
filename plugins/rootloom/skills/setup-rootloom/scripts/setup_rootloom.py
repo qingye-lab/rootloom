@@ -157,12 +157,31 @@ def render_component_policy(capabilities: tuple[str, ...]) -> bytes:
     return (json.dumps(payload, indent=2, sort_keys=True) + "\n").encode()
 
 
+def render_command_rules(template: bytes) -> bytes:
+    marker = b"ROOTLOOM_HOME_TARGETS = []"
+    if template.count(marker) != 1:
+        raise ValueError("command rules must contain one home-target placeholder")
+    home = Path.home()
+    if not home.is_absolute():
+        raise ValueError("user home must be absolute")
+    paths: set[str] = set()
+    for path in (home, home.resolve()):
+        for value, separator in ((str(path), os.sep), (path.as_posix(), "/")):
+            paths.add(value)
+            paths.add(value.rstrip(separator) + separator)
+    declaration = "ROOTLOOM_HOME_TARGETS = " + json.dumps(sorted(paths), ensure_ascii=False)
+    return template.replace(marker, declaration.encode("utf-8"))
+
+
 def desired_bytes(target: Target, capabilities: tuple[str, ...]) -> bytes:
     if target.kind == "hook-policy":
         return render_component_policy(capabilities)
     if target.source is None:
         raise ValueError(f"target has no source: {target.relative_path}")
-    return target.source.read_bytes()
+    template = target.source.read_bytes()
+    if target.component == "command-rules":
+        return render_command_rules(template)
+    return template
 
 
 def managed_span(value: bytes) -> tuple[int, int] | None:

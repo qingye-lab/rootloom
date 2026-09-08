@@ -110,6 +110,7 @@ codex execpolicy check --pretty --rules ~/.codex/rules/rootloom.rules -- gh rele
 codex execpolicy check --pretty --rules ~/.codex/rules/rootloom.rules -- terraform destroy
 codex execpolicy check --pretty --rules ~/.codex/rules/rootloom.rules -- git reset --hard
 codex execpolicy check --pretty --rules ~/.codex/rules/rootloom.rules -- rm -rf /
+codex execpolicy check --pretty --rules ~/.codex/rules/rootloom.rules -- rm -rf "$HOME"
 ```
 
 The 4.4 guidance refresh preserves the existing authorization meanings. An exact current
@@ -118,11 +119,17 @@ user to choose the same permission again. A genuinely missing authorization or i
 approval still blocks that action. No change to model, provider, sandbox, or other plugins
 is part of this guidance upgrade.
 
-Expected decisions are ten `allow`, followed by `forbidden`. The installed global guidance—not argv Rules—owns authorization state: Single action applies once, Standard persists across tasks for all non-high-risk steps of each explicit goal, and Full covers high-risk steps only in the current task and scope. The Rules avoid a second prompt after that semantic decision and retain only the catastrophic recursive-deletion hard deny. A more restrictive active Rule or platform policy can still prompt.
+Expected decisions are ten `allow`, followed by two `forbidden` decisions. The installed global guidance—not argv Rules—owns authorization state: Single action applies once, Standard persists across tasks for all non-high-risk steps of each explicit goal, and Full covers high-risk steps only in the current task and scope. The Rules avoid a second prompt after that semantic decision and retain only the catastrophic recursive-deletion hard deny. A more restrictive active Rule or platform policy can still prompt.
 If the host still classifies an exact authorized action as approval-requiring while the
 active task or organization profile forbids asking (for example
 `AskForApproval=Never`), treat that controlling profile as the blocker; repeating the
 same user confirmation cannot override it.
+
+Setup renders the current OS user's absolute home and resolved home paths into the Rules,
+including native and forward-slash spellings with optional trailing separators. This is
+independent of `CODEX_HOME`, which may live on another volume. Upgrade regenerates these
+paths through the normal backup and rollback mechanism. These are exact argv matches;
+child paths remain outside this hard deny, and Rules do not normalize arbitrary path aliases.
 
 ## Change preset or roll back
 
