@@ -5634,7 +5634,8 @@ class EngineeringChangeTests(unittest.TestCase):
                     "import sys",
                     f"sys.path.insert(0, {str(SCRIPT.parent)!r})",
                     "from runner.state import tracked_patch",
-                    f"patch = tracked_patch({str(repo)!r}, max_git_seconds=0.2)",
+                    # Test stdin closure, not a 200 ms Git cold-start benchmark.
+                    f"patch = tracked_patch({str(repo)!r}, max_git_seconds=2)",
                     "sys.stdout.buffer.write(patch)",
                 ]
             )
@@ -5646,7 +5647,7 @@ class EngineeringChangeTests(unittest.TestCase):
             )
             try:
                 try:
-                    returncode = process.wait(timeout=3)
+                    returncode = process.wait(timeout=10)
                 except subprocess.TimeoutExpired:
                     process.kill()
                     process.wait()
